@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
-import { useAuctionStore } from '../store/useAuctionStore';
+import { useAuctionSync } from '../hooks/useAuctionSync';
 import {
   LogOut,
   Play,
@@ -32,7 +32,7 @@ export default function PresenterPanel() {
     placeBid,
     markSold,
     markUnsold,
-  } = useAuctionStore();
+  } = useAuctionSync();
 
   const [selectedTeam, setSelectedTeam] = useState<number | null>(null);
   const [bidAmount, setBidAmount] = useState(0);

@@ -17,18 +17,19 @@ A modern, real-time cricket player auction portal built with React, TypeScript, 
 - **Auction Controls**: Start, pause, resume, and navigate through players
 - **Bid History**: Complete transaction history and analytics
 
-### 📊 Data Features
-- **Mock Data**: Pre-loaded with 15+ cricket players and 8 IPL teams
-- **Player Profiles**: Detailed information including nationality, age, batting/bowling styles
-- **Team Purses**: Dynamic purse management with spending tracking
-- **Real-time Updates**: Zustand state management for instant UI updates
+### � Real-Time Synchronization
+- **Cross-Tab Communication**: Updates from presenter reflect instantly in viewer screens
+- **Local Storage Sync**: Auction state persists across browser tabs and windows
+- **Live Updates**: Bid changes, player navigation, and auction controls sync in real-time
+- **Automatic Reconciliation**: Conflicting updates are resolved with timestamp-based priority
 
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 18 with TypeScript
 - **Build Tool**: Vite 7.x
 - **Styling**: Tailwind CSS 3.4
-- **State Management**: Zustand 5.0
+- **State Management**: Zustand 5.0 with real-time synchronization
+- **Cross-Tab Sync**: Custom sync utility using localStorage and Custom Events
 - **Routing**: React Router DOM 7.9
 - **Icons**: Lucide React
 - **Database Ready**: Supabase integration configured
@@ -55,8 +56,10 @@ src/
 │   └── Unauthorized.tsx       # Access denied page
 ├── routes/
 │   └── AppRoutes.tsx          # Application routing configuration
-├── store/
-│   └── useAuctionStore.ts     # Zustand store for auction state
+├── hooks/
+│   └── useAuctionSync.ts     # Real-time synchronization hook
+├── utils/
+│   └── auctionSync.ts        # Cross-tab communication utility
 ├── App.tsx                    # Main application component
 └── main.tsx                   # Application entry point
 ```
@@ -189,14 +192,15 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🔮 Future Enhancements
 
-- [ ] Real-time WebSocket integration
-- [ ] Advanced analytics and reporting
-- [ ] Mobile application companion
-- [ ] Multi-language support
-- [ ] Advanced bidding strategies
-- [ ] Integration with external cricket APIs
-- [ ] Video streaming integration
-- [ ] Advanced team management features
+- [x] **Real-time Cross-Tab Synchronization**: Implemented using localStorage and Custom Events
+- [ ] **WebSocket Integration**: Upgrade to server-based real-time communication
+- [ ] **Advanced Analytics**: Comprehensive auction statistics and reporting
+- [ ] **Mobile Application**: Native apps for iOS and Android
+- [ ] **Multi-Language Support**: Internationalization for global audiences
+- [ ] **Advanced Bidding Strategies**: Automated bidding algorithms and predictions
+- [ ] **External API Integration**: Live cricket data and player statistics
+- [ ] **Video Streaming**: Integrated live video feeds during auctions
+- [ ] **Advanced Team Management**: Detailed roster management and analytics
 
 ---
 

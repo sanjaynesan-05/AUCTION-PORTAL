@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
-import { useAuctionStore } from '../store/useAuctionStore';
+import { useAuctionSync } from '../hooks/useAuctionSync';
 import { LogOut, Clock, DollarSign, Users, TrendingUp, Tv } from 'lucide-react';
 
 export default function ViewerScreen() {
@@ -15,7 +15,7 @@ export default function ViewerScreen() {
     currentBid,
     currentBidder,
     bidHistory,
-  } = useAuctionStore();
+  } = useAuctionSync();
 
   const [time, setTime] = useState(new Date());
 

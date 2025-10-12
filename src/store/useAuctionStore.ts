@@ -12,6 +12,7 @@ interface AuctionState {
   currentBid: number;
   currentBidder: number | null;
   bidHistory: Array<{ teamId: number; amount: number; timestamp: number }>;
+  lastUpdate: number;
 
   startAuction: () => void;
   pauseAuction: () => void;
@@ -37,6 +38,7 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
   currentBid: 0,
   currentBidder: null,
   bidHistory: [],
+  lastUpdate: Date.now(),
 
   startAuction: () => {
     const unsoldPlayers = get().players.filter(p => !p.sold);
