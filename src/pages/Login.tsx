@@ -2,130 +2,227 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { mockUsers } from '../data/mockUsers';
-import { User, Shield } from 'lucide-react';
+import { Crown, Users, Eye, ArrowRight, Trophy, Zap } from 'lucide-react';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { setRole, setUsername: setContextUsername } = useRole();
+  const [isLoading, setIsLoading] = useState(false);
+  const { setRole, setUsername: setRoleUsername } = useRole();
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    const user = mockUsers.find(
-      u => u.username === username && u.password === password
-    );
-
-    if (user) {
-      setRole(user.role);
-      setContextUsername(user.username);
-      navigate(`/${user.role.toLowerCase()}`);
-    } else {
-      setError('Invalid username or password');
+    try {
+      const user = mockUsers.find(u => u.username === username && u.password === password);
+      
+      if (user) {
+        setRole(user.role);
+        setRoleUsername(user.username);
+        
+        // Route based on role
+        switch (user.role) {
+          case 'Admin':
+            navigate('/admin');
+            break;
+          case 'Presenter':
+            navigate('/presenter');
+            break;
+          case 'Viewer':
+            navigate('/viewer');
+            break;
+          default:
+            navigate('/unauthorized');
+        }
+      } else {
+        setError('Invalid credentials');
+      }
+    } catch (err) {
+      setError('Login failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const quickLogin = (role: 'Admin' | 'Presenter' | 'Viewer') => {
+  const quickLogin = (role: string) => {
     const user = mockUsers.find(u => u.role === role);
     if (user) {
       setUsername(user.username);
       setPassword(user.password);
+      setRole(user.role);
+      setRoleUsername(user.username);
+      
+      switch (role) {
+        case 'Admin':
+          navigate('/admin');
+          break;
+        case 'Presenter':
+          navigate('/presenter');
+          break;
+        case 'Viewer':
+          navigate('/viewer');
+          break;
+      }
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full mb-4 shadow-2xl">
-            <Shield className="w-10 h-10 text-white" />
-          </div>
-          <h1 className="text-4xl font-bold text-white mb-2">IPL Auction</h1>
-          <p className="text-blue-200">Live Auction Management System</p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-20 left-20 w-72 h-72 bg-yellow-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+        <div className="absolute top-40 right-20 w-72 h-72 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse delay-700"></div>
+        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse delay-1000"></div>
+      </div>
 
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Username
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
+      <div className="relative min-h-screen flex items-center justify-center px-4">
+        <div className="max-w-6xl w-full grid lg:grid-cols-2 gap-8 items-center">
+          
+          {/* Left Side - Branding */}
+          <div className="text-center lg:text-left">
+            <div className="mb-8">
+              <div className="flex items-center justify-center lg:justify-start mb-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mr-4">
+                  <Trophy className="w-8 h-8 text-white" />
                 </div>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={e => setUsername(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                  placeholder="Enter username"
-                  required
-                />
+                <h1 className="text-4xl lg:text-5xl font-bold text-white">
+                  IPL Auction
+                  <span className="text-yellow-400 block text-lg font-normal">Portal 2025</span>
+                </h1>
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                placeholder="Enter password"
-                required
-              />
-            </div>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
+              <p className="text-xl text-gray-300 mb-8">
+                Experience the thrill of cricket's biggest auction. Real-time bidding, live updates, and professional-grade auction management.
+              </p>
+              
+              {/* Features */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className="flex items-center text-gray-300">
+                  <Zap className="w-5 h-5 mr-2 text-yellow-400" />
+                  Real-time Updates
+                </div>
+                <div className="flex items-center text-gray-300">
+                  <Users className="w-5 h-5 mr-2 text-blue-400" />
+                  Multi-role Access
+                </div>
+                <div className="flex items-center text-gray-300">
+                  <Trophy className="w-5 h-5 mr-2 text-orange-400" />
+                  Professional UI
+                </div>
               </div>
-            )}
-
-            <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg"
-            >
-              Sign In
-            </button>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <p className="text-xs text-gray-500 text-center mb-4">Quick Login</p>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => quickLogin('Admin')}
-                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition"
-              >
-                Admin
-              </button>
-              <button
-                onClick={() => quickLogin('Presenter')}
-                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition"
-              >
-                Presenter
-              </button>
-              <button
-                onClick={() => quickLogin('Viewer')}
-                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition"
-              >
-                Viewer
-              </button>
             </div>
           </div>
-        </div>
 
-        <div className="mt-6 text-center text-sm text-blue-200">
-          <p>Demo Credentials:</p>
-          <p className="font-mono text-xs mt-2">
-            admin/admin123 | presenter/present123 | viewer/view123
-          </p>
+          {/* Right Side - Login Form */}
+          <div className="w-full max-w-md mx-auto">
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 p-8">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
+                <p className="text-gray-300">Sign in to access the auction portal</p>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+                    placeholder="Enter your username"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
+                    placeholder="Enter your password"
+                    required
+                  />
+                </div>
+
+                {error && (
+                  <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-300 text-sm">
+                    {error}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold py-3 px-4 rounded-lg hover:from-yellow-500 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {isLoading ? (
+                    <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <>
+                      Sign In <ArrowRight className="w-5 h-5 ml-2" />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {/* Quick Login Options */}
+              <div className="mt-8">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-white/20"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-transparent text-gray-400">Quick Access</span>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid grid-cols-3 gap-3">
+                  <button
+                    onClick={() => quickLogin('Admin')}
+                    className="flex flex-col items-center p-4 bg-white/5 border border-white/20 rounded-lg hover:bg-white/10 transition-all group"
+                  >
+                    <Crown className="w-6 h-6 text-yellow-400 mb-2 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs text-gray-300 font-medium">Admin</span>
+                  </button>
+
+                  <button
+                    onClick={() => quickLogin('Presenter')}
+                    className="flex flex-col items-center p-4 bg-white/5 border border-white/20 rounded-lg hover:bg-white/10 transition-all group"
+                  >
+                    <Trophy className="w-6 h-6 text-blue-400 mb-2 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs text-gray-300 font-medium">Presenter</span>
+                  </button>
+
+                  <button
+                    onClick={() => quickLogin('Viewer')}
+                    className="flex flex-col items-center p-4 bg-white/5 border border-white/20 rounded-lg hover:bg-white/10 transition-all group"
+                  >
+                    <Eye className="w-6 h-6 text-green-400 mb-2 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs text-gray-300 font-medium">Viewer</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Demo Credentials */}
+            <div className="mt-6 bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
+              <h3 className="text-sm font-medium text-gray-300 mb-2">Demo Credentials:</h3>
+              <div className="text-xs text-gray-400 space-y-1">
+                <div>Admin: admin / admin123</div>
+                <div>Presenter: presenter / present123</div>
+                <div>Viewer: viewer / view123</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
