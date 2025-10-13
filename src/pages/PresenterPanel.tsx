@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { useAuctionSync } from '../hooks/useAuctionSync';
@@ -10,12 +9,9 @@ import {
   SkipBack,
   CheckCircle,
   XCircle,
-  Gavel,
   TrendingUp,
   Users,
-  Clock,
   Trophy,
-  Star,
   Activity
 } from 'lucide-react';
 
@@ -35,31 +31,18 @@ export default function PresenterPanel() {
     resumeAuction,
     nextPlayer,
     previousPlayer,
-    placeBid,
     markSold,
     markUnsold,
   } = useAuctionSync();
-
-  const [selectedTeam, setSelectedTeam] = useState<number | null>(null);
-  const [bidAmount, setBidAmount] = useState(0);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const handleQuickBid = (amount: number) => {
-    if (selectedTeam) {
-      placeBid(selectedTeam, amount);
-      setBidAmount(amount);
-    }
-  };
-
   const handleSold = () => {
     if (currentPlayer && currentBidder) {
       markSold(currentPlayer.id, currentBidder, currentBid);
-      setSelectedTeam(null);
-      setBidAmount(0);
       nextPlayer();
     }
   };
@@ -67,14 +50,11 @@ export default function PresenterPanel() {
   const handleUnsold = () => {
     if (currentPlayer) {
       markUnsold(currentPlayer.id);
-      setSelectedTeam(null);
-      setBidAmount(0);
       nextPlayer();
     }
   };
 
   const currentBiddingTeam = teams.find(t => t.id === currentBidder);
-  const eligibleTeams = teams.filter(t => t.purse >= (currentBid + 10));
 
   if (!currentPlayer) {
     return (
@@ -93,24 +73,24 @@ export default function PresenterPanel() {
       {/* Header */}
       <div className="bg-black/30 backdrop-blur-lg border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between h-auto sm:h-16 py-4 sm:py-0 space-y-4 sm:space-y-0">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center mr-3">
                 <Trophy className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">IPL Auction Portal</h1>
-                <p className="text-sm text-gray-300">Presenter Panel</p>
+                <h1 className="text-lg sm:text-xl font-bold text-white">IPL Auction Portal</h1>
+                <p className="text-xs sm:text-sm text-gray-300">Presenter Panel</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm text-gray-300">Welcome back,</p>
-                <p className="text-white font-medium">{user?.username}</p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+              <div className="text-left sm:text-right">
+                <p className="text-xs sm:text-sm text-gray-300">Welcome back,</p>
+                <p className="text-white font-medium text-sm sm:text-base">{user?.username}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="flex items-center px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
@@ -120,42 +100,42 @@ export default function PresenterPanel() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           
           {/* Main Player Card */}
           <div className="xl:col-span-2">
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 overflow-hidden">
               {/* Player Header */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
                     <img
                       src={currentPlayer.image}
                       alt={currentPlayer.name}
-                      className="w-20 h-20 rounded-full border-4 border-white/30 bg-white/10"
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white/30 bg-white/10 mx-auto sm:mx-0"
                       onError={(e) => {
                         e.currentTarget.src = `https://ui-avatars.com/api/?name=${currentPlayer.name}&background=6366f1&color=fff&size=80`;
                       }}
                     />
-                    <div>
-                      <h2 className="text-3xl font-bold text-white">{currentPlayer.name}</h2>
-                      <div className="flex items-center space-x-4 mt-2">
-                        <span className="bg-white/20 px-3 py-1 rounded-full text-sm text-white">
+                    <div className="text-center sm:text-left">
+                      <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">{currentPlayer.name}</h2>
+                      <div className="flex flex-wrap justify-center sm:justify-start items-center space-x-2 mt-2">
+                        <span className="bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm text-white">
                           {currentPlayer.role}
                         </span>
-                        <span className="bg-white/20 px-3 py-1 rounded-full text-sm text-white">
+                        <span className="bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm text-white">
                           {currentPlayer.nationality}
                         </span>
-                        <span className="bg-white/20 px-3 py-1 rounded-full text-sm text-white">
+                        <span className="bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm text-white">
                           Age: {currentPlayer.age}
                         </span>
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-center sm:text-right w-full sm:w-auto">
                     <p className="text-white/80 text-sm">Base Price</p>
-                    <p className="text-3xl font-bold text-yellow-400">₹{currentPlayer.basePrice}L</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-yellow-400">₹{currentPlayer.basePrice}L</p>
                   </div>
                 </div>
               </div>
@@ -197,13 +177,13 @@ export default function PresenterPanel() {
               )}
 
               {/* Current Bid Section */}
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
+              <div className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between mb-4 sm:mb-6 space-y-4 sm:space-y-0">
+                  <div className="text-center sm:text-left">
                     <p className="text-gray-400 text-sm">Current Bid</p>
-                    <p className="text-4xl font-bold text-white">₹{currentBid}L</p>
+                    <p className="text-3xl sm:text-4xl font-bold text-white">₹{currentBid}L</p>
                     {currentBiddingTeam && (
-                      <div className="flex items-center mt-2">
+                      <div className="flex items-center justify-center sm:justify-start mt-2">
                         <img
                           src={currentBiddingTeam.logo}
                           alt={currentBiddingTeam.name}
@@ -212,53 +192,53 @@ export default function PresenterPanel() {
                             e.currentTarget.src = `https://ui-avatars.com/api/?name=${currentBiddingTeam.shortName}&background=${currentBiddingTeam.color.slice(1)}&color=fff&size=24`;
                           }}
                         />
-                        <span className="text-gray-300">{currentBiddingTeam.name}</span>
+                        <span className="text-gray-300 text-sm">{currentBiddingTeam.name}</span>
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Auction Controls */}
-                  <div className="flex space-x-3">
+                  <div className="flex flex-wrap justify-center sm:justify-end gap-2 sm:gap-3">
                     {!auctionStarted ? (
                       <button
                         onClick={startAuction}
-                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg flex items-center transition-colors"
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg flex items-center transition-colors text-sm sm:text-base"
                       >
-                        <Play className="w-5 h-5 mr-2" />
+                        <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                         Start Auction
                       </button>
                     ) : (
                       <>
                         <button
                           onClick={previousPlayer}
-                          className="bg-gray-600 hover:bg-gray-700 text-white p-3 rounded-lg transition-colors"
+                          className="bg-gray-600 hover:bg-gray-700 text-white p-2 sm:p-3 rounded-lg transition-colors"
                         >
-                          <SkipBack className="w-5 h-5" />
+                          <SkipBack className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
-                        
+
                         {auctionPaused ? (
                           <button
                             onClick={resumeAuction}
-                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg flex items-center transition-colors"
+                            className="bg-green-600 hover:bg-green-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg flex items-center transition-colors text-sm sm:text-base"
                           >
-                            <Play className="w-5 h-5 mr-2" />
+                            <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                             Resume
                           </button>
                         ) : (
                           <button
                             onClick={pauseAuction}
-                            className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg flex items-center transition-colors"
+                            className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg flex items-center transition-colors text-sm sm:text-base"
                           >
-                            <Pause className="w-5 h-5 mr-2" />
+                            <Pause className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                             Pause
                           </button>
                         )}
-                        
+
                         <button
                           onClick={nextPlayer}
-                          className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg transition-colors"
+                          className="bg-blue-600 hover:bg-blue-700 text-white p-2 sm:p-3 rounded-lg transition-colors"
                         >
-                          <SkipForward className="w-5 h-5" />
+                          <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
                       </>
                     )}
@@ -267,20 +247,20 @@ export default function PresenterPanel() {
 
                 {/* Action Buttons */}
                 {auctionStarted && !auctionPaused && (
-                  <div className="flex space-x-4">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                     <button
                       onClick={handleSold}
                       disabled={!currentBidder}
-                      className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-3 px-6 rounded-lg flex items-center justify-center transition-colors"
+                      className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-3 px-4 sm:px-6 rounded-lg flex items-center justify-center transition-colors text-sm sm:text-base"
                     >
-                      <CheckCircle className="w-5 h-5 mr-2" />
+                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                       SOLD
                     </button>
                     <button
                       onClick={handleUnsold}
-                      className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-lg flex items-center justify-center transition-colors"
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 px-4 sm:px-6 rounded-lg flex items-center justify-center transition-colors text-sm sm:text-base"
                     >
-                      <XCircle className="w-5 h-5 mr-2" />
+                      <XCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                       UNSOLD
                     </button>
                   </div>
@@ -324,79 +304,6 @@ export default function PresenterPanel() {
 
           {/* Right Panel */}
           <div className="space-y-6">
-            {/* Team Bidding Panel */}
-            {auctionStarted && !auctionPaused && (
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
-                <h3 className="text-white font-semibold mb-4 flex items-center">
-                  <Gavel className="w-5 h-5 mr-2" />
-                  Place Bid
-                </h3>
-                
-                {/* Quick Bid Buttons */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <button
-                    onClick={() => handleQuickBid(currentBid + 10)}
-                    disabled={!selectedTeam}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg transition-colors"
-                  >
-                    +₹10L
-                  </button>
-                  <button
-                    onClick={() => handleQuickBid(currentBid + 25)}
-                    disabled={!selectedTeam}
-                    className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg transition-colors"
-                  >
-                    +₹25L
-                  </button>
-                  <button
-                    onClick={() => handleQuickBid(currentBid + 50)}
-                    disabled={!selectedTeam}
-                    className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg transition-colors"
-                  >
-                    +₹50L
-                  </button>
-                  <button
-                    onClick={() => handleQuickBid(currentBid + 100)}
-                    disabled={!selectedTeam}
-                    className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg transition-colors"
-                  >
-                    +₹100L
-                  </button>
-                </div>
-
-                {/* Team Selection */}
-                <div className="space-y-2">
-                  <p className="text-gray-300 text-sm mb-2">Select Team:</p>
-                  {eligibleTeams.slice(0, 4).map(team => (
-                    <button
-                      key={team.id}
-                      onClick={() => setSelectedTeam(team.id)}
-                      className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${
-                        selectedTeam === team.id
-                          ? 'bg-white/20 border-white/40'
-                          : 'bg-white/5 border-white/10 hover:bg-white/10'
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <img
-                          src={team.logo}
-                          alt={team.name}
-                          className="w-8 h-8 mr-3"
-                          onError={(e) => {
-                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${team.shortName}&background=${team.color.slice(1)}&color=fff&size=32`;
-                          }}
-                        />
-                        <div className="text-left">
-                          <p className="text-white font-medium">{team.shortName}</p>
-                          <p className="text-gray-400 text-xs">₹{team.purse}L remaining</p>
-                        </div>
-                      </div>
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: team.color }}></div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Team Standings */}
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">

@@ -78,24 +78,24 @@ export default function AdminPanel() {
       {/* Header */}
       <div className="bg-black/30 backdrop-blur-lg border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between h-auto sm:h-16 py-4 sm:py-0 space-y-4 sm:space-y-0">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center mr-3">
                 <Crown className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">IPL Auction Portal</h1>
-                <p className="text-sm text-gray-300">Admin Dashboard</p>
+                <h1 className="text-lg sm:text-xl font-bold text-white">IPL Auction Portal</h1>
+                <p className="text-xs sm:text-sm text-gray-300">Admin Dashboard</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm text-gray-300">Administrator</p>
-                <p className="text-white font-medium">{user?.username}</p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+              <div className="text-left sm:text-right">
+                <p className="text-xs sm:text-sm text-gray-300">Administrator</p>
+                <p className="text-white font-medium text-sm sm:text-base">{user?.username}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="flex items-center px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
@@ -105,10 +105,10 @@ export default function AdminPanel() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         {/* Navigation Tabs */}
-        <div className="mb-8">
-          <div className="bg-white/10 backdrop-blur-lg rounded-lg p-1 flex space-x-1">
+        <div className="mb-6 sm:mb-8">
+          <div className="bg-white/10 backdrop-blur-lg rounded-lg p-1 flex flex-wrap gap-1">
             {[
               { id: 'overview', label: 'Overview', icon: BarChart3 },
               { id: 'players', label: 'Players', icon: Users },
@@ -119,13 +119,13 @@ export default function AdminPanel() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center px-4 py-2 rounded-md transition-all ${
+                className={`flex items-center px-3 sm:px-4 py-2 rounded-md transition-all text-sm sm:text-base ${
                   activeTab === tab.id
                     ? 'bg-white/20 text-white'
                     : 'text-gray-300 hover:text-white hover:bg-white/10'
                 }`}
               >
-                <tab.icon className="w-4 h-4 mr-2" />
+                <tab.icon className="w-4 h-4 mr-1 sm:mr-2" />
                 {tab.label}
               </button>
             ))}

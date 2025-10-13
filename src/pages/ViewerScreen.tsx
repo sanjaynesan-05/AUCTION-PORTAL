@@ -165,19 +165,19 @@ export default function ViewerScreen() {
       {/* Header */}
       <div className="bg-black/30 backdrop-blur-lg border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between h-auto lg:h-16 py-4 lg:py-0 space-y-4 lg:space-y-0">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center mr-3">
                 <Tv className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">IPL Auction Portal</h1>
-                <p className="text-sm text-gray-300">Live Viewer</p>
+                <h1 className="text-lg sm:text-xl font-bold text-white">IPL Auction Portal</h1>
+                <p className="text-xs sm:text-sm text-gray-300">Live Viewer</p>
               </div>
             </div>
-            
+
             {/* Live Status */}
-            <div className="flex items-center space-x-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 lg:space-x-6 w-full lg:w-auto">
               <div className="flex items-center bg-red-600 px-3 py-1 rounded-full">
                 <div className="w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></div>
                 <span className="text-white text-sm font-medium">LIVE</span>
@@ -186,13 +186,13 @@ export default function ViewerScreen() {
                 <Clock className="w-4 h-4 inline mr-1" />
                 {currentTime.toLocaleTimeString()}
               </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-300">Welcome,</p>
-                <p className="text-white font-medium">{user?.username}</p>
+              <div className="text-left sm:text-right flex-1 sm:flex-none">
+                <p className="text-xs sm:text-sm text-gray-300">Welcome,</p>
+                <p className="text-white font-medium text-sm sm:text-base">{user?.username}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="flex items-center px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
@@ -202,63 +202,61 @@ export default function ViewerScreen() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           
           {/* Main Player Display */}
           <div className="xl:col-span-3">
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 overflow-hidden">
               {/* Player Header */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-6">
-                    <div className="relative">
-                      <img
-                        src={currentPlayer.image}
-                        alt={currentPlayer.name}
-                        className="w-32 h-32 rounded-full border-4 border-white/30 bg-white/10"
-                        onError={(e) => {
-                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${currentPlayer.name}&background=6366f1&color=fff&size=128`;
-                        }}
-                      />
-                      {currentPlayer.role === 'All-rounder' && (
-                        <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-                          <Star className="w-4 h-4 text-black" />
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <h2 className="text-4xl font-bold text-white mb-2">{currentPlayer.name}</h2>
-                      <div className="flex items-center space-x-4 mb-3">
-                        <span className="bg-white/20 px-4 py-2 rounded-full text-white font-medium">
-                          {currentPlayer.role}
-                        </span>
-                        <span className="bg-white/20 px-4 py-2 rounded-full text-white">
-                          {currentPlayer.nationality}
-                        </span>
-                        <span className="bg-white/20 px-4 py-2 rounded-full text-white">
-                          {currentPlayer.age} years
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        {currentPlayer.battingStyle && (
-                          <span className="text-gray-200 text-sm">🏏 {currentPlayer.battingStyle}</span>
-                        )}
-                        {currentPlayer.bowlingStyle && (
-                          <span className="text-gray-200 text-sm">⚾ {currentPlayer.bowlingStyle}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-white/80 text-sm">Base Price</p>
-                    <p className="text-4xl font-bold text-yellow-400">₹{currentPlayer.basePrice}L</p>
-                    {auctionPaused && (
-                      <div className="mt-2 bg-yellow-500/20 px-3 py-1 rounded-full">
-                        <span className="text-yellow-300 text-sm font-medium">PAUSED</span>
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 sm:p-8">
+                <div className="flex flex-col items-center text-center space-y-4 sm:space-y-6">
+                  <div className="relative">
+                    <img
+                      src={currentPlayer.image}
+                      alt={currentPlayer.name}
+                      className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white/30 bg-white/10"
+                      onError={(e) => {
+                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${currentPlayer.name}&background=6366f1&color=fff&size=128`;
+                      }}
+                    />
+                    {currentPlayer.role === 'All-rounder' && (
+                      <div className="absolute -top-2 -right-2 w-6 h-6 sm:w-8 sm:h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                        <Star className="w-3 h-3 sm:w-4 sm:h-4 text-black" />
                       </div>
                     )}
                   </div>
+                  <div>
+                    <h2 className="text-2xl sm:text-4xl font-bold text-white mb-2">{currentPlayer.name}</h2>
+                    <div className="flex flex-wrap justify-center items-center space-x-2 sm:space-x-4 mb-3">
+                      <span className="bg-white/20 px-3 sm:px-4 py-1 sm:py-2 rounded-full text-white font-medium text-sm sm:text-base">
+                        {currentPlayer.role}
+                      </span>
+                      <span className="bg-white/20 px-3 sm:px-4 py-1 sm:py-2 rounded-full text-white text-sm sm:text-base">
+                        {currentPlayer.nationality}
+                      </span>
+                      <span className="bg-white/20 px-3 sm:px-4 py-1 sm:py-2 rounded-full text-white text-sm sm:text-base">
+                        {currentPlayer.age} years
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap justify-center space-x-3 sm:space-x-4 text-gray-200 text-sm">
+                      {currentPlayer.battingStyle && (
+                        <span>🏏 {currentPlayer.battingStyle}</span>
+                      )}
+                      {currentPlayer.bowlingStyle && (
+                        <span>⚾ {currentPlayer.bowlingStyle}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center mt-4 sm:mt-6">
+                  <p className="text-white/80 text-sm">Base Price</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-yellow-400">₹{currentPlayer.basePrice}L</p>
+                  {auctionPaused && (
+                    <div className="mt-2 bg-yellow-500/20 px-3 py-1 rounded-full inline-block">
+                      <span className="text-yellow-300 text-sm font-medium">PAUSED</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -299,27 +297,27 @@ export default function ViewerScreen() {
               )}
 
               {/* Current Bid Display */}
-              <div className="p-8">
-                <div className="text-center mb-8">
-                  <p className="text-gray-400 text-lg mb-2">Current Highest Bid</p>
-                  <div className="flex items-center justify-center space-x-4">
-                    <Target className="w-8 h-8 text-yellow-400" />
-                    <p className="text-6xl font-bold text-white">₹{currentBid}L</p>
-                    <Zap className="w-8 h-8 text-yellow-400" />
+              <div className="p-4 sm:p-8">
+                <div className="text-center mb-6 sm:mb-8">
+                  <p className="text-gray-400 text-base sm:text-lg mb-2">Current Highest Bid</p>
+                  <div className="flex items-center justify-center space-x-3 sm:space-x-4">
+                    <Target className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-400" />
+                    <p className="text-4xl sm:text-6xl font-bold text-white">₹{currentBid}L</p>
+                    <Zap className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-400" />
                   </div>
-                  
+
                   {currentBiddingTeam && (
-                    <div className="mt-6 flex items-center justify-center bg-white/10 rounded-lg p-4 max-w-md mx-auto">
+                    <div className="mt-4 sm:mt-6 flex items-center justify-center bg-white/10 rounded-lg p-3 sm:p-4 max-w-xs sm:max-w-md mx-auto">
                       <img
                         src={currentBiddingTeam.logo}
                         alt={currentBiddingTeam.name}
-                        className="w-12 h-12 mr-4"
+                        className="w-10 h-10 sm:w-12 sm:h-12 mr-3 sm:mr-4"
                         onError={(e) => {
                           e.currentTarget.src = `https://ui-avatars.com/api/?name=${currentBiddingTeam.shortName}&background=${currentBiddingTeam.color.slice(1)}&color=fff&size=48`;
                         }}
                       />
                       <div className="text-left">
-                        <p className="text-white font-bold text-lg">{currentBiddingTeam.name}</p>
+                        <p className="text-white font-bold text-base sm:text-lg">{currentBiddingTeam.name}</p>
                         <p className="text-gray-300 text-sm">Leading Bidder</p>
                       </div>
                     </div>
@@ -411,32 +409,32 @@ export default function ViewerScreen() {
                     </button>
 
                     {/* Quick Bid Buttons */}
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
                       <button
                         onClick={() => handleQuickBid(10)}
                         disabled={!authenticatedTeam}
-                        className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm"
+                        className="px-3 sm:px-4 py-3 sm:py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm sm:text-base min-h-[44px]"
                       >
                         +₹10L
                       </button>
                       <button
                         onClick={() => handleQuickBid(25)}
                         disabled={!authenticatedTeam}
-                        className="px-3 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm"
+                        className="px-3 sm:px-4 py-3 sm:py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm sm:text-base min-h-[44px]"
                       >
                         +₹25L
                       </button>
                       <button
                         onClick={() => handleQuickBid(50)}
                         disabled={!authenticatedTeam}
-                        className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm"
+                        className="px-3 sm:px-4 py-3 sm:py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm sm:text-base min-h-[44px]"
                       >
                         +₹50L
                       </button>
                       <button
                         onClick={() => handleQuickBid(100)}
                         disabled={!authenticatedTeam}
-                        className="px-3 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm"
+                        className="px-3 sm:px-4 py-3 sm:py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm sm:text-base min-h-[44px]"
                       >
                         +₹100L
                       </button>
