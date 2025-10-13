@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 export default function PresenterPanel() {
-  const { username, logout } = useRole();
+  const { user, logout } = useRole();
   const navigate = useNavigate();
   const {
     currentPlayer,
@@ -106,7 +106,7 @@ export default function PresenterPanel() {
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <p className="text-sm text-gray-300">Welcome back,</p>
-                <p className="text-white font-medium">{username}</p>
+                <p className="text-white font-medium">{user?.username}</p>
               </div>
               <button
                 onClick={handleLogout}

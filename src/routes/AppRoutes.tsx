@@ -14,7 +14,7 @@ export default function AppRoutes() {
       <Route
         path="/admin"
         element={
-          <RoleGuard allowed={['Admin']}>
+          <RoleGuard allowed={['admin']}>
             <AdminPanel />
           </RoleGuard>
         }
@@ -22,7 +22,7 @@ export default function AppRoutes() {
       <Route
         path="/presenter"
         element={
-          <RoleGuard allowed={['Presenter']}>
+          <RoleGuard allowed={['presenter']}>
             <PresenterPanel />
           </RoleGuard>
         }
@@ -30,7 +30,7 @@ export default function AppRoutes() {
       <Route
         path="/viewer"
         element={
-          <RoleGuard allowed={['Viewer']}>
+          <RoleGuard allowed={['viewer']}>
             <ViewerScreen />
           </RoleGuard>
         }

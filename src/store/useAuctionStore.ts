@@ -12,6 +12,7 @@ interface AuctionState {
   currentBid: number;
   currentBidder: number | null;
   bidHistory: Array<{ teamId: number; amount: number; timestamp: number }>;
+  lastBid?: { amount: number; teamId: number; teamName: string; timestamp: number };
   lastUpdate: number;
 
   startAuction: () => void;
@@ -20,6 +21,8 @@ interface AuctionState {
   nextPlayer: () => void;
   previousPlayer: () => void;
   placeBid: (teamId: number, amount: number) => void;
+  placeBidFromViewer: (bidAmount: number, teamId: number) => { success: boolean; message: string };
+  getNextBidIncrement: (currentBid: number) => number;
   markSold: (playerId: number, teamId: number, price: number) => void;
   markUnsold: (playerId: number) => void;
   resetAuction: () => void;
@@ -113,6 +116,59 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
         ],
       });
     }
+  },
+
+  // Add increment rules
+  getNextBidIncrement: (currentBid: number) => {
+    const BID_INCREMENT_RULES = [
+      { max: 10000000, increment: 500000 }, // 0-1 crore: 5 lakh
+      { max: 20000000, increment: 1000000 }, // 1-2 crore: 10 lakh
+      { max: 30000000, increment: 2000000 }, // 2-3 crore: 20 lakh
+      { max: 50000000, increment: 2500000 }, // 3-5 crore: 25 lakh
+      { max: Infinity, increment: 5000000 }, // 5+ crore: 50 lakh
+    ];
+
+    const rule = BID_INCREMENT_RULES.find(rule => currentBid < rule.max);
+    return rule ? rule.increment : 5000000;
+  },
+
+  // Add viewer bidding function
+  placeBidFromViewer: (bidAmount: number, teamId: number) => {
+    const state = get();
+    if (!state.auctionStarted || !state.currentPlayer || state.currentPlayer.sold) {
+      return { success: false, message: 'Cannot place bid at this time' };
+    }
+
+    const team = state.teams.find(t => t.id === teamId);
+    if (!team) {
+      return { success: false, message: 'Team not found' };
+    }
+
+    if (bidAmount <= state.currentBid) {
+      return { success: false, message: 'Bid must be higher than current bid' };
+    }
+
+    if (bidAmount > team.purse) {
+      return { success: false, message: 'Bid exceeds team purse' };
+    }
+
+    // Update bid
+    const newBid = {
+      amount: bidAmount,
+      teamId,
+      teamName: team.name,
+      timestamp: Date.now(),
+    };
+
+    set({
+      currentBid: bidAmount,
+      currentBidder: teamId,
+      lastBid: newBid,
+      bidHistory: [...state.bidHistory, newBid],
+      lastUpdate: Date.now(),
+    });
+
+    return { success: true, message: 'Bid placed successfully' };
   },
 
   markSold: (playerId: number, teamId: number, price: number) => {

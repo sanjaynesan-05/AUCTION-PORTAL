@@ -61,10 +61,13 @@ export const useAuctionSync = () => {
       const newState = useAuctionStore.getState();
       auctionSync.broadcast({ ...newState, lastUpdate: Date.now() });
     },
-    markUnsold: (playerId: number) => {
-      store.markUnsold(playerId);
-      const newState = useAuctionStore.getState();
-      auctionSync.broadcast({ ...newState, lastUpdate: Date.now() });
+    placeBidFromViewer: (bidAmount: number, teamId: number) => {
+      const result = store.placeBidFromViewer(bidAmount, teamId);
+      if (result.success) {
+        const newState = useAuctionStore.getState();
+        auctionSync.broadcast({ ...newState, lastUpdate: Date.now() });
+      }
+      return result;
     },
   };
 

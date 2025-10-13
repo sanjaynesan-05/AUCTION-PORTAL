@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 export default function AdminPanel() {
-  const { username, logout } = useRole();
+  const { user, logout } = useRole();
   const navigate = useNavigate();
   const {
     players,
@@ -91,7 +91,7 @@ export default function AdminPanel() {
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <p className="text-sm text-gray-300">Administrator</p>
-                <p className="text-white font-medium">{username}</p>
+                <p className="text-white font-medium">{user?.username}</p>
               </div>
               <button
                 onClick={handleLogout}

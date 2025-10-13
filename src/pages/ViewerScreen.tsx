@@ -2,22 +2,24 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { useAuctionSync } from '../hooks/useAuctionSync';
-import { 
-  LogOut, 
-  Clock, 
-  DollarSign, 
-  Users, 
-  TrendingUp, 
-  Tv, 
+import { mockTeams } from '../data/mockTeams';
+import {
+  LogOut,
+  Clock,
+  DollarSign,
+  Users,
+  TrendingUp,
+  Tv,
   Trophy,
   Activity,
   Star,
   Target,
-  Zap
+  Zap,
+  Gavel
 } from 'lucide-react';
 
 export default function ViewerScreen() {
-  const { username, logout } = useRole();
+  const { user, logout } = useRole();
   const navigate = useNavigate();
   const {
     currentPlayer,
@@ -28,9 +30,16 @@ export default function ViewerScreen() {
     currentBid,
     currentBidder,
     bidHistory,
+    placeBidFromViewer,
+    getNextBidIncrement
   } = useAuctionSync();
 
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [customBid, setCustomBid] = useState<string>('');
+  const [bidMessage, setBidMessage] = useState<{type: 'success'|'error', text: string} | null>(null);
+
+  // Get authenticated team
+  const authenticatedTeam = teams.find(t => t.id === user?.teamId);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -39,9 +48,54 @@ export default function ViewerScreen() {
     return () => clearInterval(timer);
   }, []);
 
+  // Clear message after 3 seconds
+  useEffect(() => {
+    if (bidMessage) {
+      const timer = setTimeout(() => setBidMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [bidMessage]);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleNextBid = () => {
+    if (!authenticatedTeam) {
+      setBidMessage({type: 'error', text: 'No authenticated team'});
+      return;
+    }
+    const nextBid = currentBid + getNextBidIncrement(currentBid);
+    const result = placeBidFromViewer(nextBid, authenticatedTeam.id);
+    setBidMessage({type: result.success ? 'success' : 'error', text: result.message});
+    if (result.success) setCustomBid('');
+  };
+
+  const handleCustomBid = () => {
+    if (!authenticatedTeam) {
+      setBidMessage({type: 'error', text: 'No authenticated team'});
+      return;
+    }
+    const bidAmount = parseInt(customBid.replace(/,/g, ''));
+    if (isNaN(bidAmount)) {
+      setBidMessage({type: 'error', text: 'Please enter a valid bid amount'});
+      return;
+    }
+    const result = placeBidFromViewer(bidAmount, authenticatedTeam.id);
+    setBidMessage({type: result.success ? 'success' : 'error', text: result.message});
+    if (result.success) setCustomBid('');
+  };
+
+  const handleQuickBid = (increment: number) => {
+    if (!authenticatedTeam) {
+      setBidMessage({type: 'error', text: 'No authenticated team'});
+      return;
+    }
+    const bidAmount = currentBid + increment;
+    const result = placeBidFromViewer(bidAmount, authenticatedTeam.id);
+    setBidMessage({type: result.success ? 'success' : 'error', text: result.message});
+    if (result.success) setCustomBid('');
   };
 
   const currentBiddingTeam = teams.find(t => t.id === currentBidder);
@@ -67,7 +121,7 @@ export default function ViewerScreen() {
               <div className="flex items-center space-x-4">
                 <div className="text-right">
                   <p className="text-sm text-gray-300">Welcome,</p>
-                  <p className="text-white font-medium">{username}</p>
+                  <p className="text-white font-medium">{user?.username}</p>
                 </div>
                 <button
                   onClick={handleLogout}
@@ -134,7 +188,7 @@ export default function ViewerScreen() {
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-300">Welcome,</p>
-                <p className="text-white font-medium">{username}</p>
+                <p className="text-white font-medium">{user?.username}</p>
               </div>
               <button
                 onClick={handleLogout}
@@ -315,6 +369,117 @@ export default function ViewerScreen() {
 
           {/* Right Sidebar */}
           <div className="space-y-6">
+            {/* Team Bidding Panel */}
+            {auctionStarted && currentPlayer && !currentPlayer.sold ? (
+              authenticatedTeam ? (
+                <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
+                  <h3 className="text-white font-semibold mb-4 flex items-center">
+                    <Gavel className="w-5 h-5 mr-2" />
+                    Place Your Bid
+                  </h3>
+
+                  {/* Authenticated Team Display */}
+                  <div className="mb-4 p-3 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-lg border border-blue-500/30">
+                    <div className="flex items-center space-x-3">
+                      <img src={authenticatedTeam.logo} alt={authenticatedTeam.name} className="w-8 h-8 object-contain" />
+                      <div>
+                        <div className="text-white font-semibold">{authenticatedTeam.name}</div>
+                        <div className="text-sm text-gray-300">₹{(authenticatedTeam.purse / 100).toFixed(1)}Cr remaining</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bid Message */}
+                  {bidMessage && (
+                    <div className={`mb-4 p-3 rounded-lg ${
+                      bidMessage.type === 'success'
+                        ? 'bg-green-500/20 border border-green-500/30 text-green-300'
+                        : 'bg-red-500/20 border border-red-500/30 text-red-300'
+                    }`}>
+                      {bidMessage.text}
+                    </div>
+                  )}
+
+                  {/* Bidding Controls */}
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleNextBid}
+                      disabled={!authenticatedTeam}
+                      className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:cursor-not-allowed"
+                    >
+                      Next Bid (+₹{getNextBidIncrement(currentBid).toLocaleString()})
+                    </button>
+
+                    {/* Quick Bid Buttons */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => handleQuickBid(10)}
+                        disabled={!authenticatedTeam}
+                        className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm"
+                      >
+                        +₹10L
+                      </button>
+                      <button
+                        onClick={() => handleQuickBid(25)}
+                        disabled={!authenticatedTeam}
+                        className="px-3 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm"
+                      >
+                        +₹25L
+                      </button>
+                      <button
+                        onClick={() => handleQuickBid(50)}
+                        disabled={!authenticatedTeam}
+                        className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm"
+                      >
+                        +₹50L
+                      </button>
+                      <button
+                        onClick={() => handleQuickBid(100)}
+                        disabled={!authenticatedTeam}
+                        className="px-3 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm"
+                      >
+                        +₹100L
+                      </button>
+                    </div>
+
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={customBid}
+                        onChange={(e) => setCustomBid(e.target.value)}
+                        placeholder="Enter bid amount"
+                        className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        onClick={handleCustomBid}
+                        disabled={!customBid}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-semibold rounded-lg transition-colors disabled:cursor-not-allowed"
+                      >
+                        Bid
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Increment Rules */}
+                  <div className="mt-4 p-3 bg-white/5 rounded-lg">
+                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Bid Increment Rules</h4>
+                    <div className="text-xs text-gray-400 space-y-1">
+                      <div>₹0-1Cr: +₹5L</div>
+                      <div>₹1-2Cr: +₹10L</div>
+                      <div>₹2-3Cr: +₹20L</div>
+                      <div>₹3-5Cr: +₹25L</div>
+                      <div>₹5Cr+: +₹50L</div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-red-500/20 backdrop-blur-md rounded-xl p-6 border border-red-500/30">
+                  <h3 className="text-xl font-bold text-red-300 mb-2">Authentication Required</h3>
+                  <p className="text-red-200 text-sm">Please log in with team credentials to place bids.</p>
+                </div>
+              )
+            ) : null}
+
             {/* Auction Stats */}
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
               <h3 className="text-white font-semibold mb-4 flex items-center">

@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { mockUsers } from '../data/mockUsers';
-import { Crown, Users, Eye, ArrowRight, Trophy, Zap } from 'lucide-react';
+import { mockTeams } from '../data/mockTeams';
+import { Crown, ArrowRight, Trophy, Zap, Shield } from 'lucide-react';
 
 export default function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { setRole, setUsername: setRoleUsername } = useRole();
+  const { login } = useRole();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -18,26 +18,15 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const user = mockUsers.find(u => u.username === username && u.password === password);
-      
+      // Find user by credentials only
+      const user = mockUsers.find(u =>
+        u.username === credentials.username &&
+        u.password === credentials.password
+      );
+
       if (user) {
-        setRole(user.role);
-        setRoleUsername(user.username);
-        
-        // Route based on role
-        switch (user.role) {
-          case 'Admin':
-            navigate('/admin');
-            break;
-          case 'Presenter':
-            navigate('/presenter');
-            break;
-          case 'Viewer':
-            navigate('/viewer');
-            break;
-          default:
-            navigate('/unauthorized');
-        }
+        login(user);
+        navigate(`/${user.role}`);
       } else {
         setError('Invalid credentials');
       }
@@ -48,25 +37,17 @@ export default function Login() {
     }
   };
 
-  const quickLogin = (role: string) => {
-    const user = mockUsers.find(u => u.role === role);
+  const handleQuickLogin = (role: 'admin' | 'presenter' | 'viewer', teamId?: number) => {
+    let user;
+    if (role === 'viewer' && teamId) {
+      user = mockUsers.find(u => u.role === 'viewer' && u.teamId === teamId);
+    } else {
+      user = mockUsers.find(u => u.role === role && !u.teamId);
+    }
+
     if (user) {
-      setUsername(user.username);
-      setPassword(user.password);
-      setRole(user.role);
-      setRoleUsername(user.username);
-      
-      switch (role) {
-        case 'Admin':
-          navigate('/admin');
-          break;
-        case 'Presenter':
-          navigate('/presenter');
-          break;
-        case 'Viewer':
-          navigate('/viewer');
-          break;
-      }
+      login(user);
+      navigate(`/${role}`);
     }
   };
 
@@ -81,7 +62,7 @@ export default function Login() {
 
       <div className="relative min-h-screen flex items-center justify-center px-4">
         <div className="max-w-6xl w-full grid lg:grid-cols-2 gap-8 items-center">
-          
+
           {/* Left Side - Branding */}
           <div className="text-center lg:text-left">
             <div className="mb-8">
@@ -97,7 +78,7 @@ export default function Login() {
               <p className="text-xl text-gray-300 mb-8">
                 Experience the thrill of cricket's biggest auction. Real-time bidding, live updates, and professional-grade auction management.
               </p>
-              
+
               {/* Features */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div className="flex items-center text-gray-300">
@@ -105,8 +86,8 @@ export default function Login() {
                   Real-time Updates
                 </div>
                 <div className="flex items-center text-gray-300">
-                  <Users className="w-5 h-5 mr-2 text-blue-400" />
-                  Multi-role Access
+                  <Shield className="w-5 h-5 mr-2 text-green-400" />
+                  Secure Authentication
                 </div>
                 <div className="flex items-center text-gray-300">
                   <Trophy className="w-5 h-5 mr-2 text-orange-400" />
@@ -125,28 +106,30 @@ export default function Login() {
               </div>
 
               <form onSubmit={handleLogin} className="space-y-6">
+                {/* Username */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Username
                   </label>
                   <input
                     type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    value={credentials.username}
+                    onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
                     className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
                     placeholder="Enter your username"
                     required
                   />
                 </div>
 
+                {/* Password */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Password
                   </label>
                   <input
                     type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={credentials.password}
+                    onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
                     className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all"
                     placeholder="Enter your password"
                     required
@@ -185,9 +168,10 @@ export default function Login() {
                   </div>
                 </div>
 
-                <div className="mt-6 grid grid-cols-3 gap-3">
+                {/* Admin & Presenter */}
+                <div className="mt-6 grid grid-cols-2 gap-3 mb-4">
                   <button
-                    onClick={() => quickLogin('Admin')}
+                    onClick={() => handleQuickLogin('admin')}
                     className="flex flex-col items-center p-4 bg-white/5 border border-white/20 rounded-lg hover:bg-white/10 transition-all group"
                   >
                     <Crown className="w-6 h-6 text-yellow-400 mb-2 group-hover:scale-110 transition-transform" />
@@ -195,20 +179,39 @@ export default function Login() {
                   </button>
 
                   <button
-                    onClick={() => quickLogin('Presenter')}
+                    onClick={() => handleQuickLogin('presenter')}
                     className="flex flex-col items-center p-4 bg-white/5 border border-white/20 rounded-lg hover:bg-white/10 transition-all group"
                   >
                     <Trophy className="w-6 h-6 text-blue-400 mb-2 group-hover:scale-110 transition-transform" />
                     <span className="text-xs text-gray-300 font-medium">Presenter</span>
                   </button>
+                </div>
 
-                  <button
-                    onClick={() => quickLogin('Viewer')}
-                    className="flex flex-col items-center p-4 bg-white/5 border border-white/20 rounded-lg hover:bg-white/10 transition-all group"
-                  >
-                    <Eye className="w-6 h-6 text-green-400 mb-2 group-hover:scale-110 transition-transform" />
-                    <span className="text-xs text-gray-300 font-medium">Viewer</span>
-                  </button>
+                {/* Team Viewers */}
+                <div className="grid grid-cols-2 gap-2">
+                  {mockUsers.filter(u => u.role === 'viewer').map(team => {
+                    const teamData = mockTeams.find(t => t.id === team.teamId);
+                    return (
+                      <button
+                        key={team.teamId}
+                        onClick={() => handleQuickLogin('viewer', team.teamId)}
+                        className="flex flex-col items-center p-3 bg-white/5 border border-white/20 rounded-lg hover:bg-white/10 transition-all group text-center"
+                        style={{
+                          background: teamData ? `linear-gradient(135deg, ${teamData.primaryColor}20, ${teamData.secondaryColor}20)` : undefined,
+                          borderColor: teamData ? `${teamData.primaryColor}40` : undefined
+                        }}
+                      >
+                        {teamData && (
+                          <img
+                            src={teamData.logo}
+                            alt={teamData.name}
+                            className="w-6 h-6 mb-2 object-contain group-hover:scale-110 transition-transform"
+                          />
+                        )}
+                        <span className="text-xs text-gray-300 font-medium">{team.teamName?.split(' ')[0]}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -217,9 +220,17 @@ export default function Login() {
             <div className="mt-6 bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
               <h3 className="text-sm font-medium text-gray-300 mb-2">Demo Credentials:</h3>
               <div className="text-xs text-gray-400 space-y-1">
-                <div>Admin: admin / admin123</div>
-                <div>Presenter: presenter / present123</div>
-                <div>Viewer: viewer / view123</div>
+                <div><strong>Admin:</strong> admin / admin123</div>
+                <div><strong>Presenter:</strong> presenter / presenter123</div>
+                <div className="mt-2"><strong>Teams:</strong></div>
+                <div>CSK: csk_viewer / csk@2024</div>
+                <div>MI: mi_viewer / mi@2024</div>
+                <div>RCB: rcb_viewer / rcb@2024</div>
+                <div>KKR: kkr_viewer / kkr@2024</div>
+                <div>DC: dc_viewer / dc@2024</div>
+                <div>RR: rr_viewer / rr@2024</div>
+                <div>PBKS: pbks_viewer / pbks@2024</div>
+                <div>SRH: srh_viewer / srh@2024</div>
               </div>
             </div>
           </div>

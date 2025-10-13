@@ -1,28 +1,35 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-
-type Role = 'Admin' | 'Presenter' | 'Viewer' | null;
+import { User } from '../data/mockUsers';
 
 interface RoleContextType {
-  role: Role;
-  setRole: (role: Role) => void;
-  username: string;
-  setUsername: (username: string) => void;
+  user: User | null;
+  login: (user: User) => void;
   logout: () => void;
+  username: string;
+  role: 'admin' | 'presenter' | 'viewer' | null;
 }
 
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 export const RoleProvider = ({ children }: { children: ReactNode }) => {
-  const [role, setRole] = useState<Role>(null);
-  const [username, setUsername] = useState<string>('');
+  const [user, setUser] = useState<User | null>(null);
+
+  const login = (user: User) => {
+    setUser(user);
+  };
 
   const logout = () => {
-    setRole(null);
-    setUsername('');
+    setUser(null);
   };
 
   return (
-    <RoleContext.Provider value={{ role, setRole, username, setUsername, logout }}>
+    <RoleContext.Provider value={{
+      user,
+      login,
+      logout,
+      username: user?.username || '',
+      role: user?.role || null
+    }}>
       {children}
     </RoleContext.Provider>
   );
