@@ -30,7 +30,7 @@ export const mockPlayers: Player[] = [
     nationality: 'India', 
     age: 35, 
     battingStyle: 'Right-handed',
-    image: 'https://documents.iplt20.com/ipl/IPLHeadshot2024/1.png',
+    image: 'https://www.bing.com/images/search?view=detailV2&ccid=Aoinaz1s&id=C711004ED8EFDB61B181EFDFAFC94AA91A7560B0&thid=OIP.Aoinaz1sdYVu07Ybb2Id8AHaHa&mediaurl=https%3a%2f%2fim.rediff.com%2fcricket%2f2022%2fsep%2f08vk.gif&exph=1200&expw=1200&q=virat+kohli&FORM=IRPRST&ck=2F7847E62FE1E90AA4A8C435CF396A8E&selectedIndex=3&itb=0',
     stats: { matches: 223, runs: 7263, average: 37.25, strikeRate: 131.97 }
   },
   { 

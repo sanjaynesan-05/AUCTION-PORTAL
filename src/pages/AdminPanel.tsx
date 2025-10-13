@@ -16,7 +16,15 @@ import {
   Crown,
   Activity,
   Target,
-  Star
+  Star,
+  Search,
+  Filter,
+  Download,
+  Upload,
+  X,
+  Save,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export default function AdminPanel() {
@@ -34,6 +42,12 @@ export default function AdminPanel() {
   } = useAuctionSync();
 
   const [activeTab, setActiveTab] = useState('overview');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterRole, setFilterRole] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingPlayer, setEditingPlayer] = useState<any>(null);
   const [newPlayer, setNewPlayer] = useState({
     name: '',
     role: 'Batsman',
@@ -42,6 +56,14 @@ export default function AdminPanel() {
     age: 25,
     battingStyle: 'Right-handed',
     bowlingStyle: '',
+    image: '',
+    stats: {
+      matches: 0,
+      runs: 0,
+      wickets: 0,
+      average: 0,
+      strikeRate: 0
+    }
   });
 
   const handleLogout = () => {
@@ -49,14 +71,42 @@ export default function AdminPanel() {
     navigate('/login');
   };
 
-  const handleAddPlayer = () => {
-    if (newPlayer.name) {
+  const handleEditPlayer = (player: any) => {
+    setEditingPlayer(player);
+    setNewPlayer({
+      name: player.name,
+      role: player.role,
+      basePrice: player.basePrice,
+      nationality: player.nationality,
+      age: player.age,
+      battingStyle: player.battingStyle || '',
+      bowlingStyle: player.bowlingStyle || '',
+      image: player.image,
+      stats: player.stats || {
+        matches: 0,
+        runs: 0,
+        wickets: 0,
+        average: 0,
+        strikeRate: 0
+      }
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdatePlayer = () => {
+    if (editingPlayer && newPlayer.name) {
+      // Remove the old player and add the updated one
+      removePlayer(editingPlayer.id);
       addPlayer({
+        ...editingPlayer,
         ...newPlayer,
-        sold: false,
-        image: `https://ui-avatars.com/api/?name=${newPlayer.name}&background=6366f1&color=fff&size=128`,
-        stats: { matches: 0, runs: 0, wickets: 0, average: 0, strikeRate: 0 }
+        id: editingPlayer.id,
+        sold: editingPlayer.sold,
+        teamId: editingPlayer.teamId,
+        price: editingPlayer.price
       });
+      setShowEditModal(false);
+      setEditingPlayer(null);
       setNewPlayer({
         name: '',
         role: 'Batsman',
@@ -65,9 +115,44 @@ export default function AdminPanel() {
         age: 25,
         battingStyle: 'Right-handed',
         bowlingStyle: '',
+        image: '',
+        stats: {
+          matches: 0,
+          runs: 0,
+          wickets: 0,
+          average: 0,
+          strikeRate: 0
+        }
       });
     }
   };
+
+  const handleDeletePlayer = (playerId: number) => {
+    if (window.confirm('Are you sure you want to delete this player?')) {
+      removePlayer(playerId);
+    }
+  };
+
+  const handleExportPlayers = () => {
+    const dataStr = JSON.stringify(players, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const exportFileDefaultName = 'players-data.json';
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  // Filter players based on search and filters
+  const filteredPlayers = players.filter(player => {
+    const matchesSearch = player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         player.nationality.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = filterRole === 'all' || player.role === filterRole;
+    const matchesStatus = filterStatus === 'all' ||
+                         (filterStatus === 'sold' && player.sold) ||
+                         (filterStatus === 'available' && !player.sold);
+    return matchesSearch && matchesRole && matchesStatus;
+  });
 
   const soldPlayers = players.filter(p => p.sold);
   const totalSpent = soldPlayers.reduce((sum, p) => sum + (p.price || 0), 0);
@@ -272,75 +357,88 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* Players Tab */}
+        {/* Players Tab - Comprehensive CMS */}
         {activeTab === 'players' && (
           <div className="space-y-6">
-            {/* Add Player Form */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
-              <h3 className="text-white font-semibold mb-4 flex items-center">
-                <Plus className="w-5 h-5 mr-2" />
-                Add New Player
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                <input
-                  type="text"
-                  placeholder="Player Name"
-                  value={newPlayer.name}
-                  onChange={(e) => setNewPlayer({...newPlayer, name: e.target.value})}
-                  className="px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                />
-                <select
-                  value={newPlayer.role}
-                  onChange={(e) => setNewPlayer({...newPlayer, role: e.target.value})}
-                  className="px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                >
-                  <option value="Batsman">Batsman</option>
-                  <option value="Bowler">Bowler</option>
-                  <option value="All-rounder">All-rounder</option>
-                  <option value="Wicketkeeper">Wicketkeeper</option>
-                </select>
-                <input
-                  type="number"
-                  placeholder="Base Price"
-                  value={newPlayer.basePrice}
-                  onChange={(e) => setNewPlayer({...newPlayer, basePrice: parseInt(e.target.value)})}
-                  className="px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Nationality"
-                  value={newPlayer.nationality}
-                  onChange={(e) => setNewPlayer({...newPlayer, nationality: e.target.value})}
-                  className="px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                />
+            {/* Header with Actions */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-white">Player Management CMS</h2>
+                <p className="text-gray-400">Manage all player data, stats, and auction details</p>
+              </div>
+              <div className="flex gap-3">
                 <button
-                  onClick={handleAddPlayer}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                  onClick={handleExportPlayers}
+                  className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                 >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                </button>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
                   Add Player
                 </button>
               </div>
             </div>
 
-            {/* Players List */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 overflow-hidden">
-              <div className="p-6 border-b border-white/20">
-                <h3 className="text-white font-semibold">All Players ({players.length})</h3>
+            {/* Search and Filters */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search players..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  />
+                </div>
+                <select
+                  value={filterRole}
+                  onChange={(e) => setFilterRole(e.target.value)}
+                  className="px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                >
+                  <option value="all">All Roles</option>
+                  <option value="Batsman">Batsman</option>
+                  <option value="Bowler">Bowler</option>
+                  <option value="All-rounder">All-rounder</option>
+                  <option value="Wicketkeeper">Wicketkeeper</option>
+                </select>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                >
+                  <option value="all">All Status</option>
+                  <option value="available">Available</option>
+                  <option value="sold">Sold</option>
+                </select>
+                <div className="text-sm text-gray-400 flex items-center">
+                  {filteredPlayers.length} of {players.length} players
+                </div>
               </div>
+            </div>
+
+            {/* Players Table */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-white/5">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Player</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Role</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Stats</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Base Price</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Team</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/10">
-                    {players.map((player) => {
+                    {filteredPlayers.map((player) => {
                       const team = teams.find(t => t.id === player.teamId);
                       return (
                         <tr key={player.id} className="hover:bg-white/5">
@@ -349,14 +447,14 @@ export default function AdminPanel() {
                               <img
                                 src={player.image}
                                 alt={player.name}
-                                className="w-10 h-10 rounded-full mr-3"
+                                className="w-10 h-10 rounded-full mr-3 object-cover"
                                 onError={(e) => {
                                   e.currentTarget.src = `https://ui-avatars.com/api/?name=${player.name}&background=6366f1&color=fff&size=40`;
                                 }}
                               />
                               <div>
                                 <p className="text-white font-medium">{player.name}</p>
-                                <p className="text-gray-400 text-sm">{player.nationality}</p>
+                                <p className="text-gray-400 text-sm">{player.nationality}, {player.age}y</p>
                               </div>
                             </div>
                           </td>
@@ -365,27 +463,40 @@ export default function AdminPanel() {
                               {player.role}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-white">₹{player.basePrice}L</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                            <div className="space-y-1">
+                              {player.stats?.matches && <div>M: {player.stats.matches}</div>}
+                              {player.stats?.runs && <div>R: {player.stats.runs}</div>}
+                              {player.stats?.wickets && <div>W: {player.stats.wickets}</div>}
+                              {player.stats?.strikeRate && <div>SR: {player.stats.strikeRate}</div>}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-white font-bold">₹{player.basePrice}L</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 py-1 text-xs rounded-full ${
-                              player.sold 
-                                ? 'bg-green-600 text-white' 
+                              player.sold
+                                ? 'bg-green-600 text-white'
                                 : 'bg-gray-600 text-gray-300'
                             }`}>
                               {player.sold ? 'Sold' : 'Available'}
                             </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-white">
-                            {team ? team.shortName : '-'}
+                            {player.sold && team && (
+                              <div className="text-xs text-gray-400 mt-1">to {team.shortName}</div>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex space-x-2">
-                              <button className="text-blue-400 hover:text-blue-300 p-1">
+                              <button
+                                onClick={() => handleEditPlayer(player)}
+                                className="text-blue-400 hover:text-blue-300 p-1"
+                                title="Edit Player"
+                              >
                                 <Edit className="w-4 h-4" />
                               </button>
-                              <button 
-                                onClick={() => removePlayer(player.id)}
+                              <button
+                                onClick={() => handleDeletePlayer(player.id)}
                                 className="text-red-400 hover:text-red-300 p-1"
+                                title="Delete Player"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -396,6 +507,272 @@ export default function AdminPanel() {
                     })}
                   </tbody>
                 </table>
+              </div>
+              {filteredPlayers.length === 0 && (
+                <div className="text-center py-12">
+                  <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-400">No players found matching your criteria</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Add/Edit Player Modal */}
+        {(showAddModal || showEditModal) && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-gray-900 rounded-2xl border border-white/20 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-white/20">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-bold text-white">
+                    {showAddModal ? 'Add New Player' : 'Edit Player'}
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setShowEditModal(false);
+                      setEditingPlayer(null);
+                      setNewPlayer({
+                        name: '',
+                        role: 'Batsman',
+                        basePrice: 50,
+                        nationality: 'India',
+                        age: 25,
+                        battingStyle: 'Right-handed',
+                        bowlingStyle: '',
+                        image: '',
+                        stats: {
+                          matches: 0,
+                          runs: 0,
+                          wickets: 0,
+                          average: 0,
+                          strikeRate: 0
+                        }
+                      });
+                    }}
+                    className="text-gray-400 hover:text-white"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Basic Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Player Name *</label>
+                    <input
+                      type="text"
+                      value={newPlayer.name}
+                      onChange={(e) => setNewPlayer({...newPlayer, name: e.target.value})}
+                      className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      placeholder="Enter player name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Role *</label>
+                    <select
+                      value={newPlayer.role}
+                      onChange={(e) => setNewPlayer({...newPlayer, role: e.target.value})}
+                      className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                    >
+                      <option value="Batsman">Batsman</option>
+                      <option value="Bowler">Bowler</option>
+                      <option value="All-rounder">All-rounder</option>
+                      <option value="Wicketkeeper">Wicketkeeper</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Base Price (Lakhs) *</label>
+                    <input
+                      type="number"
+                      value={newPlayer.basePrice}
+                      onChange={(e) => setNewPlayer({...newPlayer, basePrice: parseInt(e.target.value) || 0})}
+                      className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      placeholder="50"
+                      min="1"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Nationality *</label>
+                    <input
+                      type="text"
+                      value={newPlayer.nationality}
+                      onChange={(e) => setNewPlayer({...newPlayer, nationality: e.target.value})}
+                      className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      placeholder="India"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Age *</label>
+                    <input
+                      type="number"
+                      value={newPlayer.age}
+                      onChange={(e) => setNewPlayer({...newPlayer, age: parseInt(e.target.value) || 0})}
+                      className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      placeholder="25"
+                      min="16"
+                      max="50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Image URL</label>
+                    <input
+                      type="url"
+                      value={newPlayer.image}
+                      onChange={(e) => setNewPlayer({...newPlayer, image: e.target.value})}
+                      className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      placeholder="https://example.com/player-image.jpg"
+                    />
+                  </div>
+                </div>
+
+                {/* Batting/Bowling Styles */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Batting Style</label>
+                    <select
+                      value={newPlayer.battingStyle}
+                      onChange={(e) => setNewPlayer({...newPlayer, battingStyle: e.target.value})}
+                      className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                    >
+                      <option value="Right-handed">Right-handed</option>
+                      <option value="Left-handed">Left-handed</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Bowling Style</label>
+                    <select
+                      value={newPlayer.bowlingStyle}
+                      onChange={(e) => setNewPlayer({...newPlayer, bowlingStyle: e.target.value})}
+                      className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                    >
+                      <option value="">None</option>
+                      <option value="Right-arm fast">Right-arm fast</option>
+                      <option value="Left-arm fast">Left-arm fast</option>
+                      <option value="Right-arm medium">Right-arm medium</option>
+                      <option value="Left-arm medium">Left-arm medium</option>
+                      <option value="Right-arm off-spin">Right-arm off-spin</option>
+                      <option value="Left-arm off-spin">Left-arm off-spin</option>
+                      <option value="Right-arm leg-spin">Right-arm leg-spin</option>
+                      <option value="Left-arm leg-spin">Left-arm leg-spin</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Statistics */}
+                <div>
+                  <h4 className="text-lg font-semibold text-white mb-4">Player Statistics</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Matches</label>
+                      <input
+                        type="number"
+                        value={newPlayer.stats?.matches || 0}
+                        onChange={(e) => setNewPlayer({
+                          ...newPlayer,
+                          stats: {...newPlayer.stats, matches: parseInt(e.target.value) || 0}
+                        })}
+                        className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Runs</label>
+                      <input
+                        type="number"
+                        value={newPlayer.stats?.runs || 0}
+                        onChange={(e) => setNewPlayer({
+                          ...newPlayer,
+                          stats: {...newPlayer.stats, runs: parseInt(e.target.value) || 0}
+                        })}
+                        className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Wickets</label>
+                      <input
+                        type="number"
+                        value={newPlayer.stats?.wickets || 0}
+                        onChange={(e) => setNewPlayer({
+                          ...newPlayer,
+                          stats: {...newPlayer.stats, wickets: parseInt(e.target.value) || 0}
+                        })}
+                        className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Average</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={newPlayer.stats?.average || 0}
+                        onChange={(e) => setNewPlayer({
+                          ...newPlayer,
+                          stats: {...newPlayer.stats, average: parseFloat(e.target.value) || 0}
+                        })}
+                        className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Strike Rate</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={newPlayer.stats?.strikeRate || 0}
+                        onChange={(e) => setNewPlayer({
+                          ...newPlayer,
+                          stats: {...newPlayer.stats, strikeRate: parseFloat(e.target.value) || 0}
+                        })}
+                        className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-end space-x-3 pt-4 border-t border-white/20">
+                  <button
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setShowEditModal(false);
+                      setEditingPlayer(null);
+                      setNewPlayer({
+                        name: '',
+                        role: 'Batsman',
+                        basePrice: 50,
+                        nationality: 'India',
+                        age: 25,
+                        battingStyle: 'Right-handed',
+                        bowlingStyle: '',
+                        image: '',
+                        stats: {
+                          matches: 0,
+                          runs: 0,
+                          wickets: 0,
+                          average: 0,
+                          strikeRate: 0
+                        }
+                      });
+                    }}
+                    className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={showAddModal ? handleAddPlayer : handleUpdatePlayer}
+                    disabled={!newPlayer.name.trim()}
+                    className="px-6 py-2 bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {showAddModal ? 'Add Player' : 'Update Player'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
