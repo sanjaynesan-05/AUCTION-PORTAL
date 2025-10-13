@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { useAuctionSync } from '../hooks/useAuctionSync';
+import { useState, useEffect } from 'react';
 import {
   LogOut,
   Play,
@@ -35,6 +36,11 @@ export default function PresenterPanel() {
     markUnsold,
   } = useAuctionSync();
 
+  const [stampAnimation, setStampAnimation] = useState<{type: 'sold' | 'unsold' | null, show: boolean}>({
+    type: null,
+    show: false
+  });
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -43,14 +49,22 @@ export default function PresenterPanel() {
   const handleSold = () => {
     if (currentPlayer && currentBidder) {
       markSold(currentPlayer.id, currentBidder, currentBid);
-      nextPlayer();
+      setStampAnimation({ type: 'sold', show: true });
+      setTimeout(() => {
+        setStampAnimation({ type: null, show: false });
+        nextPlayer();
+      }, 2000);
     }
   };
 
   const handleUnsold = () => {
     if (currentPlayer) {
       markUnsold(currentPlayer.id);
-      nextPlayer();
+      setStampAnimation({ type: 'unsold', show: true });
+      setTimeout(() => {
+        setStampAnimation({ type: null, show: false });
+        nextPlayer();
+      }, 2000);
     }
   };
 
@@ -104,8 +118,29 @@ export default function PresenterPanel() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           
           {/* Main Player Card */}
-          <div className="xl:col-span-2">
+          <div className="xl:col-span-2 relative">
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 overflow-hidden">
+              
+              {/* Stamp Animation Overlay */}
+              {stampAnimation.show && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm rounded-2xl">
+                  {/* Confetti Animation - Only for SOLD */}
+                  {stampAnimation.type === 'sold' && (
+                    <div className="confetti-container">
+                      {Array.from({ length: 20 }, (_, i) => (
+                        <div key={i} className="confetti-piece"></div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div className={`stamp-animation ${stampAnimation.type === 'sold' ? 'stamp-sold' : 'stamp-unsold'}`}>
+                    <div className="stamp-text">
+                      {stampAnimation.type === 'sold' ? 'SOLD' : 'UNSOLD'}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Player Header */}
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
