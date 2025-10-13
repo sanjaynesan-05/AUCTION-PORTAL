@@ -376,7 +376,7 @@ export default function ViewerScreen() {
                         <div
                           className="h-2 rounded-full transition-all duration-500"
                           style={{
-                            width: `${(team.purse / 1000) * 100}%`,
+                            width: `${(team.purse / 12000) * 100}%`,
                             backgroundColor: team.color
                           }}
                         ></div>

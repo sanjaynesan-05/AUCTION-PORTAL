@@ -430,7 +430,7 @@ export default function PresenterPanel() {
                           <div
                             className="h-2 rounded-full"
                             style={{
-                              width: `${(team.purse / 1000) * 100}%`,
+                              width: `${(team.purse / 12000) * 100}%`,
                               backgroundColor: team.color
                             }}
                           ></div>

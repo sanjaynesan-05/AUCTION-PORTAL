@@ -406,7 +406,7 @@ export default function AdminPanel() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {teams.map((team) => {
               const teamPlayers = players.filter(p => p.teamId === team.id && p.sold);
-              const totalSpent = 1000 - team.purse;
+              const totalSpent = 12000 - team.purse;
               
               return (
                 <div key={team.id} className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 overflow-hidden">
@@ -444,7 +444,7 @@ export default function AdminPanel() {
                         <div
                           className="h-2 rounded-full transition-all duration-500"
                           style={{
-                            width: `${(totalSpent / 1000) * 100}%`,
+                            width: `${(totalSpent / 12000) * 100}%`,
                             backgroundColor: team.color
                           }}
                         ></div>
