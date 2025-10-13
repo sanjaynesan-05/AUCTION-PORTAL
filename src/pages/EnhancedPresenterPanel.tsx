@@ -398,46 +398,167 @@ export default function PresenterPanel() {
               </div>
             )}
 
-            {/* Team Standings */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
-              <h3 className="text-white font-semibold mb-4 flex items-center">
-                <Users className="w-5 h-5 mr-2" />
-                Team Purse Status
-              </h3>
-              <div className="space-y-3">
+            {/* Team Purse Status - Enhanced Design */}
+            <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-3xl border border-white/20 p-8 shadow-2xl">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                    <Users className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">Team Purse Status</h3>
+                    <p className="text-gray-400 text-sm">Live auction purse tracking</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2 text-sm">
+                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-green-400 font-medium">Live</span>
+                </div>
+              </div>
+
+              <div className="grid gap-4">
                 {teams
                   .sort((a, b) => b.purse - a.purse)
-                  .map((team, idx) => (
-                    <div key={team.id} className="flex items-center justify-between bg-white/5 rounded-lg p-3">
-                      <div className="flex items-center">
-                        <span className="text-gray-400 text-sm w-6">{idx + 1}.</span>
-                        <img
-                          src={team.logo}
-                          alt={team.name}
-                          className="w-8 h-8 mx-3"
-                          onError={(e) => {
-                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${team.shortName}&background=${team.color.slice(1)}&color=fff&size=32`;
+                  .map((team, idx) => {
+                    const pursePercentage = (team.purse / 12000) * 100;
+                    const isTopTeam = idx < 3;
+
+                    return (
+                      <div
+                        key={team.id}
+                        className="group relative overflow-hidden bg-gradient-to-r from-white/5 to-white/10 rounded-2xl p-5 border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+                      >
+                        {/* Background gradient overlay */}
+                        <div
+                          className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300"
+                          style={{
+                            background: `linear-gradient(135deg, ${team.color}20, ${team.color}10)`
                           }}
-                        />
-                        <div>
-                          <p className="text-white font-medium">{team.shortName}</p>
-                          <p className="text-gray-400 text-xs">{team.players.length} players</p>
+                        ></div>
+
+                        <div className="relative flex items-center justify-between">
+                          {/* Left side - Team info */}
+                          <div className="flex items-center space-x-4">
+                            {/* Ranking */}
+                            <div className={`flex items-center justify-center w-10 h-10 rounded-xl font-bold text-lg transition-all duration-300 ${
+                              idx === 0 ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black shadow-lg' :
+                              idx === 1 ? 'bg-gradient-to-r from-gray-300 to-gray-400 text-black shadow-lg' :
+                              idx === 2 ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-lg' :
+                              'bg-white/10 text-white'
+                            }`}>
+                              {idx + 1}
+                            </div>
+
+                            {/* Team logo */}
+                            <div className="relative">
+                              <div
+                                className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ring-2 ring-white/20 group-hover:ring-white/40 transition-all duration-300"
+                                style={{ backgroundColor: `${team.color}15` }}
+                              >
+                                <img
+                                  src={team.logo}
+                                  alt={team.name}
+                                  className="w-10 h-10 object-contain group-hover:scale-110 transition-transform duration-300"
+                                  onError={(e) => {
+                                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${team.shortName}&background=${team.color.slice(1)}&color=fff&size=40`;
+                                  }}
+                                />
+                              </div>
+                              {isTopTeam && (
+                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
+                                  <Star className="w-3 h-3 text-black" />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Team details */}
+                            <div className="flex-1">
+                              <h4 className="text-white font-bold text-lg group-hover:text-yellow-400 transition-colors duration-300">
+                                {team.shortName}
+                              </h4>
+                              <div className="flex items-center space-x-4 mt-1">
+                                <div className="flex items-center space-x-1">
+                                  <Users className="w-4 h-4 text-gray-400" />
+                                  <span className="text-gray-400 text-sm">{team.players.length} players</span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  <TrendingUp className="w-4 h-4 text-green-400" />
+                                  <span className="text-green-400 text-sm font-medium">
+                                    ₹{(12000 - team.purse).toFixed(1)}L spent
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right side - Purse info */}
+                          <div className="text-right flex flex-col items-end space-y-3">
+                            {/* Purse amount */}
+                            <div className="text-right">
+                              <div className="text-2xl font-bold text-white group-hover:text-yellow-400 transition-colors duration-300">
+                                ₹{team.purse}L
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                {pursePercentage.toFixed(1)}% remaining
+                              </div>
+                            </div>
+
+                            {/* Enhanced progress bar */}
+                            <div className="w-32 relative">
+                              <div className="w-full bg-gray-700/50 rounded-full h-3 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all duration-1000 ease-out shadow-sm"
+                                  style={{
+                                    width: `${pursePercentage}%`,
+                                    background: `linear-gradient(90deg, ${team.color}, ${team.color}dd)`,
+                                    boxShadow: `0 0 10px ${team.color}40`
+                                  }}
+                                ></div>
+                              </div>
+                              {/* Progress indicator */}
+                              <div
+                                className="absolute top-0 w-1 h-3 rounded-full transition-all duration-1000 ease-out"
+                                style={{
+                                  left: `${pursePercentage}%`,
+                                  transform: 'translateX(-50%)',
+                                  backgroundColor: team.color,
+                                  boxShadow: `0 0 8px ${team.color}80`
+                                }}
+                              ></div>
+                            </div>
+
+                            {/* Status indicator */}
+                            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              pursePercentage > 70 ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                              pursePercentage > 40 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                              'bg-red-500/20 text-red-400 border border-red-500/30'
+                            }`}>
+                              {pursePercentage > 70 ? 'Healthy' : pursePercentage > 40 ? 'Moderate' : 'Low'}
+                            </div>
+                          </div>
                         </div>
+
+                        {/* Hover effect overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform -skew-x-12 translate-x-full group-hover:translate-x-0"></div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-white font-bold">₹{team.purse}L</p>
-                        <div className="w-20 bg-gray-700 rounded-full h-2 mt-1">
-                          <div
-                            className="h-2 rounded-full"
-                            style={{
-                              width: `${(team.purse / 12000) * 100}%`,
-                              backgroundColor: team.color
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
+              </div>
+
+              {/* Summary stats */}
+              <div className="mt-8 grid grid-cols-3 gap-4">
+                <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
+                  <div className="text-2xl font-bold text-yellow-400">₹{teams.reduce((sum, team) => sum + team.purse, 0)}L</div>
+                  <div className="text-sm text-gray-400">Total Remaining</div>
+                </div>
+                <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
+                  <div className="text-2xl font-bold text-blue-400">{teams.reduce((sum, team) => sum + team.players.length, 0)}</div>
+                  <div className="text-sm text-gray-400">Players Bought</div>
+                </div>
+                <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
+                  <div className="text-2xl font-bold text-green-400">₹{(12000 * 10) - teams.reduce((sum, team) => sum + team.purse, 0)}L</div>
+                  <div className="text-sm text-gray-400">Total Spent</div>
+                </div>
               </div>
             </div>
           </div>
