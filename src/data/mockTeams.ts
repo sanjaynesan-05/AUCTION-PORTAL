@@ -99,6 +99,28 @@ export const mockTeams: Team[] = [
     primaryColor: '#FF822A',
     secondaryColor: '#000000'
   },
+  {
+    id: 9,
+    name: 'Gujarat Titans',
+    shortName: 'GT',
+    purse: 12000,
+    logo: 'https://documents.iplt20.com/ipl/GT/Logos/Logooutline/GToutline.png',
+    players: [],
+    color: '#1B2631',
+    primaryColor: '#1B2631',
+    secondaryColor: '#FFD700'
+  },
+  {
+    id: 10,
+    name: 'Lucknow Super Giants',
+    shortName: 'LSG',
+    purse: 12000,
+    logo: 'https://documents.iplt20.com/ipl/LSG/Logos/Logooutline/LSGoutline.png',
+    players: [],
+    color: '#00A0E3',
+    primaryColor: '#00A0E3',
+    secondaryColor: '#FFD700'
+  }
 ];
 
 export default mockTeams;

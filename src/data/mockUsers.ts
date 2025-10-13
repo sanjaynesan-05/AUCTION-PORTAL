@@ -78,6 +78,22 @@ export const mockUsers: User[] = [
     role: 'viewer',
     teamId: 8,
     teamName: 'Sunrisers Hyderabad'
+  },
+  {
+    id: 'viewer-gt',
+    username: 'gt_viewer',
+    password: 'gt@2024',
+    role: 'viewer',
+    teamId: 9,
+    teamName: 'Gujarat Titans'
+  },
+  {
+    id: 'viewer-lsg',
+    username: 'lsg_viewer',
+    password: 'lsg@2024',
+    role: 'viewer',
+    teamId: 10,
+    teamName: 'Lucknow Super Giants'
   }
 ];
 
