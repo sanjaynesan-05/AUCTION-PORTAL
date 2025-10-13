@@ -26,7 +26,10 @@ export default function Login() {
 
       if (user) {
         login(user);
-        navigate('/');
+        // Navigate to appropriate dashboard based on role
+        const dashboardRoute = user.role === 'admin' ? '/admin' :
+                              user.role === 'presenter' ? '/presenter' : '/viewer';
+        navigate(dashboardRoute);
       } else {
         setError('Invalid credentials');
       }
@@ -47,7 +50,10 @@ export default function Login() {
 
     if (user) {
       login(user);
-      navigate('/');
+      // Navigate to appropriate dashboard based on role
+      const dashboardRoute = user.role === 'admin' ? '/admin' :
+                            user.role === 'presenter' ? '/presenter' : '/viewer';
+      navigate(dashboardRoute);
     }
   };
 
