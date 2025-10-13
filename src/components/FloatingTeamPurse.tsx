@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, X } from 'lucide-react';
+import { DollarSign, X, TrendingDown, TrendingUp } from 'lucide-react';
 
 interface Team {
   id: number;
@@ -17,106 +17,170 @@ interface FloatingTeamPurseProps {
 export const FloatingTeamPurse: React.FC<FloatingTeamPurseProps> = ({ teams }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const sortedTeams = teams.sort((a, b) => b.purse - a.purse);
+  // Sort teams by purse remaining (highest to lowest)
+  const sortedTeams = [...teams].sort((a, b) => b.purse - a.purse);
+  const maxPurse = Math.max(...teams.map(t => t.purse));
 
   return (
     <>
       {/* Floating Button */}
       <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 group"
+        aria-label="Toggle Team Purse"
       >
-        <Users className="w-6 h-6 group-hover:scale-110 transition-transform" />
+        <DollarSign className="w-6 h-6 group-hover:scale-110 transition-transform" />
+        <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
+          <span className="text-xs font-bold text-black">{teams.length}</span>
+        </div>
       </button>
 
-      {/* Modal Overlay */}
+      {/* Floating Panel */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-slate-900/95 backdrop-blur-xl border border-white/20 rounded-2xl p-6 m-4 max-w-md w-full max-h-[80vh] overflow-y-auto">
-            
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+            onClick={() => setIsOpen(false)}
+          />
+          
+          {/* Panel */}
+          <div className="fixed bottom-24 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] bg-gradient-to-br from-slate-900 to-purple-900 rounded-2xl border border-white/20 shadow-2xl backdrop-blur-xl animate-slide-up">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                  <Users className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">Team Purse Status</h3>
-                  <p className="text-sm text-gray-400">Remaining budget overview</p>
+                  <h3 className="text-white font-bold text-lg">Team Purse</h3>
+                  <p className="text-gray-400 text-xs">Remaining Budget</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-8 h-8 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
               >
                 <X className="w-4 h-4 text-white" />
               </button>
             </div>
 
-            {/* Team List */}
-            <div className="space-y-3">
-              {sortedTeams.map((team, idx) => (
-                <div 
-                  key={team.id} 
-                  className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-colors"
-                >
-                  <div className="flex items-center space-x-3">
-                    {/* Rank Badge */}
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                      idx === 0 ? 'bg-yellow-500 text-black' : 
-                      idx === 1 ? 'bg-gray-400 text-black' : 
-                      idx === 2 ? 'bg-amber-600 text-white' : 
-                      'bg-white/20 text-gray-300'
-                    }`}>
-                      {idx + 1}
-                    </div>
+            {/* Teams List */}
+            <div className="p-4 max-h-96 overflow-y-auto custom-scrollbar">
+              <div className="space-y-3">
+                {sortedTeams.map((team, index) => {
+                  const pursePercentage = (team.purse / maxPurse) * 100;
+                  const isLow = pursePercentage < 30;
+                  const isMedium = pursePercentage >= 30 && pursePercentage < 60;
+                  
+                  return (
+                    <div
+                      key={team.id}
+                      className="bg-white/5 hover:bg-white/10 rounded-xl p-3 transition-all duration-300 border border-white/10 hover:border-white/20"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-3">
+                          {/* Rank Badge */}
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                            index === 0 ? 'bg-yellow-400 text-black' :
+                            index === 1 ? 'bg-gray-300 text-black' :
+                            index === 2 ? 'bg-orange-400 text-black' :
+                            'bg-white/20 text-white'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          
+                          {/* Team Logo */}
+                          <img
+                            src={team.logo}
+                            alt={team.name}
+                            className="w-8 h-8"
+                            onError={(e) => {
+                              e.currentTarget.src = `https://ui-avatars.com/api/?name=${team.shortName}&background=${team.color.slice(1)}&color=fff&size=32`;
+                            }}
+                          />
+                          
+                          {/* Team Name */}
+                          <div>
+                            <p className="text-white font-semibold text-sm">{team.shortName}</p>
+                            <p className="text-gray-400 text-xs">{team.name}</p>
+                          </div>
+                        </div>
 
-                    {/* Team Info */}
-                    <img
-                      src={team.logo}
-                      alt={team.name}
-                      className="w-10 h-10"
-                      onError={(e) => {
-                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${team.shortName}&background=${team.color.slice(1)}&color=fff&size=40`;
-                      }}
-                    />
-                    <div>
-                      <p className="text-white font-semibold text-sm">{team.shortName}</p>
-                      <p className="text-gray-400 text-xs">{team.name}</p>
-                    </div>
-                  </div>
+                        {/* Purse Amount */}
+                        <div className="text-right">
+                          <p className={`text-lg font-black ${
+                            isLow ? 'text-red-400' :
+                            isMedium ? 'text-yellow-400' :
+                            'text-green-400'
+                          }`}>
+                            ₹{(team.purse / 100).toFixed(1)}Cr
+                          </p>
+                          <div className="flex items-center justify-end space-x-1">
+                            {isLow ? (
+                              <TrendingDown className="w-3 h-3 text-red-400" />
+                            ) : (
+                              <TrendingUp className="w-3 h-3 text-green-400" />
+                            )}
+                            <span className="text-xs text-gray-400">{pursePercentage.toFixed(0)}%</span>
+                          </div>
+                        </div>
+                      </div>
 
-                  {/* Purse Amount */}
-                  <div className="text-right">
-                    <p className="text-white font-bold">₹{(team.purse / 100).toFixed(1)}Cr</p>
-                    <div className={`text-xs px-2 py-1 rounded-full ${
-                      team.purse > 2000 ? 'bg-green-500/20 text-green-400' :
-                      team.purse > 1000 ? 'bg-yellow-500/20 text-yellow-400' :
-                      'bg-red-500/20 text-red-400'
-                    }`}>
-                      {team.purse > 2000 ? 'Strong' : team.purse > 1000 ? 'Moderate' : 'Limited'}
+                      {/* Progress Bar */}
+                      <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            isLow ? 'bg-gradient-to-r from-red-500 to-red-600' :
+                            isMedium ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
+                            'bg-gradient-to-r from-green-500 to-emerald-500'
+                          }`}
+                          style={{ width: `${pursePercentage}%` }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Footer Stats */}
-            <div className="mt-6 p-4 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl border border-blue-500/30">
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div>
-                  <p className="text-gray-400 text-xs">Highest Budget</p>
-                  <p className="text-green-400 font-bold">₹{(sortedTeams[0]?.purse / 100).toFixed(1)}Cr</p>
-                </div>
-                <div>
-                  <p className="text-gray-400 text-xs">Lowest Budget</p>
-                  <p className="text-red-400 font-bold">₹{(sortedTeams[sortedTeams.length - 1]?.purse / 100).toFixed(1)}Cr</p>
-                </div>
+                  );
+                })}
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
+
+      <style>{`
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.3);
+        }
+      `}</style>
     </>
   );
 };

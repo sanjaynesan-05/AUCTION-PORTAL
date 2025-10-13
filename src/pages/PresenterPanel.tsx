@@ -1,7 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { useAuctionSync } from '../hooks/useAuctionSync';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { TVBroadcastPlayer } from '../components/TVBroadcastPlayer';
+import { FloatingTeamPurse } from '../components/FloatingTeamPurse';
 import {
   LogOut,
   Play,
@@ -11,9 +13,7 @@ import {
   CheckCircle,
   XCircle,
   TrendingUp,
-  Users,
-  Trophy,
-  Activity
+  Trophy
 } from 'lucide-react';
 
 export default function PresenterPanel() {
@@ -117,185 +117,106 @@ export default function PresenterPanel() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           
-          {/* Main Player Card */}
-          <div className="xl:col-span-2 relative">
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 overflow-hidden">
-              
-              {/* Stamp Animation Overlay */}
-              {stampAnimation.show && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm rounded-2xl">
-                  {/* Confetti Animation - Only for SOLD */}
-                  {stampAnimation.type === 'sold' && (
-                    <div className="confetti-container">
-                      {Array.from({ length: 20 }, (_, i) => (
-                        <div key={i} className="confetti-piece"></div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  <div className={`stamp-animation ${stampAnimation.type === 'sold' ? 'stamp-sold' : 'stamp-unsold'}`}>
-                    <div className="stamp-text">
-                      {stampAnimation.type === 'sold' ? 'SOLD' : 'UNSOLD'}
-                    </div>
+          {/* Main Player Display - TV Broadcast Style */}
+          <div className="xl:col-span-2 relative space-y-6">
+            
+            {/* Stamp Animation Overlay */}
+            {stampAnimation.show && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                {/* Confetti Animation - Only for SOLD */}
+                {stampAnimation.type === 'sold' && (
+                  <div className="confetti-container">
+                    {Array.from({ length: 20 }, (_, i) => (
+                      <div key={i} className="confetti-piece"></div>
+                    ))}
                   </div>
-                </div>
-              )}
-
-              {/* Player Header */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
-                    <img
-                      src={currentPlayer.image}
-                      alt={currentPlayer.name}
-                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white/30 bg-white/10 mx-auto sm:mx-0"
-                      onError={(e) => {
-                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${currentPlayer.name}&background=6366f1&color=fff&size=80`;
-                      }}
-                    />
-                    <div className="text-center sm:text-left">
-                      <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">{currentPlayer.name}</h2>
-                      <div className="flex flex-wrap justify-center sm:justify-start items-center space-x-2 mt-2">
-                        <span className="bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm text-white">
-                          {currentPlayer.role}
-                        </span>
-                        <span className="bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm text-white">
-                          {currentPlayer.nationality}
-                        </span>
-                        <span className="bg-white/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm text-white">
-                          Age: {currentPlayer.age}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-center sm:text-right w-full sm:w-auto">
-                    <p className="text-white/80 text-sm">Base Price</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-yellow-400">₹{currentPlayer.basePrice}L</p>
+                )}
+                
+                <div className={`stamp-animation ${stampAnimation.type === 'sold' ? 'stamp-sold' : 'stamp-unsold'}`}>
+                  <div className="stamp-text">
+                    {stampAnimation.type === 'sold' ? 'SOLD' : 'UNSOLD'}
                   </div>
                 </div>
               </div>
+            )}
 
-              {/* Player Stats */}
-              {currentPlayer.stats && (
-                <div className="p-6 bg-white/5">
-                  <h3 className="text-white font-semibold mb-4 flex items-center">
-                    <Activity className="w-5 h-5 mr-2" />
-                    Career Statistics
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {currentPlayer.stats.matches && (
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-white">{currentPlayer.stats.matches}</p>
-                        <p className="text-gray-400 text-sm">Matches</p>
-                      </div>
-                    )}
-                    {currentPlayer.stats.runs && (
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-green-400">{currentPlayer.stats.runs}</p>
-                        <p className="text-gray-400 text-sm">Runs</p>
-                      </div>
-                    )}
-                    {currentPlayer.stats.wickets && (
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-blue-400">{currentPlayer.stats.wickets}</p>
-                        <p className="text-gray-400 text-sm">Wickets</p>
-                      </div>
-                    )}
-                    {currentPlayer.stats.average && (
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-yellow-400">{currentPlayer.stats.average}</p>
-                        <p className="text-gray-400 text-sm">Average</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+            {/* TV Broadcast Player Component */}
+            <TVBroadcastPlayer
+              currentPlayer={currentPlayer}
+              currentBid={currentBid}
+              currentBiddingTeam={currentBiddingTeam}
+              auctionPaused={auctionPaused}
+            />
 
-              {/* Current Bid Section */}
-              <div className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row items-center justify-between mb-4 sm:mb-6 space-y-4 sm:space-y-0">
-                  <div className="text-center sm:text-left">
-                    <p className="text-gray-400 text-sm">Current Bid</p>
-                    <p className="text-3xl sm:text-4xl font-bold text-white">₹{currentBid}L</p>
-                    {currentBiddingTeam && (
-                      <div className="flex items-center justify-center sm:justify-start mt-2">
-                        <img
-                          src={currentBiddingTeam.logo}
-                          alt={currentBiddingTeam.name}
-                          className="w-6 h-6 mr-2"
-                          onError={(e) => {
-                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${currentBiddingTeam.shortName}&background=${currentBiddingTeam.color.slice(1)}&color=fff&size=24`;
-                          }}
-                        />
-                        <span className="text-gray-300 text-sm">{currentBiddingTeam.name}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Auction Controls */}
-                  <div className="flex flex-wrap justify-center sm:justify-end gap-2 sm:gap-3">
-                    {!auctionStarted ? (
+            {/* Presenter Controls */}
+            <div className="bg-black/40 backdrop-blur-xl rounded-xl border border-white/20 p-6">
+              <div className="space-y-4">
+                
+                {/* Auction Controls */}
+                <div className="flex flex-wrap justify-center gap-3">
+                  {!auctionStarted ? (
+                    <button
+                      onClick={startAuction}
+                      className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg flex items-center transition-colors font-semibold"
+                    >
+                      <Play className="w-5 h-5 mr-2" />
+                      Start Auction
+                    </button>
+                  ) : (
+                    <>
                       <button
-                        onClick={startAuction}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg flex items-center transition-colors text-sm sm:text-base"
+                        onClick={previousPlayer}
+                        className="bg-gray-600 hover:bg-gray-700 text-white p-3 rounded-lg transition-colors"
+                        title="Previous Player"
                       >
-                        <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                        Start Auction
+                        <SkipBack className="w-5 h-5" />
                       </button>
-                    ) : (
-                      <>
-                        <button
-                          onClick={previousPlayer}
-                          className="bg-gray-600 hover:bg-gray-700 text-white p-2 sm:p-3 rounded-lg transition-colors"
-                        >
-                          <SkipBack className="w-4 h-4 sm:w-5 sm:h-5" />
-                        </button>
 
-                        {auctionPaused ? (
-                          <button
-                            onClick={resumeAuction}
-                            className="bg-green-600 hover:bg-green-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg flex items-center transition-colors text-sm sm:text-base"
-                          >
-                            <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                            Resume
-                          </button>
-                        ) : (
-                          <button
-                            onClick={pauseAuction}
-                            className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg flex items-center transition-colors text-sm sm:text-base"
-                          >
-                            <Pause className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                            Pause
-                          </button>
-                        )}
-
+                      {auctionPaused ? (
                         <button
-                          onClick={nextPlayer}
-                          className="bg-blue-600 hover:bg-blue-700 text-white p-2 sm:p-3 rounded-lg transition-colors"
+                          onClick={resumeAuction}
+                          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg flex items-center transition-colors font-semibold"
                         >
-                          <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <Play className="w-5 h-5 mr-2" />
+                          Resume
                         </button>
-                      </>
-                    )}
-                  </div>
+                      ) : (
+                        <button
+                          onClick={pauseAuction}
+                          className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg flex items-center transition-colors font-semibold"
+                        >
+                          <Pause className="w-5 h-5 mr-2" />
+                          Pause
+                        </button>
+                      )}
+
+                      <button
+                        onClick={nextPlayer}
+                        className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg transition-colors"
+                        title="Next Player"
+                      >
+                        <SkipForward className="w-5 h-5" />
+                      </button>
+                    </>
+                  )}
                 </div>
 
                 {/* Action Buttons */}
                 {auctionStarted && !auctionPaused && (
-                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
                     <button
                       onClick={handleSold}
                       disabled={!currentBidder}
-                      className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-3 px-4 sm:px-6 rounded-lg flex items-center justify-center transition-colors text-sm sm:text-base"
+                      className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-4 px-6 rounded-xl flex items-center justify-center transition-all font-bold text-lg hover:scale-105"
                     >
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                      <CheckCircle className="w-6 h-6 mr-2" />
                       SOLD
                     </button>
                     <button
                       onClick={handleUnsold}
-                      className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 px-4 sm:px-6 rounded-lg flex items-center justify-center transition-colors text-sm sm:text-base"
+                      className="bg-red-600 hover:bg-red-700 text-white py-4 px-6 rounded-xl flex items-center justify-center transition-all font-bold text-lg hover:scale-105"
                     >
-                      <XCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                      <XCircle className="w-6 h-6 mr-2" />
                       UNSOLD
                     </button>
                   </div>
@@ -336,55 +257,11 @@ export default function PresenterPanel() {
               </div>
             )}
           </div>
-
-          {/* Right Panel */}
-          <div className="space-y-6">
-
-            {/* Team Standings */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
-              <h3 className="text-white font-semibold mb-4 flex items-center">
-                <Users className="w-5 h-5 mr-2" />
-                Team Purse Status
-              </h3>
-              <div className="space-y-3">
-                {teams
-                  .sort((a, b) => b.purse - a.purse)
-                  .map((team, idx) => (
-                    <div key={team.id} className="flex items-center justify-between bg-white/5 rounded-lg p-3">
-                      <div className="flex items-center">
-                        <span className="text-gray-400 text-sm w-6">{idx + 1}.</span>
-                        <img
-                          src={team.logo}
-                          alt={team.name}
-                          className="w-8 h-8 mx-3"
-                          onError={(e) => {
-                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${team.shortName}&background=${team.color.slice(1)}&color=fff&size=32`;
-                          }}
-                        />
-                        <div>
-                          <p className="text-white font-medium">{team.shortName}</p>
-                          <p className="text-gray-400 text-xs">{team.players.length} players</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-white font-bold">₹{team.purse}L</p>
-                        <div className="w-20 bg-gray-700 rounded-full h-2 mt-1">
-                          <div
-                            className="h-2 rounded-full"
-                            style={{
-                              width: `${(team.purse / 12000) * 100}%`,
-                              backgroundColor: team.color
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </div>
         </div>
       </div>
+
+      {/* Floating Team Purse Button */}
+      <FloatingTeamPurse teams={teams} />
     </div>
   );
 }

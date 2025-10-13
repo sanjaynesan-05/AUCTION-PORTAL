@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { useAuctionSync } from '../hooks/useAuctionSync';
 import { TVBroadcastPlayer } from '../components/TVBroadcastPlayer';
+import { FloatingTeamPurse } from '../components/FloatingTeamPurse';
 import {
   LogOut,
   Clock,
@@ -367,6 +368,9 @@ export default function ViewerScreen() {
           </div>
         </div>
       </div>
+
+      {/* Floating Team Purse Button */}
+      <FloatingTeamPurse teams={teams} />
     </div>
   );
 }
