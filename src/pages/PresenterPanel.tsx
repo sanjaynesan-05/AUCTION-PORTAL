@@ -118,7 +118,7 @@ export default function PresenterPanel() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           
           {/* Main Player Display - TV Broadcast Style */}
-          <div className="xl:col-span-2 relative space-y-6">
+          <div className="lg:col-span-2 relative space-y-6">
             
             {/* Stamp Animation Overlay */}
             {stampAnimation.show && (
@@ -223,40 +223,50 @@ export default function PresenterPanel() {
                 )}
               </div>
             </div>
+          </div>
 
-            {/* Bid History */}
-            {bidHistory.length > 0 && (
-              <div className="mt-6 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
-                <h3 className="text-white font-semibold mb-4 flex items-center">
-                  <TrendingUp className="w-5 h-5 mr-2" />
-                  Recent Bids
-                </h3>
+          {/* Right Sidebar - Recent Bids */}
+          <div className="lg:col-span-1">
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6 sticky top-6">
+              <h3 className="text-white font-semibold mb-4 flex items-center">
+                <TrendingUp className="w-5 h-5 mr-2" />
+                Recent Bids
+              </h3>
+              
+              {bidHistory.length > 0 ? (
                 <div className="space-y-3">
-                  {bidHistory.slice(-5).reverse().map((bid, idx) => {
+                  {bidHistory.slice(-6).reverse().map((bid, idx) => {
                     const team = teams.find(t => t.id === bid.teamId);
                     return (
-                      <div key={idx} className="flex items-center justify-between bg-white/5 rounded-lg p-3">
-                        <div className="flex items-center">
+                      <div key={idx} className="flex items-center justify-between bg-white/5 rounded-lg p-3 hover:bg-white/10 transition-colors">
+                        <div className="flex items-center space-x-3 flex-1 min-w-0">
                           {team && (
                             <img
                               src={team.logo}
                               alt={team.name}
-                              className="w-8 h-8 mr-3"
+                              className="w-8 h-8 flex-shrink-0"
                               onError={(e) => {
                                 e.currentTarget.src = `https://ui-avatars.com/api/?name=${team.shortName}&background=${team.color.slice(1)}&color=fff&size=32`;
                               }}
                             />
                           )}
-                          <span className="text-white">{team?.name}</span>
+                          <span className="text-white text-sm font-medium truncate">{team?.shortName}</span>
                         </div>
-                        <span className="text-yellow-400 font-bold">₹{bid.amount}L</span>
+                        <span className="text-yellow-400 font-bold text-lg ml-2 flex-shrink-0">₹{bid.amount}L</span>
                       </div>
                     );
                   })}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="text-center py-8">
+                  <TrendingUp className="w-12 h-12 mx-auto text-gray-500 mb-3" />
+                  <p className="text-gray-400 text-sm">No bids yet</p>
+                  <p className="text-gray-500 text-xs mt-1">Bids will appear here</p>
+                </div>
+              )}
+            </div>
           </div>
+
         </div>
       </div>
 

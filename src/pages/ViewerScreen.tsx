@@ -65,6 +65,36 @@ export default function ViewerScreen() {
     setBidMessage({type: result.success ? 'success' : 'error', text: result.message});
   };
 
+  const handleStartFirstBid = () => {
+    if (!authenticatedTeam || !currentPlayer) {
+      setBidMessage({type: 'error', text: 'No authenticated team'});
+      return;
+    }
+    // Place bid at base price
+    const result = placeBidFromViewer(currentPlayer.basePrice, authenticatedTeam.id);
+    setBidMessage({type: result.success ? 'success' : 'error', text: result.message});
+  };
+
+  // Get dynamic bid increments based on current bid
+  const getBidIncrements = (currentBid: number): number[] => {
+    if (currentBid < 100) {
+      // ₹0L-100L: +₹5L increments
+      return [5, 10, 15, 20];
+    } else if (currentBid < 200) {
+      // ₹100L-200L: +₹10L increments
+      return [10, 20, 30, 40];
+    } else if (currentBid < 300) {
+      // ₹200L-300L: +₹20L increments
+      return [20, 40, 60, 80];
+    } else if (currentBid < 500) {
+      // ₹300L-500L: +₹25L increments
+      return [25, 50, 75, 100];
+    } else {
+      // ₹500L+: +₹50L increments
+      return [50, 100, 150, 200];
+    }
+  };
+
   const currentBiddingTeam = teams.find(t => t.id === currentBidder);
   const soldPlayers = players.filter(p => p.sold && p.teamId);
   const totalSpent = soldPlayers.reduce((sum, p) => sum + (p.price || 0), 0);
@@ -215,48 +245,61 @@ export default function ViewerScreen() {
 
                     {/* Bidding Controls */}
                     <div className="space-y-3">
-                      {/* Quick Bid Buttons */}
-                      <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                      {/* Conditional Bidding Buttons */}
+                      {currentBid === 0 || !currentBiddingTeam ? (
+                        /* Show "Start First Bid" button when no bids yet */
                         <button
-                          onClick={() => handleQuickBid(10)}
+                          onClick={handleStartFirstBid}
                           disabled={!authenticatedTeam}
-                          className="px-3 sm:px-4 py-3 sm:py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm sm:text-base min-h-[44px]"
+                          className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all text-lg shadow-lg hover:shadow-xl hover:scale-105 transform duration-200"
                         >
-                          +₹10L
+                          🎯 Start First Bid at ₹{currentPlayer.basePrice}L
                         </button>
-                        <button
-                          onClick={() => handleQuickBid(25)}
-                          disabled={!authenticatedTeam}
-                          className="px-3 sm:px-4 py-3 sm:py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm sm:text-base min-h-[44px]"
-                        >
-                          +₹25L
-                        </button>
-                        <button
-                          onClick={() => handleQuickBid(50)}
-                          disabled={!authenticatedTeam}
-                          className="px-3 sm:px-4 py-3 sm:py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm sm:text-base min-h-[44px]"
-                        >
-                          +₹50L
-                        </button>
-                        <button
-                          onClick={() => handleQuickBid(100)}
-                          disabled={!authenticatedTeam}
-                          className="px-3 sm:px-4 py-3 sm:py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm sm:text-base min-h-[44px]"
-                        >
-                          +₹100L
-                        </button>
-                      </div>
+                      ) : (
+                        /* Show Dynamic Quick Bid Increment Buttons based on current bid */
+                        <>
+                          <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                            {getBidIncrements(currentBid).map((increment, index) => {
+                              const colors = [
+                                'bg-blue-600 hover:bg-blue-700',
+                                'bg-purple-600 hover:bg-purple-700',
+                                'bg-indigo-600 hover:bg-indigo-700',
+                                'bg-orange-600 hover:bg-orange-700'
+                              ];
+                              return (
+                                <button
+                                  key={index}
+                                  onClick={() => handleQuickBid(increment)}
+                                  disabled={!authenticatedTeam}
+                                  className={`px-3 sm:px-4 py-3 sm:py-2 ${colors[index]} disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors text-sm sm:text-base min-h-[44px]`}
+                                >
+                                  +₹{increment}L
+                                </button>
+                              );
+                            })}
+                          </div>
+                          
+                          {/* Current Bid Range Indicator */}
+                          <div className="text-center text-xs text-gray-400 mt-2">
+                            {currentBid < 100 && '₹0L-100L: +₹5L increments'}
+                            {currentBid >= 100 && currentBid < 200 && '₹100L-200L: +₹10L increments'}
+                            {currentBid >= 200 && currentBid < 300 && '₹200L-300L: +₹20L increments'}
+                            {currentBid >= 300 && currentBid < 500 && '₹300L-500L: +₹25L increments'}
+                            {currentBid >= 500 && '₹500L+: +₹50L increments'}
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     {/* Increment Rules */}
                     <div className="mt-4 p-3 bg-white/5 rounded-lg">
-                      <h4 className="text-sm font-semibold text-gray-300 mb-2">Bid Increment Rules</h4>
+                      <h4 className="text-sm font-semibold text-gray-300 mb-2">📋 Bid Increment Rules</h4>
                       <div className="text-xs text-gray-400 space-y-1">
-                        <div>₹0-1Cr: +₹5L</div>
-                        <div>₹1-2Cr: +₹10L</div>
-                        <div>₹2-3Cr: +₹20L</div>
-                        <div>₹3-5Cr: +₹25L</div>
-                        <div>₹5Cr+: +₹50L</div>
+                        <div className={currentBid < 100 ? 'text-yellow-400 font-semibold' : ''}>₹0L-100L: +₹5L</div>
+                        <div className={currentBid >= 100 && currentBid < 200 ? 'text-yellow-400 font-semibold' : ''}>₹100L-200L: +₹10L</div>
+                        <div className={currentBid >= 200 && currentBid < 300 ? 'text-yellow-400 font-semibold' : ''}>₹200L-300L: +₹20L</div>
+                        <div className={currentBid >= 300 && currentBid < 500 ? 'text-yellow-400 font-semibold' : ''}>₹300L-500L: +₹25L</div>
+                        <div className={currentBid >= 500 ? 'text-yellow-400 font-semibold' : ''}>₹500L+: +₹50L</div>
                       </div>
                     </div>
                   </div>
@@ -300,48 +343,64 @@ export default function ViewerScreen() {
               </div>
             </div>
 
-            {/* Team Standings */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
-              <h3 className="text-white font-semibold mb-4 flex items-center">
-                <Users className="w-5 h-5 mr-2" />
-                Team Purse Remaining
-              </h3>
-              <div className="space-y-3">
-                {teams
-                  .sort((a, b) => b.purse - a.purse)
-                  .map((team, idx) => (
-                    <div key={team.id} className="bg-white/5 rounded-lg p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center">
-                          <span className="text-gray-400 text-sm w-6">{idx + 1}.</span>
-                          <img
-                            src={team.logo}
-                            alt={team.name}
-                            className="w-8 h-8 mx-2"
-                            onError={(e) => {
-                              e.currentTarget.src = `https://ui-avatars.com/api/?name=${team.shortName}&background=${team.color.slice(1)}&color=fff&size=32`;
-                            }}
-                          />
-                          <div>
-                            <p className="text-white font-medium text-sm">{team.shortName}</p>
-                            <p className="text-gray-400 text-xs">{team.players.length} players</p>
+            {/* My Team Players */}
+            {authenticatedTeam && (
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
+                <h3 className="text-white font-semibold mb-4 flex items-center">
+                  <Users className="w-5 h-5 mr-2" />
+                  My Team Players
+                </h3>
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {players.filter(p => p.sold && p.teamId === authenticatedTeam.id).length > 0 ? (
+                    players
+                      .filter(p => p.sold && p.teamId === authenticatedTeam.id)
+                      .map((player) => (
+                        <div key={player.id} className="flex items-center justify-between bg-white/5 rounded-lg p-3">
+                          <div className="flex items-center space-x-3">
+                            <img
+                              src={player.image}
+                              alt={player.name}
+                              className="w-8 h-8 rounded-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = `https://ui-avatars.com/api/?name=${player.name}&background=${authenticatedTeam.color.slice(1)}&color=fff&size=32`;
+                              }}
+                            />
+                            <div>
+                              <div className="text-white font-medium text-sm">{player.name}</div>
+                              <div className="text-gray-400 text-xs">{player.role}</div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-green-400 font-bold text-sm">₹{player.price}L</div>
+                            <div className="text-gray-500 text-xs">{player.nationality}</div>
                           </div>
                         </div>
-                        <p className="text-white font-bold">₹{team.purse}L</p>
-                      </div>
-                      <div className="w-full bg-gray-700 rounded-full h-2">
-                        <div
-                          className="h-2 rounded-full transition-all duration-500"
-                          style={{
-                            width: `${(team.purse / 12000) * 100}%`,
-                            backgroundColor: team.color
-                          }}
-                        ></div>
-                      </div>
+                      ))
+                  ) : (
+                    <div className="text-center text-gray-400 py-4">
+                      <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No players acquired yet</p>
                     </div>
-                  ))}
+                  )}
+                </div>
+                {players.filter(p => p.sold && p.teamId === authenticatedTeam.id).length > 0 && (
+                  <div className="mt-4 pt-3 border-t border-white/10">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-400">Total Players:</span>
+                      <span className="text-white font-bold">
+                        {players.filter(p => p.sold && p.teamId === authenticatedTeam.id).length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-400">Total Spent:</span>
+                      <span className="text-green-400 font-bold">
+                        ₹{players.filter(p => p.sold && p.teamId === authenticatedTeam.id).reduce((sum, p) => sum + (p.price || 0), 0)}L
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
             {/* Live Feed */}
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">

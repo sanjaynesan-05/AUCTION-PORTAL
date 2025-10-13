@@ -51,7 +51,7 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
         auctionPaused: false,
         currentIndex: 0,
         currentPlayer: unsoldPlayers[0],
-        currentBid: unsoldPlayers[0].basePrice,
+        currentBid: 0, // Reset to 0 - first bid will be at base price
         currentBidder: null,
         bidHistory: [],
       });
@@ -71,7 +71,7 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
       set({
         currentIndex: nextIndex,
         currentPlayer: unsoldPlayers[nextIndex],
-        currentBid: unsoldPlayers[nextIndex].basePrice,
+        currentBid: 0, // Reset to 0 - first bid will be at base price
         currentBidder: null,
         bidHistory: [],
       });
@@ -95,7 +95,7 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
       set({
         currentIndex: prevIndex,
         currentPlayer: unsoldPlayers[prevIndex],
-        currentBid: unsoldPlayers[prevIndex].basePrice,
+        currentBid: 0, // Reset to 0 - first bid will be at base price
         currentBidder: null,
         bidHistory: [],
       });
@@ -105,21 +105,36 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
   placeBid: (teamId: number, amount: number) => {
     const state = get();
     const team = state.teams.find(t => t.id === teamId);
+    const currentPlayer = state.currentPlayer;
 
-    if (team && amount <= team.purse && amount > state.currentBid) {
-      // Prevent consecutive bids from the same team
-      if (teamId === state.currentBidder) {
-        return;
-      }
-      set({
-        currentBid: amount,
-        currentBidder: teamId,
-        bidHistory: [
-          ...state.bidHistory,
-          { teamId, amount, timestamp: Date.now() }
-        ],
-      });
+    if (!team || !currentPlayer) return;
+
+    // Check if team has enough purse
+    if (amount > team.purse) {
+      return;
     }
+
+    // First bid must be at or above base price
+    // Subsequent bids must be higher than current bid
+    const minValidBid = state.currentBidder === null ? currentPlayer.basePrice : state.currentBid;
+    
+    if (amount < minValidBid) {
+      return;
+    }
+
+    // Prevent consecutive bids from the same team
+    if (teamId === state.currentBidder) {
+      return;
+    }
+
+    set({
+      currentBid: amount,
+      currentBidder: teamId,
+      bidHistory: [
+        ...state.bidHistory,
+        { teamId, amount, timestamp: Date.now() }
+      ],
+    });
   },
 
   // Add increment rules
@@ -148,8 +163,18 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
       return { success: false, message: 'Team not found' };
     }
 
-    if (bidAmount <= state.currentBid) {
-      return { success: false, message: 'Bid must be higher than current bid' };
+    // First bid must be at or above base price
+    // Subsequent bids must be higher than current bid
+    const minValidBid = state.currentBidder === null ? state.currentPlayer.basePrice : state.currentBid;
+    
+    if (bidAmount < minValidBid) {
+      const isFirstBid = state.currentBidder === null;
+      return { 
+        success: false, 
+        message: isFirstBid 
+          ? `First bid must be at least ₹${state.currentPlayer.basePrice}L (base price)` 
+          : `Bid must be higher than current bid of ₹${state.currentBid}L` 
+      };
     }
 
     // Prevent consecutive bids from the same team
