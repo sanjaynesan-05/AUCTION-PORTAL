@@ -131,11 +131,14 @@ export default function Login() {
                         </label>
                         <input
                           type="text"
+                          id="username"
                           value={credentials.username}
                           onChange={(e) => setCredentials(prev => ({ ...prev, username: e.target.value }))}
                           className="w-full px-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all text-lg"
                           placeholder="Enter your username"
                           required
+                          aria-label="Username"
+                          aria-describedby={error ? "login-error" : undefined}
                         />
                       </div>
 
@@ -145,17 +148,25 @@ export default function Login() {
                         </label>
                         <input
                           type="password"
+                          id="password"
                           value={credentials.password}
                           onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
                           className="w-full px-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all text-lg"
                           placeholder="Enter your password"
                           required
+                          aria-label="Password"
+                          aria-describedby={error ? "login-error" : undefined}
                         />
                       </div>
                     </div>
 
                     {error && (
-                      <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-4 text-red-300 text-sm text-center">
+                      <div
+                        id="login-error"
+                        className="bg-red-500/20 border border-red-500/50 rounded-xl p-4 text-red-300 text-sm text-center"
+                        role="alert"
+                        aria-live="polite"
+                      >
                         {error}
                       </div>
                     )}

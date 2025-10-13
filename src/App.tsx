@@ -1,14 +1,17 @@
 import { BrowserRouter } from 'react-router-dom';
 import AppRoutes from './routes/AppRoutes';
 import { RoleProvider } from './context/RoleContext';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (
-    <BrowserRouter>
-      <RoleProvider>
-        <AppRoutes />
-      </RoleProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <RoleProvider>
+          <AppRoutes />
+        </RoleProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 
