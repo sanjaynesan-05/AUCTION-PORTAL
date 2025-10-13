@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { useAuctionSync } from '../hooks/useAuctionSync';
-import { mockTeams } from '../data/mockTeams';
+import { TVBroadcastPlayer } from '../components/TVBroadcastPlayer';
 import {
   LogOut,
   Clock,
@@ -10,10 +10,6 @@ import {
   Users,
   Tv,
   Trophy,
-  Activity,
-  Star,
-  Target,
-  Zap,
   Gavel
 } from 'lucide-react';
 
@@ -175,126 +171,14 @@ export default function ViewerScreen() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           
-          {/* Main Player Display */}
-          <div className="xl:col-span-3">
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 overflow-hidden">
-              {/* Player Header */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 sm:p-8">
-                <div className="flex flex-col items-center text-center space-y-4 sm:space-y-6">
-                  <div className="relative">
-                    <img
-                      src={currentPlayer.image}
-                      alt={currentPlayer.name}
-                      className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white/30 bg-white/10"
-                      onError={(e) => {
-                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${currentPlayer.name}&background=6366f1&color=fff&size=128`;
-                      }}
-                    />
-                    {currentPlayer.role === 'All-rounder' && (
-                      <div className="absolute -top-2 -right-2 w-6 h-6 sm:w-8 sm:h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-                        <Star className="w-3 h-3 sm:w-4 sm:h-4 text-black" />
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <h2 className="text-2xl sm:text-4xl font-bold text-white mb-2">{currentPlayer.name}</h2>
-                    <div className="flex flex-wrap justify-center items-center space-x-2 sm:space-x-4 mb-3">
-                      <span className="bg-white/20 px-3 sm:px-4 py-1 sm:py-2 rounded-full text-white font-medium text-sm sm:text-base">
-                        {currentPlayer.role}
-                      </span>
-                      <span className="bg-white/20 px-3 sm:px-4 py-1 sm:py-2 rounded-full text-white text-sm sm:text-base">
-                        {currentPlayer.nationality}
-                      </span>
-                      <span className="bg-white/20 px-3 sm:px-4 py-1 sm:py-2 rounded-full text-white text-sm sm:text-base">
-                        {currentPlayer.age} years
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap justify-center space-x-3 sm:space-x-4 text-gray-200 text-sm">
-                      {currentPlayer.battingStyle && (
-                        <span>🏏 {currentPlayer.battingStyle}</span>
-                      )}
-                      {currentPlayer.bowlingStyle && (
-                        <span>⚾ {currentPlayer.bowlingStyle}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="text-center mt-4 sm:mt-6">
-                  <p className="text-white/80 text-sm">Base Price</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-yellow-400">₹{currentPlayer.basePrice}L</p>
-                  {auctionPaused && (
-                    <div className="mt-2 bg-yellow-500/20 px-3 py-1 rounded-full inline-block">
-                      <span className="text-yellow-300 text-sm font-medium">PAUSED</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Player Stats */}
-              {currentPlayer.stats && (
-                <div className="p-6 bg-white/5">
-                  <h3 className="text-white font-semibold mb-6 flex items-center text-lg">
-                    <Activity className="w-6 h-6 mr-3" />
-                    Career Statistics
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    {currentPlayer.stats.matches && (
-                      <div className="text-center bg-white/10 rounded-lg p-4">
-                        <p className="text-3xl font-bold text-white">{currentPlayer.stats.matches}</p>
-                        <p className="text-gray-400 text-sm mt-1">Matches</p>
-                      </div>
-                    )}
-                    {currentPlayer.stats.runs && (
-                      <div className="text-center bg-white/10 rounded-lg p-4">
-                        <p className="text-3xl font-bold text-green-400">{currentPlayer.stats.runs}</p>
-                        <p className="text-gray-400 text-sm mt-1">Runs</p>
-                      </div>
-                    )}
-                    {currentPlayer.stats.wickets && (
-                      <div className="text-center bg-white/10 rounded-lg p-4">
-                        <p className="text-3xl font-bold text-blue-400">{currentPlayer.stats.wickets}</p>
-                        <p className="text-gray-400 text-sm mt-1">Wickets</p>
-                      </div>
-                    )}
-                    {currentPlayer.stats.strikeRate && (
-                      <div className="text-center bg-white/10 rounded-lg p-4">
-                        <p className="text-3xl font-bold text-yellow-400">{currentPlayer.stats.strikeRate}</p>
-                        <p className="text-gray-400 text-sm mt-1">Strike Rate</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Current Bid Display */}
-              <div className="p-4 sm:p-8">
-                <div className="text-center mb-6 sm:mb-8">
-                  <p className="text-gray-400 text-base sm:text-lg mb-2">Current Highest Bid</p>
-                  <div className="flex items-center justify-center space-x-3 sm:space-x-4">
-                    <Target className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-400" />
-                    <p className="text-4xl sm:text-6xl font-bold text-white">₹{currentBid}L</p>
-                    <Zap className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-400" />
-                  </div>
-
-                  {currentBiddingTeam && (
-                    <div className="mt-4 sm:mt-6 flex items-center justify-center bg-white/10 rounded-lg p-3 sm:p-4 max-w-xs sm:max-w-md mx-auto">
-                      <img
-                        src={currentBiddingTeam.logo}
-                        alt={currentBiddingTeam.name}
-                        className="w-10 h-10 sm:w-12 sm:h-12 mr-3 sm:mr-4"
-                        onError={(e) => {
-                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${currentBiddingTeam.shortName}&background=${currentBiddingTeam.color.slice(1)}&color=fff&size=48`;
-                        }}
-                      />
-                      <div className="text-left">
-                        <p className="text-white font-bold text-base sm:text-lg">{currentBiddingTeam.name}</p>
-                        <p className="text-gray-300 text-sm">Leading Bidder</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+          {/* Main Player Display - TV Broadcast Style */}
+          <div className="xl:col-span-3 space-y-6">
+            <TVBroadcastPlayer
+              currentPlayer={currentPlayer}
+              currentBid={currentBid}
+              currentBiddingTeam={currentBiddingTeam}
+              auctionPaused={auctionPaused}
+            />
 
             {/* Team Bidding Panel - Moved below player details */}
             {auctionStarted && currentPlayer && !currentPlayer.sold && (
