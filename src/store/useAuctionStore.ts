@@ -107,6 +107,10 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
     const team = state.teams.find(t => t.id === teamId);
 
     if (team && amount <= team.purse && amount > state.currentBid) {
+      // Prevent consecutive bids from the same team
+      if (teamId === state.currentBidder) {
+        return;
+      }
       set({
         currentBid: amount,
         currentBidder: teamId,
@@ -146,6 +150,11 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
 
     if (bidAmount <= state.currentBid) {
       return { success: false, message: 'Bid must be higher than current bid' };
+    }
+
+    // Prevent consecutive bids from the same team
+    if (teamId === state.currentBidder) {
+      return { success: false, message: 'Cannot bid consecutively from the same team' };
     }
 
     if (bidAmount > team.purse) {
