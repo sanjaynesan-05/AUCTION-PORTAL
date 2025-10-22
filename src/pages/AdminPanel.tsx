@@ -400,22 +400,22 @@ export default function AdminPanel() {
                 <select
                   value={filterRole}
                   onChange={(e) => setFilterRole(e.target.value)}
-                  className="px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  className="px-4 py-2 bg-gray-800 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 cursor-pointer hover:border-white/50 transition-colors"
                 >
-                  <option value="all">All Roles</option>
-                  <option value="Batsman">Batsman</option>
-                  <option value="Bowler">Bowler</option>
-                  <option value="All-rounder">All-rounder</option>
-                  <option value="Wicketkeeper">Wicketkeeper</option>
+                  <option value="all" className="bg-gray-900 text-white">All Roles</option>
+                  <option value="Batsman" className="bg-gray-900 text-white">Batsman</option>
+                  <option value="Bowler" className="bg-gray-900 text-white">Bowler</option>
+                  <option value="All-rounder" className="bg-gray-900 text-white">All-rounder</option>
+                  <option value="Wicketkeeper" className="bg-gray-900 text-white">Wicketkeeper</option>
                 </select>
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  className="px-4 py-2 bg-gray-800 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 cursor-pointer hover:border-white/50 transition-colors"
                 >
-                  <option value="all">All Status</option>
-                  <option value="available">Available</option>
-                  <option value="sold">Sold</option>
+                  <option value="all" className="bg-gray-900 text-white">All Status</option>
+                  <option value="available" className="bg-gray-900 text-white">Available</option>
+                  <option value="sold" className="bg-gray-900 text-white">Sold</option>
                 </select>
                 <div className="text-sm text-gray-400 flex items-center">
                   {filteredPlayers.length} of {players.length} players
@@ -575,12 +575,12 @@ export default function AdminPanel() {
                     <select
                       value={newPlayer.role}
                       onChange={(e) => setNewPlayer({...newPlayer, role: e.target.value})}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      className="w-full px-4 py-2 bg-gray-800 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 cursor-pointer hover:border-white/50 transition-colors"
                     >
-                      <option value="Batsman">Batsman</option>
-                      <option value="Bowler">Bowler</option>
-                      <option value="All-rounder">All-rounder</option>
-                      <option value="Wicketkeeper">Wicketkeeper</option>
+                      <option value="Batsman" className="bg-gray-900 text-white">Batsman</option>
+                      <option value="Bowler" className="bg-gray-900 text-white">Bowler</option>
+                      <option value="All-rounder" className="bg-gray-900 text-white">All-rounder</option>
+                      <option value="Wicketkeeper" className="bg-gray-900 text-white">Wicketkeeper</option>
                     </select>
                   </div>
                   <div>
@@ -635,10 +635,10 @@ export default function AdminPanel() {
                     <select
                       value={newPlayer.battingStyle}
                       onChange={(e) => setNewPlayer({...newPlayer, battingStyle: e.target.value})}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      className="w-full px-4 py-2 bg-gray-800 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 cursor-pointer hover:border-white/50 transition-colors"
                     >
-                      <option value="Right-handed">Right-handed</option>
-                      <option value="Left-handed">Left-handed</option>
+                      <option value="Right-handed" className="bg-gray-900 text-white">Right-handed</option>
+                      <option value="Left-handed" className="bg-gray-900 text-white">Left-handed</option>
                     </select>
                   </div>
                   <div>
@@ -646,17 +646,17 @@ export default function AdminPanel() {
                     <select
                       value={newPlayer.bowlingStyle}
                       onChange={(e) => setNewPlayer({...newPlayer, bowlingStyle: e.target.value})}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      className="w-full px-4 py-2 bg-gray-800 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 cursor-pointer hover:border-white/50 transition-colors"
                     >
-                      <option value="">None</option>
-                      <option value="Right-arm fast">Right-arm fast</option>
-                      <option value="Left-arm fast">Left-arm fast</option>
-                      <option value="Right-arm medium">Right-arm medium</option>
-                      <option value="Left-arm medium">Left-arm medium</option>
-                      <option value="Right-arm off-spin">Right-arm off-spin</option>
-                      <option value="Left-arm off-spin">Left-arm off-spin</option>
-                      <option value="Right-arm leg-spin">Right-arm leg-spin</option>
-                      <option value="Left-arm leg-spin">Left-arm leg-spin</option>
+                      <option value="" className="bg-gray-900 text-white">None</option>
+                      <option value="Right-arm fast" className="bg-gray-900 text-white">Right-arm fast</option>
+                      <option value="Left-arm fast" className="bg-gray-900 text-white">Left-arm fast</option>
+                      <option value="Right-arm medium" className="bg-gray-900 text-white">Right-arm medium</option>
+                      <option value="Left-arm medium" className="bg-gray-900 text-white">Left-arm medium</option>
+                      <option value="Right-arm off-spin" className="bg-gray-900 text-white">Right-arm off-spin</option>
+                      <option value="Left-arm off-spin" className="bg-gray-900 text-white">Left-arm off-spin</option>
+                      <option value="Right-arm leg-spin" className="bg-gray-900 text-white">Right-arm leg-spin</option>
+                      <option value="Left-arm leg-spin" className="bg-gray-900 text-white">Left-arm leg-spin</option>
                     </select>
                   </div>
                 </div>
