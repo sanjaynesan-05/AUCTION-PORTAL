@@ -3,6 +3,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 const connectDB = require('./db');
@@ -40,6 +41,20 @@ app.use(express.urlencoded({ extended: true }));
 // Connect to MongoDB
 connectDB();
 
+// Initialize auction state when MongoDB connects
+mongoose.connection.on('connected', async () => {
+  console.log('📡 MongoDB connected. Initializing auction state...');
+  await initializeAuctionState();
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('❌ MongoDB connection error:', err.message);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('⚠️  MongoDB disconnected');
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/players', playerRoutes);
@@ -69,6 +84,13 @@ let auctionState = {
 // Initialize auction state from database
 const initializeAuctionState = async () => {
   try {
+    // Check if MongoDB is connected
+    if (mongoose.connection.readyState !== 1) {
+      console.log('⚠️  MongoDB not connected. Skipping auction state initialization.');
+      console.log('💡 Auction state will be initialized when MongoDB connects.');
+      return;
+    }
+
     const players = await Player.find().populate('teamId').lean();
     const teams = await Team.find().populate('players').lean();
 
@@ -79,7 +101,8 @@ const initializeAuctionState = async () => {
     console.log(`📊 Players loaded: ${players.length}`);
     console.log(`🏆 Teams loaded: ${teams.length}`);
   } catch (error) {
-    console.error('❌ Failed to initialize auction state:', error);
+    console.error('❌ Failed to initialize auction state:', error.message);
+    console.log('💡 Server will continue running. Auction state will be initialized when database is available.');
   }
 };
 
@@ -373,13 +396,25 @@ app.use((err, req, res, next) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, async () => {
+server.listen(PORT, () => {
   console.log(`\n🚀 Server running on port ${PORT}`);
   console.log(`📱 Client URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}\n`);
 
-  // Initialize auction state
-  await initializeAuctionState();
+  // Check MongoDB connection status
+  const mongoStatus = mongoose.connection.readyState;
+  const statusMessages = {
+    0: '❌ MongoDB disconnected',
+    1: '✅ MongoDB connected',
+    2: '🔄 MongoDB connecting',
+    3: '⏸️  MongoDB disconnecting'
+  };
+  console.log(statusMessages[mongoStatus] || '❓ MongoDB status unknown');
+
+  // Initialize auction state if MongoDB is already connected
+  if (mongoStatus === 1) {
+    initializeAuctionState();
+  }
 });
 
 // Handle unhandled promise rejections

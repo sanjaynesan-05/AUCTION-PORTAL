@@ -40,31 +40,39 @@ cd ..
 npm install
 ```
 
-### Step 3: Configure MongoDB
+### Step 3: Start MongoDB
 
-**Option A: Local MongoDB**
+**Option A: Using the provided script (Recommended)**
 
-1. Install MongoDB Community Edition
-2. Start MongoDB service:
-   ```powershell
-   # Windows
-   net start MongoDB
-   
-   # Or run manually
-   mongod
-   ```
-3. MongoDB will run on `mongodb://localhost:27017` by default
+For Windows PowerShell:
+```powershell
+.\start-mongodb.ps1
+```
 
-**Option B: MongoDB Atlas (Cloud)**
+For Windows Command Prompt:
+```cmd
+start-mongodb.bat
+```
 
-1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-2. Create a free cluster (M0 Sandbox)
-3. Create a database user
-4. Whitelist your IP address (or allow access from anywhere: `0.0.0.0/0`)
-5. Get your connection string:
-   ```
-   mongodb+srv://<username>:<password>@cluster.mongodb.net/auction-portal?retryWrites=true&w=majority
-   ```
+**Option B: Manual MongoDB Start**
+
+1. Open a new terminal/command prompt
+2. Create data directory: `mkdir C:\data\db`
+3. Start MongoDB: `mongod --dbpath "C:\data\db"`
+
+**Option C: MongoDB Atlas (Cloud)**
+- No local installation needed
+- Update `MONGO_URI` in `server/.env` with your Atlas connection string
+
+### Step 4: Test Backend Connection
+
+Run the test script to verify everything is working:
+
+```powershell
+.\test-backend.ps1
+```
+
+This will check if the backend is running and provide next steps.
 
 ### Step 4: Configure Environment Variables
 
@@ -398,6 +406,75 @@ Access to fetch blocked by CORS policy
 6. ✅ Test API endpoints
 7. ✅ Run frontend with `npm start`
 8. 🎯 Start building your auction!
+
+## 🐛 Troubleshooting
+
+### Issue: Duplicate Schema Index Warnings
+
+**Symptoms:**
+```
+[Mongoose] Warning: Duplicate schema index on {"name":1} found.
+[Mongoose] Warning: Duplicate schema index on {"shortName":1} found.
+[Mongoose] Warning: Duplicate schema index on {"username":1} found.
+```
+
+**Solution:** ✅ **Fixed** - Removed duplicate index definitions in model files.
+
+### Issue: Deprecated MongoDB Options
+
+**Symptoms:**
+```
+[MongoDB Driver] Warning: useNewUrlParser is a deprecated option
+[MongoDB Driver] Warning: useUnifiedTopology is a deprecated option
+```
+
+**Solution:** ✅ **Fixed** - Removed deprecated options from database connection.
+
+### Issue: MongoDB Connection Timeout
+
+**Symptoms:**
+```
+❌ Failed to initialize auction state: MongooseError: Operation `players.find()` buffering timed out after 10000ms
+```
+
+**Solutions:**
+1. **Start MongoDB** using the provided scripts:
+   ```powershell
+   .\start-mongodb.ps1
+   ```
+2. **Check MongoDB status:**
+   ```powershell
+   net start | findstr MongoDB
+   ```
+3. **Verify connection string** in `server/.env`
+4. **Use MongoDB Atlas** if local installation fails
+
+### Issue: Port Already in Use
+
+**Symptoms:**
+```
+Error: listen EADDRINUSE: address already in use :::5000
+```
+
+**Solutions:**
+1. Change port in `server/.env`: `PORT=5001`
+2. Kill process on port 5000:
+   ```powershell
+   netstat -ano | findstr :5000
+   taskkill /PID <PID> /F
+   ```
+
+### Issue: CORS Errors
+
+**Symptoms:**
+```
+Access to fetch blocked by CORS policy
+```
+
+**Solutions:**
+1. Verify `CLIENT_URL` in `server/.env` matches frontend URL
+2. Check CORS configuration in `server/server.js`
+3. Ensure frontend runs on correct port (5173)
 
 ## 🆘 Need Help?
 

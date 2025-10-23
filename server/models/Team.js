@@ -77,10 +77,7 @@ teamSchema.methods.removePlayer = function (playerId, price) {
 teamSchema.set('toJSON', { virtuals: true });
 teamSchema.set('toObject', { virtuals: true });
 
-// Indexes
-teamSchema.index({ name: 1 });
-teamSchema.index({ shortName: 1 });
-
+// Indexes (name and shortName already have unique indexes from schema)
 const Team = mongoose.model('Team', teamSchema);
 
 module.exports = Team;

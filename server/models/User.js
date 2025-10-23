@@ -59,9 +59,7 @@ userSchema.methods.toJSON = function () {
   return obj;
 };
 
-// Index for faster queries
-userSchema.index({ username: 1 });
-
+// Index for faster queries (username already has unique index from schema)
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;
