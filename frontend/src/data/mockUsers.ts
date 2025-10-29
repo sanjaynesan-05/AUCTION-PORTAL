@@ -3,7 +3,7 @@ export interface User {
   username: string;
   password: string;
   role: 'admin' | 'presenter' | 'viewer';
-  teamId?: number;
+  teamId?: number | string; // Support both for backward compatibility
   teamName?: string;
 }
 

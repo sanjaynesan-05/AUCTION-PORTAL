@@ -178,6 +178,7 @@ export interface Team {
   name: string;
   shortName: string;
   color: string;
+  logo?: string;
   purse: number;
   createdAt?: string;
   updatedAt?: string;

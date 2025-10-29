@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
-import { useAuctionSync } from '../hooks/useAuctionSync';
-import { useState } from 'react';
+import { useInitializeAuction } from '../store/useAuctionStore';
+import { useState, useEffect } from 'react';
 import { TVBroadcastPlayer } from '../components/TVBroadcastPlayer';
 import { FloatingTeamPurse } from '../components/FloatingTeamPurse';
 import {
@@ -20,6 +20,7 @@ export default function PresenterPanel() {
   const { user, logout } = useRole();
   const navigate = useNavigate();
   const {
+    initialize,
     currentPlayer,
     teams,
     auctionStarted,
@@ -34,7 +35,18 @@ export default function PresenterPanel() {
     previousPlayer,
     markSold,
     markUnsold,
-  } = useAuctionSync();
+    // isConnected,
+    // isLoading,
+    disconnectWebSocket,
+  } = useInitializeAuction();
+
+  // Initialize data and WebSocket connection on mount
+  useEffect(() => {
+    initialize();
+    return () => {
+      disconnectWebSocket();
+    };
+  }, []);
 
   const [stampAnimation, setStampAnimation] = useState<{type: 'sold' | 'unsold' | null, show: boolean}>({
     type: null,

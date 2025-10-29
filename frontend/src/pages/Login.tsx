@@ -52,7 +52,7 @@ export default function Login() {
     }
   };
 
-  const handleQuickLogin = (role: 'admin' | 'presenter' | 'viewer', teamId?: number) => {
+  const handleQuickLogin = (role: 'admin' | 'presenter' | 'viewer', teamId?: number | string) => {
     let user;
     if (role === 'viewer' && teamId) {
       user = mockUsers.find(u => u.role === 'viewer' && u.teamId === teamId);

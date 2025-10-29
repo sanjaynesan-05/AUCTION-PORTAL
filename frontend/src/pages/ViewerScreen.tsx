@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
-import { useAuctionSync } from '../hooks/useAuctionSync';
+import { useInitializeAuction } from '../store/useAuctionStore';
 import { TVBroadcastPlayer } from '../components/TVBroadcastPlayer';
 import { FloatingTeamPurse } from '../components/FloatingTeamPurse';
 import {
@@ -18,6 +18,7 @@ export default function ViewerScreen() {
   const { user, logout } = useRole();
   const navigate = useNavigate();
   const {
+    initialize,
     currentPlayer,
     teams,
     players,
@@ -26,11 +27,20 @@ export default function ViewerScreen() {
     currentBid,
     currentBidder,
     bidHistory,
-    placeBidFromViewer
-  } = useAuctionSync();
+    placeBid,
+    disconnectWebSocket,
+  } = useInitializeAuction();
 
   const [currentTime, setCurrentTime] = useState(new Date());
   const [bidMessage, setBidMessage] = useState<{type: 'success'|'error', text: string} | null>(null);
+
+  // Initialize data and WebSocket connection on mount
+  useEffect(() => {
+    initialize();
+    return () => {
+      disconnectWebSocket();
+    };
+  }, []);
 
   // Get authenticated team
   const authenticatedTeam = teams.find(t => t.id === user?.teamId);
@@ -61,7 +71,7 @@ export default function ViewerScreen() {
       return;
     }
     const bidAmount = currentBid + increment;
-    const result = placeBidFromViewer(bidAmount, authenticatedTeam.id);
+    const result = placeBid(bidAmount);
     setBidMessage({type: result.success ? 'success' : 'error', text: result.message});
   };
 
@@ -71,7 +81,7 @@ export default function ViewerScreen() {
       return;
     }
     // Place bid at base price
-    const result = placeBidFromViewer(currentPlayer.basePrice, authenticatedTeam.id);
+    const result = placeBid(currentPlayer.basePrice);
     setBidMessage({type: result.success ? 'success' : 'error', text: result.message});
   };
 

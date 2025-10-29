@@ -7,13 +7,13 @@ import {
 } from 'lucide-react';
 
 interface Player {
-  id: number;
+  id: string;
   name: string;
   role: string;
   nationality: string;
   age: number;
   basePrice: number;
-  image: string;
+  image?: string;
   battingStyle?: string;
   bowlingStyle?: string;
   stats?: {
@@ -25,10 +25,10 @@ interface Player {
 }
 
 interface Team {
-  id: number;
+  id: string;
   name: string;
   shortName: string;
-  logo: string;
+  logo?: string;
   color: string;
 }
 

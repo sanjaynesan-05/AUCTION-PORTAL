@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { DollarSign, X, TrendingDown, TrendingUp } from 'lucide-react';
 
 interface Team {
-  id: number;
+  id: string;
   name: string;
   shortName: string;
-  logo: string;
+  logo?: string;
   color: string;
   purse: number;
 }
