@@ -1,6 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const { User } = require('../models');
 require('dotenv').config();
 
 const router = express.Router();
@@ -30,7 +30,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ username });
+    const existingUser = await User.findOne({ where: { username } });
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -42,19 +42,17 @@ router.post('/register', async (req, res) => {
     const validRoles = ['admin', 'presenter', 'viewer'];
     const userRole = role && validRoles.includes(role) ? role : 'viewer';
 
-    // Create new user (password will be hashed by pre-save hook)
-    const user = new User({
+    // Create new user (password will be hashed by beforeCreate hook)
+    const user = await User.create({
       username,
       password,
       role: userRole,
     });
 
-    await user.save();
-
     // Generate JWT token
     const token = jwt.sign(
       {
-        id: user._id,
+        id: user.id,
         username: user.username,
         role: user.role,
       },
@@ -68,7 +66,7 @@ router.post('/register', async (req, res) => {
       data: {
         token,
         user: {
-          id: user._id,
+          id: user.id,
           username: user.username,
           role: user.role,
         },
@@ -76,10 +74,20 @@ router.post('/register', async (req, res) => {
     });
   } catch (error) {
     console.error('Registration error:', error);
+    
+    // Handle Sequelize validation errors
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed.',
+        errors: error.errors.map((e) => e.message),
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Registration failed. Please try again.',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 });
@@ -102,7 +110,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Find user
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ where: { username } });
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -122,7 +130,7 @@ router.post('/login', async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       {
-        id: user._id,
+        id: user.id,
         username: user.username,
         role: user.role,
       },
@@ -136,7 +144,7 @@ router.post('/login', async (req, res) => {
       data: {
         token,
         user: {
-          id: user._id,
+          id: user.id,
           username: user.username,
           role: user.role,
         },
@@ -147,7 +155,7 @@ router.post('/login', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Login failed. Please try again.',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 });
@@ -172,7 +180,7 @@ router.get('/verify', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Find user to ensure they still exist
-    const user = await User.findById(decoded.id).select('-password');
+    const user = await User.findByPk(decoded.id);
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -184,7 +192,7 @@ router.get('/verify', async (req, res) => {
       success: true,
       data: {
         user: {
-          id: user._id,
+          id: user.id,
           username: user.username,
           role: user.role,
         },

@@ -3,17 +3,15 @@ const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const mongoose = require('mongoose');
 require('dotenv').config();
 
-const connectDB = require('./db');
-const Player = require('./models/Player');
-const Team = require('./models/Team');
+const { connectDB } = require('./database');
+const { Player, Team, sequelize } = require('./models');
 
 // Import routes
-const authRoutes = require('./routes/auth');
-const playerRoutes = require('./routes/players');
-const teamRoutes = require('./routes/teams');
+const authRoutes = require('./routes/auth.routes');
+const playerRoutes = require('./routes/players.routes');
+const teamRoutes = require('./routes/teams.routes');
 
 // Initialize Express app
 const app = express();
@@ -38,22 +36,8 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Connect to MongoDB
+// Connect to PostgreSQL
 connectDB();
-
-// Initialize auction state when MongoDB connects
-mongoose.connection.on('connected', async () => {
-  console.log('📡 MongoDB connected. Initializing auction state...');
-  await initializeAuctionState();
-});
-
-mongoose.connection.on('error', (err) => {
-  console.error('❌ MongoDB connection error:', err.message);
-});
-
-mongoose.connection.on('disconnected', () => {
-  console.log('⚠️  MongoDB disconnected');
-});
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -65,6 +49,7 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Server is running',
+    database: sequelize.config.database,
     timestamp: new Date().toISOString(),
   });
 });
@@ -84,27 +69,54 @@ let auctionState = {
 // Initialize auction state from database
 const initializeAuctionState = async () => {
   try {
-    // Check if MongoDB is connected
-    if (mongoose.connection.readyState !== 1) {
-      console.log('⚠️  MongoDB not connected. Skipping auction state initialization.');
-      console.log('💡 Auction state will be initialized when MongoDB connects.');
-      return;
-    }
+    // Check if PostgreSQL is connected
+    await sequelize.authenticate();
 
-    const players = await Player.find().populate('teamId').lean();
-    const teams = await Team.find().populate('players').lean();
+    const players = await Player.findAll({
+      include: [
+        {
+          model: Team,
+          as: 'team',
+          attributes: ['id', 'name', 'shortName', 'color'],
+        },
+      ],
+      raw: false,
+    });
 
-    auctionState.players = players;
-    auctionState.teams = teams;
+    const teams = await Team.findAll({
+      include: [
+        {
+          model: Player,
+          as: 'players',
+          attributes: ['id', 'name', 'role', 'price'],
+        },
+      ],
+      raw: false,
+    });
+
+    // Convert Sequelize instances to plain objects
+    auctionState.players = players.map((p) => p.toJSON());
+    auctionState.teams = teams.map((t) => t.toJSON());
 
     console.log('✅ Auction state initialized from database');
-    console.log(`📊 Players loaded: ${players.length}`);
-    console.log(`🏆 Teams loaded: ${teams.length}`);
+    console.log(`📊 Players loaded: ${auctionState.players.length}`);
+    console.log(`🏆 Teams loaded: ${auctionState.teams.length}`);
   } catch (error) {
     console.error('❌ Failed to initialize auction state:', error.message);
     console.log('💡 Server will continue running. Auction state will be initialized when database is available.');
   }
 };
+
+// Initialize auction state after database connection
+sequelize
+  .authenticate()
+  .then(async () => {
+    console.log('📡 PostgreSQL connected. Initializing auction state...');
+    await initializeAuctionState();
+  })
+  .catch((err) => {
+    console.error('❌ PostgreSQL connection error:', err.message);
+  });
 
 // Socket.io authentication middleware
 io.use((socket, next) => {
@@ -186,7 +198,7 @@ io.on('connection', (socket) => {
       }
 
       const { playerId } = data;
-      const player = auctionState.players.find(p => p._id.toString() === playerId);
+      const player = auctionState.players.find(p => p.id === playerId);
 
       if (!player) {
         socket.emit('error', { message: 'Player not found' });
@@ -194,7 +206,7 @@ io.on('connection', (socket) => {
       }
 
       auctionState.currentPlayer = player;
-      auctionState.currentBid = player.basePrice;
+      auctionState.currentBid = parseFloat(player.basePrice);
       auctionState.currentTeam = null;
 
       console.log(`👤 Current player set to: ${player.name} by ${socket.user.username}`);
@@ -221,37 +233,40 @@ io.on('connection', (socket) => {
         return;
       }
 
-      const team = auctionState.teams.find(t => t._id.toString() === teamId);
+      const team = auctionState.teams.find(t => t.id === teamId);
       if (!team) {
         socket.emit('error', { message: 'Team not found' });
         return;
       }
 
-      if (team.purse < bidAmount) {
+      const teamPurse = parseFloat(team.purse);
+      const bid = parseFloat(bidAmount);
+
+      if (teamPurse < bid) {
         socket.emit('error', { message: 'Insufficient purse balance' });
         return;
       }
 
-      if (bidAmount <= auctionState.currentBid) {
+      if (bid <= auctionState.currentBid) {
         socket.emit('error', { message: 'Bid must be higher than current bid' });
         return;
       }
 
-      auctionState.currentBid = bidAmount;
+      auctionState.currentBid = bid;
       auctionState.currentTeam = team;
 
       // Add to bid history
       auctionState.bidHistory.push({
-        playerId: auctionState.currentPlayer._id,
+        playerId: auctionState.currentPlayer.id,
         playerName: auctionState.currentPlayer.name,
-        teamId: team._id,
+        teamId: team.id,
         teamName: team.shortName,
-        amount: bidAmount,
+        amount: bid,
         timestamp: new Date(),
         user: socket.user.username,
       });
 
-      console.log(`💰 Bid placed: ${team.shortName} - ₹${bidAmount}L for ${auctionState.currentPlayer.name}`);
+      console.log(`💰 Bid placed: ${team.shortName} - ₹${bid}L for ${auctionState.currentPlayer.name}`);
 
       io.emit('auction-state', auctionState);
     } catch (error) {
@@ -273,34 +288,44 @@ io.on('connection', (socket) => {
         return;
       }
 
-      const playerId = auctionState.currentPlayer._id;
-      const teamId = auctionState.currentTeam._id;
+      const playerId = auctionState.currentPlayer.id;
+      const teamId = auctionState.currentTeam.id;
       const finalPrice = auctionState.currentBid;
 
       // Update database
-      const player = await Player.findByIdAndUpdate(
-        playerId,
-        {
-          sold: true,
-          teamId: teamId,
-          price: finalPrice,
-        },
-        { new: true }
-      );
+      const player = await Player.findByPk(playerId);
+      await player.update({
+        sold: true,
+        teamId: teamId,
+        price: finalPrice,
+      });
 
-      const team = await Team.findById(teamId);
-      team.addPlayer(playerId, finalPrice);
-      await team.save();
+      const team = await Team.findByPk(teamId);
+      await team.addPlayerToTeam(playerId, finalPrice);
 
       // Update in-memory state
-      const playerIndex = auctionState.players.findIndex(p => p._id.toString() === playerId.toString());
+      const playerIndex = auctionState.players.findIndex(p => p.id === playerId);
       if (playerIndex !== -1) {
-        auctionState.players[playerIndex] = { ...auctionState.players[playerIndex], sold: true, teamId, price: finalPrice };
+        auctionState.players[playerIndex] = {
+          ...auctionState.players[playerIndex],
+          sold: true,
+          teamId,
+          price: finalPrice,
+        };
       }
 
-      const teamIndex = auctionState.teams.findIndex(t => t._id.toString() === teamId.toString());
+      const teamIndex = auctionState.teams.findIndex(t => t.id === teamId);
       if (teamIndex !== -1) {
-        auctionState.teams[teamIndex] = await Team.findById(teamId).populate('players').lean();
+        const updatedTeam = await Team.findByPk(teamId, {
+          include: [
+            {
+              model: Player,
+              as: 'players',
+              attributes: ['id', 'name', 'role', 'price'],
+            },
+          ],
+        });
+        auctionState.teams[teamIndex] = updatedTeam.toJSON();
       }
 
       console.log(`✅ Player sold: ${auctionState.currentPlayer.name} to ${auctionState.currentTeam.shortName} for ₹${finalPrice}L`);
@@ -353,10 +378,16 @@ io.on('connection', (socket) => {
       }
 
       // Reset all players in database
-      await Player.updateMany({}, { sold: false, teamId: null, price: null });
+      await Player.update(
+        { sold: false, teamId: null, price: null },
+        { where: {} }
+      );
 
       // Reset all teams in database
-      await Team.updateMany({}, { purse: 12000, players: [] });
+      await Team.update(
+        { purse: 12000 },
+        { where: {} }
+      );
 
       // Reinitialize auction state
       await initializeAuctionState();
@@ -399,22 +430,8 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`\n🚀 Server running on port ${PORT}`);
   console.log(`📱 Client URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}\n`);
-
-  // Check MongoDB connection status
-  const mongoStatus = mongoose.connection.readyState;
-  const statusMessages = {
-    0: '❌ MongoDB disconnected',
-    1: '✅ MongoDB connected',
-    2: '🔄 MongoDB connecting',
-    3: '⏸️  MongoDB disconnecting'
-  };
-  console.log(statusMessages[mongoStatus] || '❓ MongoDB status unknown');
-
-  // Initialize auction state if MongoDB is already connected
-  if (mongoStatus === 1) {
-    initializeAuctionState();
-  }
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🗄️  Database: PostgreSQL\n`);
 });
 
 // Handle unhandled promise rejections

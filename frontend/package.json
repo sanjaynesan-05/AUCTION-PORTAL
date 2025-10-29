@@ -1,7 +1,7 @@
 {
-  "name": "vite-react-typescript-starter",
+  "name": "auction-portal-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,9 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
-    "server": "cd server && npm run dev",
-    "client": "vite",
-    "start": "concurrently \"npm run server\" \"npm run client\""
+    "start": "vite"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

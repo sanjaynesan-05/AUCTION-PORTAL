@@ -1,12 +1,13 @@
 const express = require('express');
-const Player = require('../models/Player');
+const { Player, Team } = require('../models');
 const { authMiddleware, requireRole } = require('../middleware/authMiddleware');
+const { Op } = require('sequelize');
 
 const router = express.Router();
 
 /**
  * @route   GET /api/players
- * @desc    Get all players
+ * @desc    Get all players with optional filtering
  * @access  Protected
  */
 router.get('/', authMiddleware, async (req, res) => {
@@ -14,14 +15,22 @@ router.get('/', authMiddleware, async (req, res) => {
     const { role, sold, teamId } = req.query;
 
     // Build query filter
-    const filter = {};
-    if (role) filter.role = role;
-    if (sold !== undefined) filter.sold = sold === 'true';
-    if (teamId) filter.teamId = teamId;
+    const where = {};
+    if (role) where.role = role;
+    if (sold !== undefined) where.sold = sold === 'true';
+    if (teamId) where.teamId = teamId;
 
-    const players = await Player.find(filter)
-      .populate('teamId', 'name shortName color')
-      .sort({ name: 1 });
+    const players = await Player.findAll({
+      where,
+      include: [
+        {
+          model: Team,
+          as: 'team',
+          attributes: ['id', 'name', 'shortName', 'color'],
+        },
+      ],
+      order: [['name', 'ASC']],
+    });
 
     res.status(200).json({
       success: true,
@@ -33,7 +42,7 @@ router.get('/', authMiddleware, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch players.',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 });
@@ -45,7 +54,15 @@ router.get('/', authMiddleware, async (req, res) => {
  */
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
-    const player = await Player.findById(req.params.id).populate('teamId', 'name shortName color');
+    const player = await Player.findByPk(req.params.id, {
+      include: [
+        {
+          model: Team,
+          as: 'team',
+          attributes: ['id', 'name', 'shortName', 'color'],
+        },
+      ],
+    });
 
     if (!player) {
       return res.status(404).json({
@@ -63,7 +80,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch player.',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 });
@@ -75,8 +92,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
  */
 router.post('/', authMiddleware, requireRole('admin'), async (req, res) => {
   try {
-    const player = new Player(req.body);
-    await player.save();
+    const player = await Player.create(req.body);
 
     res.status(201).json({
       success: true,
@@ -85,10 +101,20 @@ router.post('/', authMiddleware, requireRole('admin'), async (req, res) => {
     });
   } catch (error) {
     console.error('Create player error:', error);
+
+    // Handle validation errors
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed.',
+        errors: error.errors.map((e) => e.message),
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Failed to create player.',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 });
@@ -100,10 +126,7 @@ router.post('/', authMiddleware, requireRole('admin'), async (req, res) => {
  */
 router.put('/:id', authMiddleware, requireRole('admin'), async (req, res) => {
   try {
-    const player = await Player.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const player = await Player.findByPk(req.params.id);
 
     if (!player) {
       return res.status(404).json({
@@ -112,6 +135,8 @@ router.put('/:id', authMiddleware, requireRole('admin'), async (req, res) => {
       });
     }
 
+    await player.update(req.body);
+
     res.status(200).json({
       success: true,
       message: 'Player updated successfully.',
@@ -119,10 +144,20 @@ router.put('/:id', authMiddleware, requireRole('admin'), async (req, res) => {
     });
   } catch (error) {
     console.error('Update player error:', error);
+
+    // Handle validation errors
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed.',
+        errors: error.errors.map((e) => e.message),
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Failed to update player.',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 });
@@ -134,7 +169,7 @@ router.put('/:id', authMiddleware, requireRole('admin'), async (req, res) => {
  */
 router.delete('/:id', authMiddleware, requireRole('admin'), async (req, res) => {
   try {
-    const player = await Player.findByIdAndDelete(req.params.id);
+    const player = await Player.findByPk(req.params.id);
 
     if (!player) {
       return res.status(404).json({
@@ -142,6 +177,8 @@ router.delete('/:id', authMiddleware, requireRole('admin'), async (req, res) => 
         message: 'Player not found.',
       });
     }
+
+    await player.destroy();
 
     res.status(200).json({
       success: true,
@@ -152,7 +189,7 @@ router.delete('/:id', authMiddleware, requireRole('admin'), async (req, res) => 
     res.status(500).json({
       success: false,
       message: 'Failed to delete player.',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 });

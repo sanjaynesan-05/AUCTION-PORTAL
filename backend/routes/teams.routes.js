@@ -1,5 +1,5 @@
 const express = require('express');
-const Team = require('../models/Team');
+const { Team, Player } = require('../models');
 const { authMiddleware, requireRole } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -11,9 +11,16 @@ const router = express.Router();
  */
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const teams = await Team.find()
-      .populate('players', 'name role price nationality')
-      .sort({ name: 1 });
+    const teams = await Team.findAll({
+      include: [
+        {
+          model: Player,
+          as: 'players',
+          attributes: ['id', 'name', 'role', 'price', 'nationality'],
+        },
+      ],
+      order: [['name', 'ASC']],
+    });
 
     res.status(200).json({
       success: true,
@@ -25,7 +32,7 @@ router.get('/', authMiddleware, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch teams.',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 });
@@ -37,7 +44,15 @@ router.get('/', authMiddleware, async (req, res) => {
  */
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
-    const team = await Team.findById(req.params.id).populate('players', 'name role price nationality image');
+    const team = await Team.findByPk(req.params.id, {
+      include: [
+        {
+          model: Player,
+          as: 'players',
+          attributes: ['id', 'name', 'role', 'price', 'nationality', 'image'],
+        },
+      ],
+    });
 
     if (!team) {
       return res.status(404).json({
@@ -55,7 +70,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch team.',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 });
@@ -67,8 +82,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
  */
 router.post('/', authMiddleware, requireRole('admin'), async (req, res) => {
   try {
-    const team = new Team(req.body);
-    await team.save();
+    const team = await Team.create(req.body);
 
     res.status(201).json({
       success: true,
@@ -77,10 +91,20 @@ router.post('/', authMiddleware, requireRole('admin'), async (req, res) => {
     });
   } catch (error) {
     console.error('Create team error:', error);
+
+    // Handle validation errors
+    if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed.',
+        errors: error.errors.map((e) => e.message),
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Failed to create team.',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 });
@@ -92,10 +116,7 @@ router.post('/', authMiddleware, requireRole('admin'), async (req, res) => {
  */
 router.put('/:id', authMiddleware, requireRole('admin'), async (req, res) => {
   try {
-    const team = await Team.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const team = await Team.findByPk(req.params.id);
 
     if (!team) {
       return res.status(404).json({
@@ -104,6 +125,8 @@ router.put('/:id', authMiddleware, requireRole('admin'), async (req, res) => {
       });
     }
 
+    await team.update(req.body);
+
     res.status(200).json({
       success: true,
       message: 'Team updated successfully.',
@@ -111,10 +134,20 @@ router.put('/:id', authMiddleware, requireRole('admin'), async (req, res) => {
     });
   } catch (error) {
     console.error('Update team error:', error);
+
+    // Handle validation errors
+    if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed.',
+        errors: error.errors.map((e) => e.message),
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Failed to update team.',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 });
@@ -126,7 +159,7 @@ router.put('/:id', authMiddleware, requireRole('admin'), async (req, res) => {
  */
 router.delete('/:id', authMiddleware, requireRole('admin'), async (req, res) => {
   try {
-    const team = await Team.findByIdAndDelete(req.params.id);
+    const team = await Team.findByPk(req.params.id);
 
     if (!team) {
       return res.status(404).json({
@@ -134,6 +167,8 @@ router.delete('/:id', authMiddleware, requireRole('admin'), async (req, res) => 
         message: 'Team not found.',
       });
     }
+
+    await team.destroy();
 
     res.status(200).json({
       success: true,
@@ -144,7 +179,7 @@ router.delete('/:id', authMiddleware, requireRole('admin'), async (req, res) => 
     res.status(500).json({
       success: false,
       message: 'Failed to delete team.',
-      error: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 });
