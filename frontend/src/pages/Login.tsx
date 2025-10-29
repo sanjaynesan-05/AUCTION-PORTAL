@@ -4,6 +4,7 @@ import { useRole } from '../context/RoleContext';
 import { mockUsers } from '../data/mockUsers';
 import { mockTeams } from '../data/mockTeams';
 import { Crown, ArrowRight, Trophy, Users, LogIn, Sparkles } from 'lucide-react';
+import { authApi, setToken } from '../services/api.service';
 
 export default function Login() {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
@@ -19,22 +20,33 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const user = mockUsers.find(u =>
-        u.username === credentials.username &&
-        u.password === credentials.password
-      );
+      // Use real API
+      const response = await authApi.login({
+        username: credentials.username,
+        password: credentials.password,
+      });
 
-      if (user) {
-        login(user);
-        // Navigate to appropriate dashboard based on role
-        const dashboardRoute = user.role === 'admin' ? '/admin' :
-                              user.role === 'presenter' ? '/presenter' : '/viewer';
-        navigate(dashboardRoute);
-      } else {
-        setError('Invalid credentials');
-      }
-    } catch (err) {
-      setError('Login failed');
+      // Store token
+      setToken(response.token);
+
+      // Login with user data
+      const user = {
+        id: response.user.id,
+        username: response.user.username,
+        password: '', // Not needed after authentication
+        role: response.user.role,
+        teamId: response.user.teamId ? parseInt(response.user.teamId) : undefined,
+      };
+
+      login(user);
+
+      // Navigate to appropriate dashboard based on role
+      const dashboardRoute = user.role === 'admin' ? '/admin' :
+                            user.role === 'presenter' ? '/presenter' : '/viewer';
+      navigate(dashboardRoute);
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
