@@ -55,13 +55,16 @@ export interface LoginCredentials {
 }
 
 export interface LoginResponse {
+  success: boolean;
   message: string;
-  token: string;
-  user: {
-    id: string;
-    username: string;
-    role: 'admin' | 'presenter' | 'viewer';
-    teamId?: string;
+  data: {
+    token: string;
+    user: {
+      id: string;
+      username: string;
+      role: 'admin' | 'presenter' | 'viewer';
+      teamId?: string;
+    };
   };
 }
 

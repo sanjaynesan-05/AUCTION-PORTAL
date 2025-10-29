@@ -26,26 +26,40 @@ export default function Login() {
         password: credentials.password,
       });
 
+      console.log('✅ Login response:', response);
+
+      // Validate response
+      if (!response || !response.data || !response.data.token) {
+        throw new Error('Invalid response from server - missing token');
+      }
+
+      if (!response.data.user || !response.data.user.id) {
+        throw new Error('Invalid response from server - missing user data');
+      }
+
       // Store token
-      setToken(response.token);
+      setToken(response.data.token);
 
       // Login with user data
       const user = {
-        id: response.user.id,
-        username: response.user.username,
+        id: response.data.user.id,
+        username: response.data.user.username,
         password: '', // Not needed after authentication
-        role: response.user.role,
-        teamId: response.user.teamId ? parseInt(response.user.teamId) : undefined,
+        role: response.data.user.role,
+        teamId: response.data.user.teamId,
       };
 
       login(user);
+
+      console.log('✅ User logged in:', user);
 
       // Navigate to appropriate dashboard based on role
       const dashboardRoute = user.role === 'admin' ? '/admin' :
                             user.role === 'presenter' ? '/presenter' : '/viewer';
       navigate(dashboardRoute);
     } catch (err: any) {
-      console.error('Login error:', err);
+      console.error('❌ Login error:', err);
+      console.error('Error details:', err.response || err);
       setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
