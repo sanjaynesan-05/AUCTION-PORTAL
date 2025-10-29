@@ -2,6 +2,8 @@
 
 **Complete Documentation for Project Setup, Architecture, and Deployment**
 
+> **⚡ Quick Note:** This project uses **SQLite** database (file-based, zero configuration) for easy development. No database server installation needed! PostgreSQL support available for production deployment.
+
 ---
 
 ## 📋 Table of Contents
@@ -179,9 +181,10 @@ CREATE TABLE players (
 Before you begin, ensure you have the following installed:
 
 - **Node.js** (v16 or higher) - [Download](https://nodejs.org/)
-- **PostgreSQL** (v15 or higher) - [Download](https://www.postgresql.org/download/)
 - **npm** or **yarn** - Comes with Node.js
 - **Git** - [Download](https://git-scm.com/)
+
+**That's it!** ✨ No database server installation needed - SQLite is included!
 
 ### Installation Steps
 
@@ -195,17 +198,16 @@ cd AUCTION-PORTAL
 # 2. Install all dependencies (frontend + backend)
 .\scripts\install-all.ps1
 
-# 3. Setup PostgreSQL database
-.\scripts\setup-postgresql.ps1
-
-# 4. Initialize database with seed data
+# 3. Initialize SQLite database with seed data
 cd backend
 npm run init-db
 cd ..
 
-# 5. Start both servers
+# 4. Start both servers
 .\scripts\start-all.ps1
 ```
+
+**That's it!** Database file `backend/database.sqlite` is created automatically! 🎉
 
 #### Method 2: Manual Setup
 
@@ -217,19 +219,15 @@ cd backend
 # 2. Install dependencies
 npm install
 
-# 3. Create .env file
-New-Item .env -ItemType File
+# 3. Environment is already configured in .env file
+# (No database setup needed!)
 
-# 4. Add environment variables to .env:
-# DATABASE_URL=postgresql://postgres:your_password@localhost:5432/auction_portal
-# JWT_SECRET=your_super_secret_jwt_key_change_this
-# PORT=5000
-# NODE_ENV=development
-
-# 5. Initialize database
+# 4. Initialize database (creates database.sqlite file)
 npm run init-db
 
-# 6. Start backend server
+# 5. Start backend server
+npm start
+# Or for development with auto-reload:
 npm run dev
 ```
 
@@ -245,24 +243,13 @@ npm install
 npm run dev
 ```
 
-#### Method 3: Docker Setup
-
-```powershell
-# Start PostgreSQL in Docker
-docker run --name auction-postgres `
-  -e POSTGRES_PASSWORD=password `
-  -e POSTGRES_DB=auction_portal `
-  -p 5432:5432 -d postgres:15
-
-# Then follow Manual Setup steps for backend and frontend
-```
-
 ### Access the Application
 
 After setup, access:
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:5000
 - **API Health**: http://localhost:5000/api/health
+- **Database**: `backend/database.sqlite` (file-based)
 
 ### Default Credentials
 
@@ -400,10 +387,23 @@ backend/
 | **PostgreSQL** | 15+ | Relational database |
 | **Sequelize** | 6.35.2 | ORM for PostgreSQL |
 | **Socket.io** | 4.6.0 | Real-time server |
+| Component | Version | Purpose |
+|-----------|---------|---------|
+| **Express.js** | 4.21.2 | Web framework |
+| **SQLite3** | 5.x.x | File-based database |
+| **Sequelize** | 6.37.7 | ORM (Object-Relational Mapping) |
+| **Socket.io** | 4.8.1 | Real-time communication |
 | **JWT** | 9.0.2 | Authentication tokens |
 | **bcryptjs** | 2.4.3 | Password hashing |
+| **Helmet** | 8.1.0 | Security headers |
+| **Express Rate Limit** | 8.2.0 | DDoS protection |
+| **Express Validator** | 7.3.0 | Input validation |
+| **Winston** | 3.18.3 | Structured logging |
+| **Morgan** | 1.10.1 | HTTP logging |
 | **CORS** | 2.8.5 | Cross-origin requests |
-| **dotenv** | 16.3.1 | Environment variables |
+| **dotenv** | 16.6.1 | Environment variables |
+
+> **💡 Production Note:** For production deployment with high traffic, you can easily migrate to PostgreSQL by updating the database configuration. The code is database-agnostic thanks to Sequelize ORM.
 
 ### Development Tools
 

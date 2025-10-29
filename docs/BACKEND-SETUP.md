@@ -28,23 +28,32 @@
 ### Technology Stack
 
 - **Node.js** (v16+) - JavaScript runtime
-- **Express.js 4.18.2** - Web application framework
-- **PostgreSQL 15+** - Relational database
-- **Sequelize 6.35.2** - ORM for PostgreSQL
-- **Socket.io 4.6.0** - Real-time bidirectional communication
+- **Express.js 4.21.2** - Web application framework
+- **SQLite 3** - Lightweight file-based database (zero configuration!)
+- **Sequelize 6.37.7** - ORM for database operations
+- **Socket.io 4.8.1** - Real-time bidirectional communication
 - **JWT 9.0.2** - JSON Web Tokens for authentication
 - **bcryptjs 2.4.3** - Password hashing
+- **Helmet 8.1.0** - Security headers
+- **Express Rate Limit 8.2.0** - DDoS protection
+- **Express Validator 7.3.0** - Input validation
+- **Winston 3.18.3** - Structured logging
+- **Morgan 1.10.1** - HTTP request logging
 - **CORS 2.8.5** - Cross-Origin Resource Sharing
-- **dotenv 16.3.1** - Environment variable management
+- **dotenv 16.6.1** - Environment variable management
 
 ### Features
 
 ✅ RESTful API with Express.js  
-✅ PostgreSQL database with Sequelize ORM  
+✅ SQLite database with Sequelize ORM (no server installation needed!)  
 ✅ Real-time updates with Socket.io  
 ✅ JWT-based authentication  
-✅ Role-based access control  
+✅ Role-based access control (Admin, Presenter, Viewer)  
 ✅ Password encryption with bcrypt  
+✅ Security headers with Helmet  
+✅ Rate limiting for DDoS protection  
+✅ Input validation on all endpoints  
+✅ Structured logging with Winston  
 ✅ CORS enabled for frontend  
 ✅ Environment-based configuration  
 
@@ -65,40 +74,14 @@ node --version
 # https://nodejs.org/
 ```
 
-#### 2. PostgreSQL (v15 or higher)
-
-**Option A: Native Installation**
-
-```powershell
-# Download from: https://www.postgresql.org/download/
-
-# Verify installation
-psql --version
-# Should output: psql (PostgreSQL) 15.x
-```
-
-**Option B: Docker**
-
-```powershell
-# Pull PostgreSQL image
-docker pull postgres:15
-
-# Run PostgreSQL container
-docker run --name auction-postgres `
-  -e POSTGRES_PASSWORD=password `
-  -e POSTGRES_DB=auction_portal `
-  -p 5432:5432 -d postgres:15
-
-# Verify
-docker ps
-```
-
-#### 3. npm (comes with Node.js)
+#### 2. npm (comes with Node.js)
 
 ```powershell
 npm --version
 # Should output: 8.x.x or higher
 ```
+
+**That's it!** SQLite is included as a package - no database server installation needed! 🎉
 
 ### Optional Tools
 
@@ -123,14 +106,19 @@ cd "d:\AUCTION PORTAL\backend"
 npm install
 
 # This will install:
-# - express
-# - pg (PostgreSQL driver)
-# - sequelize
-# - socket.io
-# - jsonwebtoken
-# - bcryptjs
-# - cors
-# - dotenv
+# - express (Web framework)
+# - sqlite3 (Database)
+# - sequelize (ORM)
+# - socket.io (Real-time)
+# - jsonwebtoken (Auth)
+# - bcryptjs (Password hashing)
+# - helmet (Security headers)
+# - express-rate-limit (Rate limiting)
+# - express-validator (Input validation)
+# - winston (Logging)
+# - morgan (HTTP logging)
+# - cors (CORS support)
+# - dotenv (Environment variables)
 # - nodemon (dev dependency)
 ```
 
@@ -144,103 +132,123 @@ npm list --depth=0
 # auction-portal-backend@1.0.0
 # ├── bcryptjs@2.4.3
 # ├── cors@2.8.5
-# ├── dotenv@16.3.1
-# ├── express@4.18.2
+# ├── dotenv@16.6.1
+# ├── express@4.21.2
+# ├── express-rate-limit@8.2.0
+# ├── express-validator@7.3.0
+# ├── helmet@8.1.0
 # ├── jsonwebtoken@9.0.2
-# ├── pg@8.11.3
-# ├── sequelize@6.35.2
-# ├── socket.io@4.6.0
-# └── nodemon@3.0.2
+# ├── morgan@1.10.1
+# ├── nodemon@3.1.10
+# ├── sequelize@6.37.7
+# ├── socket.io@4.8.1
+# ├── sqlite3@5.x.x
+# └── winston@3.18.3
 ```
 
 ---
 
 ## 🗄️ Database Setup
 
-### Option 1: Using Setup Script (Recommended)
+### SQLite - Zero Configuration! 🎉
 
-```powershell
-# Run automated setup
-cd ..
-.\scripts\setup-postgresql.ps1
+**Good news:** SQLite requires no database server installation! It's a file-based database that's automatically created when you run the application.
 
-# This script will:
-# 1. Check PostgreSQL installation
-# 2. Test database connection
-# 3. Create auction_portal database
-# 4. Update .env file
-# 5. Provide next steps
-```
+### Step 1: Configure Environment
 
-### Option 2: Manual Setup
+The `.env` file is already configured for SQLite:
 
-#### Step 1: Start PostgreSQL
+```properties
+# SQLite Database (File-based, no installation needed!)
+DB_TYPE=sqlite
 
-```powershell
-# Check if PostgreSQL service is running
-Get-Service postgresql*
+# JWT Secret Key
+JWT_SECRET=your-secret-key-change-this-in-production-12345
 
-# Start service if not running
-Start-Service postgresql-x64-15
-
-# Or if using Docker
-docker start auction-postgres
-```
-
-#### Step 2: Create Database
-
-```powershell
-# Open PostgreSQL command line
-psql -U postgres
-
-# Create database
-CREATE DATABASE auction_portal;
-
-# Verify
-\l
-
-# Exit
-\q
-```
-
-#### Step 3: Create .env File
-
-```powershell
-cd backend
-
-# Create .env file
-New-Item .env -ItemType File
-
-# Add content to .env (edit with notepad or VS Code)
-```
-
-Add the following to `.env`:
-
-```env
-# Database Configuration
-DATABASE_URL=postgresql://postgres:your_password@localhost:5432/auction_portal
-
-# JWT Configuration
-JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
-
-# Server Configuration
+# Server Port
 PORT=5000
+
+# Node Environment
 NODE_ENV=development
 
-# Optional
-CORS_ORIGIN=http://localhost:5173
+# Client URL (Frontend)
+CLIENT_URL=http://localhost:5173
+
+# Logging
+LOG_LEVEL=info
 ```
 
-#### Step 4: Initialize Database
+### Step 2: Initialize Database
 
 ```powershell
-# Run database initialization
+# Create database, tables, and seed initial data
 npm run init-db
+```
 
-# This will:
-# 1. Create all tables (users, players, teams)
-# 2. Seed default data
-# 3. Create admin user (admin/admin123)
+**This will:**
+- ✅ Create `database.sqlite` file in the backend folder
+- ✅ Create all tables (Users, Teams, Players)
+- ✅ Add admin user (username: `admin`, password: `admin123`)
+- ✅ Add 10 IPL teams
+- ✅ Add sample players
+
+**Expected output:**
+```
+✅ Database models synchronized
+✅ Tables created successfully
+✅ Admin user created (username: admin, password: admin123)
+✅ Sample teams created
+✅ Sample players created
+✅ Database initialization complete!
+```
+
+### Database File Location
+
+The SQLite database is created at:
+```
+backend/database.sqlite
+```
+
+This single file contains all your data:
+- Users (authentication)
+- Teams (10 IPL teams)
+- Players (auction participants)
+
+### Database Operations
+
+#### Reset Database
+```powershell
+# Delete database file
+Remove-Item backend/database.sqlite
+
+# Recreate from scratch
+npm run init-db
+```
+
+#### Backup Database
+```powershell
+# Simply copy the file
+Copy-Item backend/database.sqlite backup/database-backup.sqlite
+```
+
+#### View Database Contents
+```powershell
+# Install SQLite command line (optional)
+winget install SQLite.SQLite
+
+# Open database
+sqlite3 backend/database.sqlite
+
+# Show tables
+.tables
+
+# Query data
+SELECT * FROM users;
+SELECT * FROM teams;
+SELECT * FROM players;
+
+# Exit
+.quit
 ```
 
 ### Database Schema
@@ -250,64 +258,48 @@ The initialization creates three main tables:
 #### **Users Table**
 ```sql
 CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  username VARCHAR(255) UNIQUE NOT NULL,
+  id TEXT PRIMARY KEY,
+  username VARCHAR(30) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
-  role ENUM('admin', 'presenter', 'viewer') NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  role TEXT NOT NULL DEFAULT 'viewer',
+  createdAt DATETIME NOT NULL,
+  updatedAt DATETIME NOT NULL
 );
 ```
 
 #### **Teams Table**
 ```sql
 CREATE TABLE teams (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY,
   name VARCHAR(255) UNIQUE NOT NULL,
-  short_name VARCHAR(10) UNIQUE NOT NULL,
-  purse DECIMAL(10,2) DEFAULT 12000.00,
-  color VARCHAR(7) NOT NULL,
-  logo_url VARCHAR(500),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  shortName VARCHAR(5) UNIQUE NOT NULL,
+  purse DECIMAL(10,2) NOT NULL DEFAULT 12000,
+  logo TEXT DEFAULT '',
+  color VARCHAR(7) NOT NULL DEFAULT '#000000',
+  createdAt DATETIME NOT NULL,
+  updatedAt DATETIME NOT NULL
 );
 ```
 
 #### **Players Table**
 ```sql
 CREATE TABLE players (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
-  role VARCHAR(50) NOT NULL,
-  base_price DECIMAL(10,2) NOT NULL,
-  sold BOOLEAN DEFAULT FALSE,
-  team_id UUID REFERENCES teams(id) ON DELETE SET NULL,
-  price DECIMAL(10,2),
-  nationality VARCHAR(100) DEFAULT 'India',
-  age INTEGER,
-  stats JSONB,
-  image_url VARCHAR(500),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  role TEXT NOT NULL,
+  basePrice DECIMAL(10,2) NOT NULL DEFAULT 0,
+  sold TINYINT(1) DEFAULT 0,
+  teamId TEXT REFERENCES teams(id) ON DELETE SET NULL,
+  price DECIMAL(10,2) DEFAULT NULL,
+  nationality VARCHAR(255) NOT NULL,
+  age INTEGER NOT NULL,
+  battingStyle VARCHAR(255) DEFAULT '',
+  bowlingStyle VARCHAR(255) DEFAULT '',
+  image TEXT DEFAULT '',
+  stats TEXT DEFAULT '{"matches":0,"runs":0,"wickets":0}',
+  createdAt DATETIME NOT NULL,
+  updatedAt DATETIME NOT NULL
 );
-```
-
-### Verify Database Setup
-
-```powershell
-# Connect to database
-psql -U postgres -d auction_portal
-
-# Check tables
-\dt
-
-# Check data
-SELECT * FROM users;
-SELECT * FROM teams;
-SELECT * FROM players LIMIT 5;
-
-# Exit
-\q
 ```
 
 ---
@@ -331,12 +323,22 @@ backend/
 │   └── teams.routes.js       # Team CRUD
 │
 ├── middleware/                # Express middleware
-│   └── authMiddleware.js     # JWT verification
+│   ├── authMiddleware.js     # JWT verification
+│   ├── rateLimiter.js        # Rate limiting
+│   └── validator.js          # Input validation
+│
+├── utils/                     # Utility functions
+│   └── logger.js             # Winston logger
+│
+├── logs/                      # Log files
+│   ├── error.log             # Error logs
+│   └── combined.log          # All logs
 │
 ├── docs/                      # Documentation
 │   └── BACKEND.md            # API reference
 │
-├── database.js                # PostgreSQL connection
+├── database.js                # SQLite connection
+├── database.sqlite            # SQLite database file (auto-created)
 ├── server.postgres.js         # Main server file
 ├── init-database.js           # DB initialization
 ├── .env                       # Environment variables
@@ -351,20 +353,22 @@ backend/
 
 ```javascript
 const { Sequelize } = require('sequelize');
+const path = require('path');
 require('dotenv').config();
 
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-  dialect: 'postgres',
-  logging: false, // Set to console.log to see SQL queries
-  pool: {
-    max: 10,
-    min: 0,
-    acquire: 30000,
-    idle: 10000,
+// SQLite configuration - no server needed!
+const sequelize = new Sequelize({
+  dialect: 'sqlite',
+  storage: path.join(__dirname, 'database.sqlite'),
+  logging: process.env.NODE_ENV === 'development' ? console.log : false,
+  
+  define: {
+    freezeTableName: false,
+    timestamps: true,
   },
 });
 
-module.exports = sequelize;
+module.exports = { sequelize };
 ```
 
 #### **server.postgres.js** - Main Server
@@ -374,7 +378,11 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
-const sequelize = require('./database');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const { connectDB } = require('./database');
+const logger = require('./utils/logger');
+const { apiLimiter } = require('./middleware/rateLimiter');
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
@@ -385,23 +393,32 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Security & Logging Middleware
+app.use(helmet());
+app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(morgan('combined', { stream: logger.stream }));
+app.use('/api/', apiLimiter);
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/players', playerRoutes);
 app.use('/api/teams', teamRoutes);
 
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ success: true, message: 'Server is running' });
+});
+
 // Socket.io connection
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+  console.log('✅ Client connected:', socket.id);
   // Socket event handlers here
 });
 
@@ -409,11 +426,10 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, async () => {
   try {
-    await sequelize.authenticate();
-    console.log('✅ PostgreSQL Connected successfully');
+    await connectDB();
     console.log(`🚀 Server running on port ${PORT}`);
   } catch (error) {
-    console.error('❌ Database connection error:', error);
+    console.error('❌ Server startup error:', error);
   }
 });
 ```

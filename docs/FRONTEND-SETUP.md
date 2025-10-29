@@ -2,6 +2,8 @@
 
 **Complete guide for setting up, developing, and deploying the React frontend**
 
+> **⚡ Quick Note:** The backend uses **SQLite** database (file-based, zero configuration). No database server installation needed! Just install dependencies and start coding.
+
 ---
 
 ## 📋 Table of Contents

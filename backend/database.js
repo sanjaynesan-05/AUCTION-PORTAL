@@ -1,26 +1,20 @@
 const { Sequelize } = require('sequelize');
+const path = require('path');
 require('dotenv').config();
 
 /**
- * Initialize Sequelize with PostgreSQL connection
+ * Initialize Sequelize with SQLite
+ * SQLite is a file-based database - no server installation needed!
  */
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-  dialect: 'postgres',
+const sequelize = new Sequelize({
+  dialect: 'sqlite',
+  storage: path.join(__dirname, 'database.sqlite'), // Database file location
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
-  pool: {
-    max: 10,
-    min: 0,
-    acquire: 30000,
-    idle: 10000,
-  },
-  dialectOptions: {
-    // Enable SSL for production (e.g., Heroku, AWS RDS)
-    ...(process.env.NODE_ENV === 'production' && {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false,
-      },
-    }),
+  
+  // SQLite-specific options
+  define: {
+    freezeTableName: false,
+    timestamps: true,
   },
 });
 
@@ -31,9 +25,8 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
 const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    console.log('✅ PostgreSQL Connected successfully');
-    console.log(`📊 Database: ${sequelize.config.database}`);
-    console.log(`🏠 Host: ${sequelize.config.host}:${sequelize.config.port}`);
+    console.log('✅ SQLite Database Connected!');
+    console.log(`📊 Database file: ${sequelize.options.storage}`);
 
     // Sync models with database (creates tables if they don't exist)
     if (process.env.NODE_ENV === 'development') {
@@ -41,25 +34,24 @@ const connectDB = async () => {
       console.log('📋 Database tables synchronized');
     }
   } catch (error) {
-    console.error('❌ PostgreSQL Connection Error:', error.message);
-    console.error('💡 Make sure PostgreSQL is running and credentials are correct');
+    console.error('❌ SQLite Connection Error:', error.message);
     process.exit(1);
   }
 };
 
 // Handle connection events
 sequelize.beforeConnect(() => {
-  console.log('🔄 Connecting to PostgreSQL...');
+  console.log('🔄 Connecting to SQLite database...');
 });
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
   try {
     await sequelize.close();
-    console.log('PostgreSQL connection closed through app termination');
+    console.log('SQLite connection closed through app termination');
     process.exit(0);
   } catch (error) {
-    console.error('Error closing PostgreSQL connection:', error);
+    console.error('Error closing SQLite connection:', error);
     process.exit(1);
   }
 });
