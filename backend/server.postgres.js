@@ -2,11 +2,15 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const { connectDB } = require('./database');
 const { Player, Team, sequelize } = require('./models');
+const logger = require('./utils/logger');
+const { apiLimiter } = require('./middleware/rateLimiter');
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
@@ -28,13 +32,27 @@ const io = socketIo(server, {
   },
 });
 
-// Middleware
+// Security Middleware
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable for development, enable in production
+  crossOriginEmbedderPolicy: false,
+}));
+
+// CORS Configuration
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true,
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Body Parser Middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// HTTP Request Logging
+app.use(morgan('combined', { stream: logger.stream }));
+
+// Rate Limiting
+app.use('/api/', apiLimiter);
 
 // Connect to PostgreSQL
 connectDB();

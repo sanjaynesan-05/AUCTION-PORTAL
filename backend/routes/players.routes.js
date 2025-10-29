@@ -1,6 +1,8 @@
 const express = require('express');
 const { Player, Team } = require('../models');
 const { authMiddleware, requireRole } = require('../middleware/authMiddleware');
+const { validatePlayer, validateUUID, validatePlayerQuery } = require('../middleware/validator');
+const { writeLimiter } = require('../middleware/rateLimiter');
 const { Op } = require('sequelize');
 
 const router = express.Router();
@@ -10,7 +12,7 @@ const router = express.Router();
  * @desc    Get all players with optional filtering
  * @access  Protected
  */
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, validatePlayerQuery, async (req, res) => {
   try {
     const { role, sold, teamId } = req.query;
 
@@ -52,7 +54,7 @@ router.get('/', authMiddleware, async (req, res) => {
  * @desc    Get single player by ID
  * @access  Protected
  */
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id', authMiddleware, validateUUID, async (req, res) => {
   try {
     const player = await Player.findByPk(req.params.id, {
       include: [
@@ -90,7 +92,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
  * @desc    Create a new player
  * @access  Protected (Admin only)
  */
-router.post('/', authMiddleware, requireRole('admin'), async (req, res) => {
+router.post('/', authMiddleware, requireRole('admin'), writeLimiter, validatePlayer, async (req, res) => {
   try {
     const player = await Player.create(req.body);
 
@@ -124,7 +126,7 @@ router.post('/', authMiddleware, requireRole('admin'), async (req, res) => {
  * @desc    Update player
  * @access  Protected (Admin only)
  */
-router.put('/:id', authMiddleware, requireRole('admin'), async (req, res) => {
+router.put('/:id', authMiddleware, requireRole('admin'), writeLimiter, validateUUID, validatePlayer, async (req, res) => {
   try {
     const player = await Player.findByPk(req.params.id);
 
@@ -167,7 +169,7 @@ router.put('/:id', authMiddleware, requireRole('admin'), async (req, res) => {
  * @desc    Delete player
  * @access  Protected (Admin only)
  */
-router.delete('/:id', authMiddleware, requireRole('admin'), async (req, res) => {
+router.delete('/:id', authMiddleware, requireRole('admin'), writeLimiter, validateUUID, async (req, res) => {
   try {
     const player = await Player.findByPk(req.params.id);
 

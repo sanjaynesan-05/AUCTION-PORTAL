@@ -1,6 +1,9 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
+const { authLimiter } = require('../middleware/rateLimiter');
+const { validateRegister, validateLogin } = require('../middleware/validator');
+const logger = require('../utils/logger');
 require('dotenv').config();
 
 const router = express.Router();
@@ -10,7 +13,7 @@ const router = express.Router();
  * @desc    Register a new user
  * @access  Public
  */
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, validateRegister, async (req, res) => {
   try {
     const { username, password, role } = req.body;
 
@@ -97,7 +100,7 @@ router.post('/register', async (req, res) => {
  * @desc    Login user and return JWT token
  * @access  Public
  */
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, validateLogin, async (req, res) => {
   try {
     const { username, password } = req.body;
 
