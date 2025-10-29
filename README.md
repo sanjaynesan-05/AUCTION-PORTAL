@@ -1,635 +1,471 @@
-# 🏏 IPL Auction Portal# 🏏 IPL Auction Portal 2025
+# 🏏 IPL Auction Portal 2025
 
+A professional, real-time cricket player auction portal built with React, TypeScript, and PostgreSQL. This comprehensive application provides an authentic IPL auction experience with role-based access control, real-time synchronization, and stunning modern UI design.
 
+## ✨ Features
 
-A comprehensive real-time auction management system for IPL cricket player auctions, built with React, TypeScript, and PostgreSQL.A professional, real-time cricket player auction portal built with React, TypeScript, and Vite. This comprehensive application provides an authentic IPL auction experience with role-based access control, real-time synchronization, and stunning modern UI design.
+### 🔐 Advanced Authentication System
+- **Tabbed Login Interface**: Modern Sign In and Quick Access tabs
+- **Role-Based Access**: Admin, Presenter, and Team Viewer accounts
+- **Secure Navigation**: Automatic role-based dashboard routing
+- **Quick Team Access**: Instant login for all 10 IPL teams
 
+### 🏆 Complete Auction Management
+- **Live Player Auctions**: Real-time bidding with professional controls
+- **Team Management**: Track all 10 IPL teams with authentic branding
+- **Player Database**: 20+ professional cricketers with detailed profiles
+- **Purse Tracking**: Dynamic budget management with visual indicators
+- **Auction Controls**: Start, pause, resume, navigate, and manage sales
 
+### 📡 Real-Time Synchronization
+- **Cross-Tab Communication**: Updates sync instantly across all browser tabs
+- **Local Storage Persistence**: Auction state maintained across sessions
+- **Live Updates**: Bid changes, player navigation sync in real-time
+- **Multi-User Support**: Simultaneous presenter and viewer experiences
 
-## 📁 Project Structure## ✨ Features
+### 📊 Enhanced Team Features
+- **Complete IPL Roster**: All 10 current IPL teams (CSK, MI, RCB, KKR, DC, RR, PBKS, SRH, GT, LSG)
+- **Official Branding**: Authentic team logos, colors, and styling
+- **Team Analytics**: Enhanced purse status with progress bars and statistics
+- **Player Tracking**: Individual team rosters with spending analysis
+- **Live Leaderboards**: Real-time team rankings and purse status
 
+### 🎨 Modern UI/UX Design
+- **Gradient Overlays**: Dynamic color schemes on login and team cards
+- **Smooth Animations**: CSS transitions and hover effects throughout
+- **Real-time Status Indicators**: Live auction status with pulsing animations
+- **Enhanced Team Cards**: Hover scaling, color theming, and progress bars
+- **Micro-interactions**: Button hover states, loading spinners, and visual feedback
+- **Mobile Responsive**: Optimized layouts for all screen sizes
 
+## 🛠️ Tech Stack
 
-```### 🔐 Advanced Authentication System
+### Frontend
+- **Framework**: React 18.3.1 with TypeScript 5.5.3
+- **Build Tool**: Vite 7.1.9 with fast HMR and optimized bundling
+- **Styling**: Tailwind CSS 3.4.1 with PostCSS and Autoprefixer
+- **State Management**: Zustand 5.0.8 with persistent real-time synchronization
+- **Routing**: React Router DOM 7.9.4 with role-based navigation
+- **Icons**: Lucide React 0.344.0 with 1000+ professional icons
+- **Real-Time**: Socket.io Client 4.6.0
 
-AUCTION-PORTAL/- **Tabbed Login Interface**: Modern Sign In and Quick Access tabs
+### Backend
+- **Runtime**: Node.js 16+ with Express 4.18.2
+- **Database**: PostgreSQL 15+ with Sequelize ORM 6.35.2
+- **Authentication**: JWT (jsonwebtoken 9.0.2) with bcryptjs 2.4.3
+- **Real-Time**: Socket.io 4.6.0 for WebSocket connections
+- **Environment**: dotenv 16.3.1 for configuration
+- **Security**: CORS enabled with helmet middleware
 
-├── frontend/                 # React + TypeScript + Vite frontend- **Role-Based Access**: Admin, Presenter, and Team Viewer accounts
+## 📁 Project Structure
 
-│   ├── src/- **Secure Navigation**: Automatic role-based dashboard routing
-
-│   │   ├── components/      # Reusable UI components- **Quick Team Access**: Instant login for all 10 IPL teams
-
+```
+AUCTION-PORTAL/
+├── frontend/                 # React + TypeScript + Vite frontend
+│   ├── src/
+│   │   ├── components/      # Reusable UI components
+│   │   │   └── common/      # Shared components (RoleGuard, etc.)
 │   │   ├── pages/          # Page components (Admin, Presenter, Viewer)
-
-│   │   ├── context/        # React context providers### 🏆 Complete Auction Management
-
-│   │   ├── store/          # Zustand state management- **Live Player Auctions**: Real-time bidding with professional controls
-
-│   │   ├── routes/         # React Router configuration- **Team Management**: Track all 10 IPL teams with authentic branding
-
-│   │   ├── data/           # Mock data and constants- **Player Database**: 20+ professional cricketers with detailed profiles
-
-│   │   ├── hooks/          # Custom React hooks- **Purse Tracking**: Dynamic budget management with visual indicators
-
-│   │   └── utils/          # Utility functions- **Auction Controls**: Start, pause, resume, navigate, and manage sales
-
+│   │   ├── context/        # React context providers (RoleContext)
+│   │   ├── store/          # Zustand state management
+│   │   ├── routes/         # React Router configuration
+│   │   └── data/           # Mock data and constants
 │   ├── public/             # Static assets
-
-│   ├── index.html          # Entry HTML file### 📡 Real-Time Synchronization
-
-│   ├── vite.config.ts      # Vite configuration- **Cross-Tab Communication**: Updates sync instantly across all browser tabs
-
-│   ├── tailwind.config.js  # Tailwind CSS configuration- **Local Storage Persistence**: Auction state maintained across sessions
-
-│   ├── tsconfig.json       # TypeScript configuration- **Live Updates**: Bid changes, player navigation sync in real-time
-
-│   └── package.json        # Frontend dependencies- **Multi-User Support**: Simultaneous presenter and viewer experiences
-
+│   ├── vite.config.ts      # Vite configuration
+│   ├── tailwind.config.js  # Tailwind CSS configuration
+│   ├── tsconfig.json       # TypeScript configuration
+│   └── package.json        # Frontend dependencies
 │
-
-├── backend/                 # Node.js + Express + PostgreSQL backend### 📊 Enhanced Team Features
-
-│   ├── models/             # Sequelize database models- **Complete IPL Roster**: All 10 current IPL teams (CSK, MI, RCB, KKR, DC, RR, PBKS, SRH, GT, LSG)
-
-│   │   ├── User.model.js   # User authentication model- **Official Branding**: Authentic team logos, colors, and styling
-
-│   │   ├── Player.model.js # Player data model- **Team Analytics**: Enhanced purse status with progress bars and statistics
-
-│   │   ├── Team.model.js   # Team data model- **Player Tracking**: Individual team rosters with spending analysis
-
-│   │   └── index.js        # Model associations- **Live Leaderboards**: Real-time team rankings and purse status
-
+├── backend/                 # Node.js + Express + PostgreSQL backend
+│   ├── models/             # Sequelize database models
+│   │   ├── User.model.js   # User authentication model
+│   │   ├── Player.model.js # Player data model
+│   │   ├── Team.model.js   # Team data model
+│   │   └── index.js        # Model associations
 │   ├── routes/             # Express API routes
-
-│   │   ├── auth.routes.js  # Authentication endpoints## 🛠️ Tech Stack
-
+│   │   ├── auth.routes.js  # Authentication endpoints
 │   │   ├── players.routes.js # Player CRUD operations
-
-│   │   └── teams.routes.js # Team CRUD operations- **Frontend**: React 18.3.1 with TypeScript 5.5.3
-
-│   ├── middleware/         # Express middleware- **Build Tool**: Vite 7.1.9 with fast HMR and optimized bundling
-
-│   │   └── authMiddleware.js # JWT authentication- **Styling**: Tailwind CSS 3.4.1 with PostCSS and Autoprefixer
-
-│   ├── docs/               # Backend documentation- **State Management**: Zustand 5.0.8 with persistent real-time synchronization
-
-│   │   └── BACKEND.md      # API documentation- **Cross-Tab Sync**: Custom localStorage-based sync with Custom Events API
-
-│   ├── database.js         # PostgreSQL connection (Sequelize)- **Routing**: React Router DOM 7.9.4 with role-based navigation
-
-│   ├── server.postgres.js  # Main server file with Socket.io- **Icons**: Lucide React 0.344.0 with 1000+ professional icons
-
-│   ├── init-database.js    # Database initialization script- **Database Ready**: Supabase 2.57.4 integration prepared
-
-│   ├── .env                # Environment variables- **Development**: ESLint 9.9.1, TypeScript ESLint 8.3.0, React Hooks linting
-
+│   │   └── teams.routes.js # Team CRUD operations
+│   ├── middleware/         # Express middleware
+│   │   └── authMiddleware.js # JWT authentication
+│   ├── docs/               # Backend documentation
+│   │   └── BACKEND.md      # Complete API reference
+│   ├── database.js         # PostgreSQL connection (Sequelize)
+│   ├── server.postgres.js  # Main server file with Socket.io
+│   ├── init-database.js    # Database initialization script
+│   ├── .env                # Environment variables
 │   └── package.json        # Backend dependencies
-
-│## 📁 Project Structure
-
+│
 ├── docs/                    # Project documentation
+│   ├── MASTER-GUIDE.md      # Complete project documentation
+│   ├── FRONTEND-SETUP.md    # Frontend setup and development guide
+│   └── BACKEND-SETUP.md     # Backend setup and API development guide
+│
+├── scripts/                 # Utility scripts
+│   ├── install-all.ps1      # Install dependencies for both frontend and backend
+│   ├── start-all.ps1        # Start both servers simultaneously
+│   ├── setup-postgresql.ps1 # PostgreSQL database setup automation
+│   └── test-backend.ps1     # Backend API testing script
+│
+├── .vscode/                 # VS Code configuration
+├── .gitignore               # Git ignore rules
+└── README.md                # This file
+```
 
-│   ├── POSTGRESQL-SETUP.md      # PostgreSQL setup guide```
+## 🚀 Quick Start
 
-│   ├── MIGRATION-SUMMARY.md     # MongoDB to PostgreSQL migrationAUCTION PORTAL/
+### Prerequisites
+- **Node.js** 16+ (18+ recommended)
+- **PostgreSQL** 15+ installed and running
+- **npm** or **yarn** package manager
 
-│   ├── QUICKSTART-POSTGRESQL.md # Quick start guide├── public/                     # Static assets and favicon
+### Option 1: Automated Setup (Recommended)
 
-│   └── SETUP.md                 # General setup instructions├── src/
+```powershell
+# Install all dependencies
+.\scripts\install-all.ps1
 
-││   ├── components/
+# Setup PostgreSQL database
+.\scripts\setup-postgresql.ps1
 
-├── scripts/                 # Utility scripts│   │   └── common/
-
-│   ├── install-all.ps1     # Install all dependencies│   │       └── RoleGuard.tsx   # Route protection & access control
-
-│   ├── start-all.ps1       # Start frontend and backend│   ├── context/
-
-│   ├── setup-postgresql.ps1 # PostgreSQL setup automation│   │   └── RoleContext.tsx     # Authentication state management
-
-│   └── test-backend.ps1    # Backend testing script│   ├── data/
-
-││   │   ├── mockPlayers.ts      # 20+ professional cricket players
-
-├── .gitignore              # Git ignore rules│   │   ├── mockTeams.ts        # All 10 IPL teams with official branding
-
-└── README.md               # This file│   │   └── mockUsers.ts        # Role-based user accounts
-
-```│   ├── hooks/
-
-│   │   └── useAuctionSync.ts   # Real-time auction synchronization
-
-## 🚀 Quick Start│   ├── pages/
-
-│   │   ├── AdminPanel.tsx      # Admin dashboard with player management
-
-### Prerequisites│   │   ├── EnhancedAdminPanel.tsx    # Enhanced admin interface
-
-│   │   ├── Login.tsx           # Modern tabbed authentication
-
-- **Node.js** (v16 or higher)│   │   ├── PresenterPanel.tsx  # Live auction presentation
-
-- **PostgreSQL** (v15 or higher) or Docker│   │   ├── EnhancedPresenterPanel.tsx # Enhanced presenter interface
-
-- **npm** or **yarn**│   │   ├── ViewerScreen.tsx    # Spectator auction view
-
-│   │   ├── EnhancedViewerScreen.tsx  # Enhanced viewer interface
-
-### Option 1: Automated Setup (Recommended)│   │   └── Unauthorized.tsx    # Access denied page
-
-│   ├── routes/
-
-```powershell│   │   └── AppRoutes.tsx       # Role-based routing configuration
-
-# 1. Clone the repository│   ├── store/
-
-git clone <repository-url>│   │   └── useAuctionStore.ts  # Zustand state management
-
-cd AUCTION-PORTAL│   ├── App.tsx                 # Main application wrapper
-
-│   ├── index.css              # Global styles & animations
-
-# 2. Run the automated installation script│   ├── main.tsx               # Application entry point
-
-.\scripts\install-all.ps1│   └── vite-env.d.ts          # Vite environment types
-
-├── index.html                  # HTML template
-
-# 3. Setup PostgreSQL database├── package.json               # Dependencies & scripts
-
-.\setup-postgresql.ps1├── tailwind.config.js         # Tailwind CSS configuration
-
-├── postcss.config.js          # PostCSS configuration
-
-# 4. Start the application├── vite.config.ts             # Vite build configuration
-
-.\scripts\start-all.ps1├── tsconfig.json              # TypeScript configuration
-
-```├── tsconfig.app.json          # App-specific TypeScript config
-
-├── tsconfig.node.json         # Node-specific TypeScript config
-
-The application will be available at:└── eslint.config.js           # ESLint configuration
-
-- **Frontend:** http://localhost:5173```
-
-- **Backend API:** http://localhost:5000
-
-## 🚀 Getting Started
+# Start both frontend and backend
+.\scripts\start-all.ps1
+```
 
 ### Option 2: Manual Setup
 
-### Prerequisites
-
-#### Backend Setup- Node.js 18+ 
-
-- npm or yarn package manager
-
-```powershell
-
-# 1. Navigate to backend directory### Installation
-
-cd backend
-
-1. **Clone the repository**
-
-# 2. Install dependencies   ```bash
-
-npm install   git clone <repository-url>
-
-   cd AUCTION\ PORTAL
-
-# 3. Create .env file   ```
-
-# Copy .env.example to .env and configure:
-
-# DATABASE_URL=postgresql://postgres:password@localhost:5432/auction_portal2. **Install dependencies**
-
-# JWT_SECRET=your_secret_key   ```bash
-
-# PORT=5000   npm install
-
-   ```
-
-# 4. Initialize database (creates tables and seeds data)
-
-npm run init-db3. **Start development server**
-
-   ```bash
-
-# 5. Start backend server   npm run dev
-
-npm start   ```
-
-# or for development with auto-reload:
-
-npm run dev4. **Open in browser**
-
-```   Navigate to `http://localhost:5173`
-
-
-
-#### Frontend Setup### Available Scripts
-
-
-
-```powershell- `npm run dev` - Start Vite development server with HMR at `http://localhost:5173`
-
-# 1. Navigate to frontend directory (from root)- `npm run build` - Build optimized production bundle in `dist/`
-
-cd frontend- `npm run preview` - Preview production build locally
-
-- `npm run lint` - Run ESLint with TypeScript and React rules
-
-# 2. Install dependencies- `npm run typecheck` - Run TypeScript compiler type checking
-
-npm install
-
-## 🔑 Authentication & User Roles
-
-# 3. Start development server
-
-npm run dev### 🎯 Login Methods
-
-# or- **Traditional Login**: Username/password authentication
-
-npm start- **Quick Access**: One-click role-based login buttons
-
-```- **Team Viewers**: Instant access for all 10 IPL team accounts
-
-
-
-### Option 3: Docker Setup### 👑 Admin Access
-
-- **Credentials**: `admin` / `admin123`
-
-```powershell- **Features**: Complete auction management, player administration, team controls
-
-# 1. Start PostgreSQL container- **Dashboard**: `/admin` - Full system oversight and configuration
-
-docker run --name auction-postgres `
-
-  -e POSTGRES_PASSWORD=password `### 🎙️ Presenter Access  
-
-  -e POSTGRES_DB=auction_portal `- **Credentials**: `presenter` / `presenter123`
-
-  -p 5432:5432 -d postgres:15- **Features**: Live auction presentation, bid management, player navigation
-
-- **Dashboard**: `/presenter` - Professional auction control interface
-
-# 2. Follow manual setup steps for backend and frontend
-
-```### 👥 Team Viewer Access
-
-**All 10 IPL Teams Available:**
-
-## 👤 Default Credentials- **CSK**: `csk_viewer` / `csk@2024`
-
-- **MI**: `mi_viewer` / `mi@2024` 
-
-After running `npm run init-db`, you can login with:- **RCB**: `rcb_viewer` / `rcb@2024`
-
-- **KKR**: `kkr_viewer` / `kkr@2024`
-
-- **Username:** `admin`- **DC**: `dc_viewer` / `dc@2024`
-
-- **Password:** `admin123`- **RR**: `rr_viewer` / `rr@2024`
-
-- **Role:** Admin (full access)- **PBKS**: `pbks_viewer` / `pbks@2024`
-
-- **SRH**: `srh_viewer` / `srh@2024`
-
-## 🎯 Features- **GT**: `gt_viewer` / `gt@2024`
-
-- **LSG**: `lsg_viewer` / `lsg@2024`
-
-### Admin Panel
-
-- ✅ User management (create, edit, delete users)**Features**: Real-time auction viewing, team-specific dashboards, bid tracking
-
-- ✅ Player management (add, edit, delete players)
-
-- ✅ Team management (create, manage teams)## 📱 Pages Overview
-
-- ✅ Auction control (start, pause, reset)
-
-- ✅ Real-time auction monitoring| Page | Route | Access | Description |
-
-|------|-------|--------|-------------|
-
-### Presenter Panel| Login | `/login` | Public | Authentication portal |
-
-- ✅ Live auction control| Admin Panel | `/admin` | Admin only | Complete auction management |
-
-- ✅ Player bidding interface| Presenter Panel | `/presenter` | Presenter only | Live auction presentation |
-
-- ✅ Mark players as sold/unsold| Viewer Screen | `/viewer` | Viewer only | Spectator interface |
-
-- ✅ Real-time team purse tracking| Unauthorized | `/unauthorized` | All | Access denied page |
-
-- ✅ Player details display
-
-## 🎯 Key Components
-
-### Viewer Screen
-
-- ✅ Live auction updates### AuctionStore (Zustand)
-
-- ✅ Current player on auction- **State Management**: Centralized auction state
-
-- ✅ Team purse display- **Real-time Updates**: Live bid tracking and player status
-
-- ✅ Sold players list- **Persistence**: Maintains auction state across components
-
-- ✅ TV broadcast-style interface
-
-### RoleGuard
-
-### Technical Features- **Route Protection**: Enforces role-based access
-
-- ✅ Real-time updates using Socket.io- **Authentication**: Validates user permissions
-
-- ✅ JWT-based authentication- **Redirection**: Automatic routing based on roles
-
-- ✅ Role-based access control (Admin, Presenter, Viewer)
-
-- ✅ PostgreSQL database with Sequelize ORM### Mock Data
-
-- ✅ Responsive design with Tailwind CSS- **Players**: 20+ professional cricket players with authentic profiles and statistics
-
-- ✅ Type-safe with TypeScript- **Teams**: Complete 10 IPL teams with official logos, colors, and branding
-
-- **Users**: Comprehensive role-based authentication system with team-specific accounts
-
-## 🛠️ Technology Stack
-
-## 🔧 Configuration
-
-### Frontend
-
-- **React 18** - UI library### Environment Setup
-
-- **TypeScript** - Type safetyThe application is configured for easy deployment with:
-
-- **Vite** - Build tool- Vite configuration optimized for React
-
-- **Tailwind CSS** - Styling- Tailwind CSS with PostCSS processing
-
-- **Zustand** - State management- TypeScript strict mode enabled
-
-- **React Router** - Routing- ESLint with React and TypeScript rules
-
-- **Framer Motion** - Animations
-
-- **Lucide React** - Icons### Database Integration
-
-- **Socket.io Client** - Real-time communication- Supabase client configured and ready
-
-- Mock data can be easily migrated to live database
-
-### Backend- Authentication system prepared for Supabase integration
-
-- **Node.js** - Runtime
-
-- **Express.js** - Web framework## 🎨 UI/UX Features
-
-- **PostgreSQL** - Database
-
-- **Sequelize** - ORM### 🎯 Modern Design System
-
-- **Socket.io** - Real-time bidirectional communication- **Professional IPL Branding**: Authentic team colors, official logos, and styling
-
-- **JWT** - Authentication- **Glassmorphism Effects**: Premium backdrop blur and transparency layers
-
-- **bcrypt** - Password hashing- **Gradient Overlays**: Dynamic color schemes matching team identities
-
-- **CORS** - Cross-origin resource sharing- **Responsive Grid Layouts**: Mobile-first design with Tailwind breakpoints
-
-
-
-## 📚 Documentation### ⚡ Interactive Elements
-
-- **Smooth Animations**: CSS transitions and hover effects throughout
-
-- **[Backend API Documentation](./backend/docs/BACKEND.md)** - Complete API reference- **Real-time Status Indicators**: Live auction status with pulsing animations
-
-- **[PostgreSQL Setup Guide](./docs/POSTGRESQL-SETUP.md)** - Detailed database setup- **Enhanced Team Cards**: Hover scaling, color theming, and progress bars
-
-- **[Quick Start Guide](./docs/QUICKSTART-POSTGRESQL.md)** - 5-minute setup- **Tabbed Navigation**: Modern login interface with Sign In and Quick Access
-
-- **[Migration Summary](./docs/MIGRATION-SUMMARY.md)** - MongoDB to PostgreSQL migration- **Micro-interactions**: Button hover states, loading spinners, and visual feedback
-
-
-
-## 🔧 Development### 📱 Enhanced Responsiveness
-
-- **Mobile Navigation**: Touch-friendly elements and optimized layouts
-
-### Backend Development- **Tablet Optimization**: Grid adjustments for medium screen sizes  
-
-- **Desktop Experience**: Full-featured interface with advanced controls
-
-```powershell- **Cross-browser Support**: Tested across modern browsers with consistent styling
-
-cd backend
-
-npm run dev  # Starts server with nodemon (auto-reload)### 🎯 Accessibility & Performance
-
-```- **Semantic HTML**: Proper heading hierarchy and ARIA attributes
-
-- **Keyboard Navigation**: Full keyboard accessibility support
-
-### Frontend Development- **High Contrast**: Professional dark theme with optimal color ratios
-
-- **Fast Loading**: Optimized assets and efficient component rendering
-
-```powershell
-
-cd frontend## 🚀 Deployment
-
-npm run dev  # Starts Vite dev server with HMR
-
-```### Build for Production
+#### 1. Backend Setup
 
 ```bash
+# Navigate to backend
+cd backend
 
-### Building for Productionnpm run build
+# Install dependencies
+npm install
 
+# Configure environment variables
+# Create .env file with:
+# DB_NAME=auction_db
+# DB_USER=postgres
+# DB_PASSWORD=your_password
+# DB_HOST=localhost
+# DB_PORT=5432
+# JWT_SECRET=your_jwt_secret_key
+# PORT=5000
+
+# Initialize database
+node init-database.js
+
+# Start backend server
+npm start
 ```
 
-```powershell
+Backend will run on: http://localhost:5000
 
-# Build frontend### Preview Production Build
+#### 2. Frontend Setup
 
-cd frontend```bash
+```bash
+# Navigate to frontend (in new terminal)
+cd frontend
 
-npm run buildnpm run preview
+# Install dependencies
+npm install
 
+# Start development server
+npm run dev
 ```
 
-# Build creates optimized files in frontend/dist/
+Frontend will run on: http://localhost:5173
 
-# Serve with any static file server or configure backend to serve themThe built files will be in the `dist/` directory, ready for deployment to any static hosting service.
+### Default Login Credentials
 
+#### Admin Account
+- **Email**: `admin@auction.com`
+- **Password**: `admin123`
+
+#### Presenter Account
+- **Email**: `presenter@auction.com`
+- **Password**: `presenter123`
+
+#### Team Viewer Accounts (Quick Access)
+All teams use password: `team123`
+- Chennai Super Kings (CSK)
+- Mumbai Indians (MI)
+- Royal Challengers Bangalore (RCB)
+- Kolkata Knight Riders (KKR)
+- Delhi Capitals (DC)
+- Rajasthan Royals (RR)
+- Punjab Kings (PBKS)
+- Sunrisers Hyderabad (SRH)
+- Gujarat Titans (GT)
+- Lucknow Super Giants (LSG)
+
+## 📚 Documentation
+
+### Main Guides
+- **[Master Guide](./docs/MASTER-GUIDE.md)** - Complete project documentation, architecture, and deployment
+- **[Frontend Setup Guide](./docs/FRONTEND-SETUP.md)** - React + TypeScript + Vite frontend setup and development
+- **[Backend Setup Guide](./docs/BACKEND-SETUP.md)** - Node.js + Express + PostgreSQL backend setup and API development
+
+### Additional Documentation
+- **[Backend API Reference](./backend/docs/BACKEND.md)** - Complete API endpoint documentation
+
+## 🔧 Development
+
+### Frontend Development
+
+```bash
+cd frontend
+
+# Start development server with HMR
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Lint code
+npm run lint
 ```
 
-## 🤝 Contributing
+### Backend Development
 
-## 🧪 Testing
+```bash
+cd backend
 
-1. Fork the repository
+# Start server with nodemon (auto-reload)
+npm run dev
 
-```powershell2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+# Start production server
+npm start
 
-# Test backend API3. Commit your changes (`git commit -m 'Add amazing feature'`)
+# Initialize/reset database
+node init-database.js
 
-cd backend4. Push to the branch (`git push origin feature/amazing-feature`)
+# Test API endpoints
+npm test
+```
 
-npm test5. Open a Pull Request
+### Available Scripts
 
+**Frontend:**
+- `npm run dev` - Start Vite dev server with HMR
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
 
+**Backend:**
+- `npm start` - Start Express server
+- `npm run dev` - Start with nodemon (development)
+- `npm test` - Run API tests
 
-# Test backend endpoints## 📄 License
+**PowerShell Scripts:**
+- `.\scripts\install-all.ps1` - Install all dependencies
+- `.\scripts\start-all.ps1` - Start both servers
+- `.\scripts\setup-postgresql.ps1` - Setup PostgreSQL
+- `.\scripts\test-backend.ps1` - Test backend API
 
-.\scripts\test-backend.ps1
+## 🗄️ Database Schema
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+### Users Table
+```sql
+CREATE TABLE Users (
+  id UUID PRIMARY KEY,
+  username VARCHAR(255) UNIQUE NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  role ENUM('admin', 'presenter', 'team') NOT NULL,
+  teamId UUID REFERENCES Teams(id),
+  createdAt TIMESTAMP,
+  updatedAt TIMESTAMP
+);
+```
 
-# Type checking (frontend)
+### Teams Table
+```sql
+CREATE TABLE Teams (
+  id UUID PRIMARY KEY,
+  name VARCHAR(255) UNIQUE NOT NULL,
+  shortName VARCHAR(10) UNIQUE NOT NULL,
+  logo VARCHAR(500),
+  primaryColor VARCHAR(7),
+  secondaryColor VARCHAR(7),
+  totalPurse DECIMAL(10,2) DEFAULT 100.00,
+  remainingPurse DECIMAL(10,2) DEFAULT 100.00,
+  createdAt TIMESTAMP,
+  updatedAt TIMESTAMP
+);
+```
 
-cd frontend## 🔮 Roadmap & Future Enhancements
+### Players Table
+```sql
+CREATE TABLE Players (
+  id UUID PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  role ENUM('Batsman', 'Bowler', 'All-Rounder', 'Wicket-Keeper') NOT NULL,
+  basePrice DECIMAL(10,2) NOT NULL,
+  nationality VARCHAR(100),
+  imageUrl VARCHAR(500),
+  stats JSONB,
+  teamId UUID REFERENCES Teams(id),
+  soldPrice DECIMAL(10,2),
+  status ENUM('available', 'sold', 'unsold') DEFAULT 'available',
+  createdAt TIMESTAMP,
+  updatedAt TIMESTAMP
+);
+```
 
-npm run typecheck
+## 🌐 API Endpoints
 
-```### ✅ Completed Features
+### Authentication
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login user
 
-- [x] **Real-time Cross-Tab Synchronization**: Implemented with localStorage and Custom Events
+### Players
+- `GET /api/players` - Get all players
+- `GET /api/players/:id` - Get player by ID
+- `POST /api/players` - Create new player (Admin only)
+- `PUT /api/players/:id` - Update player (Admin only)
+- `DELETE /api/players/:id` - Delete player (Admin only)
 
-## 📦 Available Scripts- [x] **Complete IPL Team Integration**: All 10 teams with official branding
+### Teams
+- `GET /api/teams` - Get all teams
+- `GET /api/teams/:id` - Get team by ID
+- `POST /api/teams` - Create new team (Admin only)
+- `PUT /api/teams/:id` - Update team (Admin only)
+- `DELETE /api/teams/:id` - Delete team (Admin only)
 
-- [x] **Professional UI Redesign**: Modern glassmorphism effects and animations  
+For complete API documentation, see [Backend API Documentation](./backend/docs/BACKEND.md)
 
-### Backend Scripts- [x] **Enhanced Authentication**: Tabbed login with quick access for all roles
+## 🚀 Deployment
 
-- `npm start` - Start production server- [x] **Advanced Team Analytics**: Interactive purse tracking with progress indicators
+### Frontend Deployment (Vercel/Netlify)
 
-- `npm run dev` - Start development server with auto-reload- [x] **Mobile Responsive Design**: Touch-friendly interface across all devices
+```bash
+cd frontend
+npm run build
+# Deploy the 'dist' folder
+```
 
-- `npm run init-db` - Initialize database and seed data- [x] **Enhanced Presenter Panel**: Professional auction management interface
+**Vercel:**
+```bash
+npm install -g vercel
+vercel --prod
+```
 
+**Netlify:**
+```bash
+npm install -g netlify-cli
+netlify deploy --prod --dir=dist
+```
 
+### Backend Deployment (Heroku/Railway)
 
-### Frontend Scripts### 🚀 Planned Improvements
+**Heroku:**
+```bash
+cd backend
+heroku create auction-portal-api
+heroku addons:create heroku-postgresql:hobby-dev
+git push heroku main
+```
 
-- `npm start` or `npm run dev` - Start development server- [ ] **WebSocket Integration**: Server-based real-time communication for multi-user sessions
+**Railway:**
+```bash
+# Connect GitHub repository to Railway
+# Add PostgreSQL database plugin
+# Configure environment variables
+# Deploy automatically on push
+```
 
-- `npm run build` - Build for production- [ ] **Advanced Analytics Dashboard**: Comprehensive auction statistics and performance metrics
-
-- `npm run preview` - Preview production build- [ ] **Player Performance API**: Integration with live cricket statistics and rankings
-
-- `npm run lint` - Run ESLint- [ ] **Auction History**: Complete transaction logs and historical data analysis
-
-- `npm run typecheck` - Check TypeScript types- [ ] **Advanced Bidding Features**: Automated bidding strategies and AI predictions
-
-- [ ] **Video Integration**: Live streaming capabilities during auction sessions
-
-## 🔒 Environment Variables- [ ] **Mobile Applications**: Native iOS and Android apps with push notifications
-
-- [ ] **Multi-Language Support**: Internationalization for global cricket audiences
-
-### Backend (.env)
-
-```env### 🎯 Technical Enhancements
-
-DATABASE_URL=postgresql://postgres:password@localhost:5432/auction_portal- [ ] **Database Integration**: Full Supabase backend with real-time subscriptions
-
-JWT_SECRET=your_super_secret_jwt_key_change_this_in_production- [ ] **Authentication Upgrade**: OAuth integration with Google, Facebook, Twitter
-
-PORT=5000- [ ] **Advanced Caching**: Redis integration for improved performance
-
-NODE_ENV=development- [ ] **Testing Suite**: Comprehensive unit, integration, and E2E testing
-
-```- [ ] **CI/CD Pipeline**: Automated testing and deployment workflows
-
-- [ ] **Performance Monitoring**: Real-time analytics and error tracking
+For detailed deployment instructions, see [Master Guide - Deployment](./docs/MASTER-GUIDE.md#-deployment-guide)
 
 ## 🐛 Troubleshooting
 
-## 📊 Project Statistics
+### Frontend Issues
 
-### PostgreSQL Connection Issues
-
-```powershell- **Total Files**: 30+ TypeScript/React components
-
-# Check if PostgreSQL is running- **Team Coverage**: All 10 current IPL teams with authentic branding
-
-Get-Service postgresql*- **Player Database**: 20+ professional cricketers with detailed profiles  
-
-- **Authentication**: 13 pre-configured user accounts across all roles
-
-# Start PostgreSQL service- **UI Components**: 15+ page layouts with modern design system
-
-Start-Service postgresql-x64-15- **Real-time Features**: Cross-tab synchronization and live auction updates
-
+**Issue**: `Cannot find module 'vite'`
+```bash
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
 ```
 
-## 🌟 Key Highlights
-
-### Port Already in Use
-
-```powershell- **Professional Grade**: Enterprise-level React application architecture
-
-# Check what's using port 5000 (backend)- **IPL Official**: Authentic team logos, colors, and branding throughout
-
-netstat -ano | findstr :5000- **Real-time Sync**: Advanced cross-tab communication without server dependency
-
-- **Mobile Ready**: Fully responsive design tested on all device sizes
-
-# Check what's using port 5173 (frontend)- **Type Safe**: Complete TypeScript implementation with strict type checking
-
-netstat -ano | findstr :5173- **Performance Optimized**: Vite build system with fast HMR and efficient bundling
-
+**Issue**: Port 5173 already in use
+```bash
+# Kill the process using port 5173
+npx kill-port 5173
+npm run dev
 ```
 
----
+### Backend Issues
 
-### Module Not Found Errors
+**Issue**: Database connection failed
+```bash
+# Check PostgreSQL is running
+psql -U postgres -c "SELECT version();"
 
-```powershell**Built with ❤️ for cricket auction enthusiasts | IPL Auction Portal 2025**
-# Reinstall dependencies
+# Verify .env configuration
+cat backend/.env
+
+# Reinitialize database
 cd backend
-Remove-Item node_modules -Recurse -Force
-npm install
-
-cd ../frontend
-Remove-Item node_modules -Recurse -Force
-npm install
+node init-database.js
 ```
+
+**Issue**: `Port 5000 is already in use`
+```bash
+# Change PORT in backend/.env or kill process
+npx kill-port 5000
+npm start
+```
+
+For more troubleshooting solutions, see [Master Guide - Troubleshooting](./docs/MASTER-GUIDE.md#-troubleshooting)
 
 ## 🤝 Contributing
 
+Contributions are welcome! Please follow these steps:
+
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
 
-## 📄 License
+### Development Guidelines
+- Follow TypeScript and ESLint conventions
+- Write meaningful commit messages
+- Add comments for complex logic
+- Update documentation for new features
+- Test thoroughly before submitting PR
 
-This project is licensed under the MIT License.
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 👥 Authors
 
-- **Sanjay Nesan** - Initial work
+**IPL Auction Portal Team**
+- Frontend: React + TypeScript + Vite
+- Backend: Node.js + Express + PostgreSQL
+- Real-Time: Socket.io + LocalStorage Sync
 
 ## 🙏 Acknowledgments
 
-- React and Vite communities
-- Socket.io documentation
-- PostgreSQL and Sequelize teams
-- Tailwind CSS framework
+- IPL teams for branding inspiration
+- Lucide React for beautiful icons
+- Tailwind CSS for utility-first styling
+- Socket.io for real-time communication
+- PostgreSQL for reliable data storage
+
+## 📞 Support
+
+For issues, questions, or suggestions:
+- Create an issue in the GitHub repository
+- Check the [Troubleshooting Guide](./docs/MASTER-GUIDE.md#-troubleshooting)
+- Review the [Documentation](./docs/MASTER-GUIDE.md)
 
 ---
 
-**Made with ❤️ for IPL Auction Management**
+**Built with ❤️ for cricket fans and auction enthusiasts**
