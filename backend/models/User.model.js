@@ -53,6 +53,17 @@ const User = sequelize.define(
         },
       },
     },
+    teamId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      defaultValue: null,
+      references: {
+        model: 'teams',
+        key: 'id',
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'SET NULL',
+    },
   },
   {
     tableName: 'users',

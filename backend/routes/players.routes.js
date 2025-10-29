@@ -10,7 +10,7 @@ const router = express.Router();
 /**
  * @route   GET /api/players
  * @desc    Get all players with optional filtering
- * @access  Protected
+ * @access  Protected (Viewers see only their team's players)
  */
 router.get('/', authMiddleware, validatePlayerQuery, async (req, res) => {
   try {
@@ -22,13 +22,26 @@ router.get('/', authMiddleware, validatePlayerQuery, async (req, res) => {
     if (sold !== undefined) where.sold = sold === 'true';
     if (teamId) where.teamId = teamId;
 
+    // 🔒 VIEWER RESTRICTION: Only see their own team's players
+    if (req.user.role === 'viewer') {
+      if (!req.user.teamId) {
+        return res.status(403).json({
+          success: false,
+          message: 'You are not assigned to any team. Please contact admin.',
+        });
+      }
+      // Force filter to viewer's team only
+      where.teamId = req.user.teamId;
+      where.sold = true; // Only show sold players (players they bought)
+    }
+
     const players = await Player.findAll({
       where,
       include: [
         {
           model: Team,
           as: 'team',
-          attributes: ['id', 'name', 'shortName', 'color'],
+          attributes: ['id', 'name', 'shortName', 'color', 'logo'],
         },
       ],
       order: [['name', 'ASC']],
@@ -38,6 +51,7 @@ router.get('/', authMiddleware, validatePlayerQuery, async (req, res) => {
       success: true,
       count: players.length,
       data: players,
+      teamRestricted: req.user.role === 'viewer', // Let frontend know it's filtered
     });
   } catch (error) {
     console.error('Get players error:', error);

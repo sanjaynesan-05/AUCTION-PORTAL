@@ -85,9 +85,9 @@ npm --version
 
 ### Optional Tools
 
-- **pgAdmin** - GUI for PostgreSQL management
-- **Postman** - API testing tool
-- **DBeaver** - Universal database tool
+- **DB Browser for SQLite** - GUI for SQLite database viewing ([Download](https://sqlitebrowser.org/))
+- **Postman** - API testing tool ([Download](https://www.postman.com/))
+- **DBeaver** - Universal database tool (supports SQLite & PostgreSQL)
 
 ---
 
@@ -1200,54 +1200,62 @@ npm start
 # 1. Make code changes
 # 2. Nodemon automatically restarts server
 # 3. Test with Postman or frontend
-# 4. Check logs in terminal
+# 4. Check logs in terminal or backend/logs/
 ```
 
 ### Environment Variables
 
 ```env
 # .env file
-DATABASE_URL=postgresql://postgres:password@localhost:5432/auction_portal
-JWT_SECRET=your_secret_key
+DB_TYPE=sqlite
+JWT_SECRET=your_secret_key_change_in_production
 PORT=5000
 NODE_ENV=development
-CORS_ORIGIN=http://localhost:5173
+CLIENT_URL=http://localhost:5173
+LOG_LEVEL=info
 ```
+
+> **💡 Tip:** For production with PostgreSQL, add `DB_TYPE=postgres` and `DATABASE_URL=postgresql://user:pass@host:5432/dbname`
 
 ### Logging
 
-```javascript
-// Enable SQL logging in database.js
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-  dialect: 'postgres',
-  logging: console.log, // Enable to see SQL queries
-});
+The backend now includes two types of logging:
 
-// Add custom logging
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
-  next();
-});
+**1. Winston Logger (Structured Logs)**
+```javascript
+// backend/utils/logger.js
+// Logs to files: backend/logs/error.log and backend/logs/combined.log
+// Automatically rotates files at 5MB
+```
+
+**2. Morgan Logger (HTTP Requests)**
+```javascript
+// HTTP request logs in development
+// Example: GET /api/players 200 25ms
 ```
 
 ### Database Operations
 
+**SQLite Commands:**
 ```powershell
 # Reset database
 npm run init-db
 
-# Check database connection
-psql -U postgres -d auction_portal
+# View database with SQLite CLI
+sqlite3 backend/database.sqlite
 
-# View all users
-SELECT * FROM users;
+# Inside SQLite CLI:
+.tables                          # Show all tables
+SELECT * FROM users;             # View all users
+SELECT * FROM players;           # View all players
+SELECT * FROM teams;             # View all teams
 
-# View all players with teams
-SELECT p.name, p.role, t.name as team 
+# View players with teams (JOIN)
+SELECT p.name, p.role, p.base_price, t.name as team 
 FROM players p 
-LEFT JOIN teams t ON p.team_id = t.id;
+LEFT JOIN teams t ON p."teamId" = t.id;
 
-# Check purse remaining
+# Check team purses
 SELECT name, purse FROM teams ORDER BY purse DESC;
 ```
 
@@ -1314,12 +1322,13 @@ heroku login
 # Create app
 heroku create auction-portal-api
 
-# Add PostgreSQL
+# Optional: Add PostgreSQL for high-traffic production
 heroku addons:create heroku-postgresql:hobby-dev
 
 # Set environment variables
 heroku config:set JWT_SECRET=your_production_secret
 heroku config:set NODE_ENV=production
+heroku config:set DB_TYPE=sqlite    # or postgres if using PostgreSQL addon
 
 # Deploy
 git push heroku main
@@ -1331,13 +1340,15 @@ heroku run npm run init-db
 heroku logs --tail
 ```
 
+> **💡 Note:** SQLite works great on Heroku for small to medium traffic. For high-traffic applications, add PostgreSQL addon.
+
 ### Deploy to Railway
 
 ```bash
 # Connect GitHub repo
 # Railway auto-detects Node.js
-# Add PostgreSQL plugin in Railway dashboard
-# Set environment variables
+# Optional: Add PostgreSQL plugin for production scale
+# Set environment variables in Railway dashboard
 # Railway auto-deploys on push
 ```
 
@@ -1345,7 +1356,7 @@ heroku logs --tail
 
 ```bash
 # 1. Launch EC2 instance
-# 2. Install Node.js and PostgreSQL
+# 2. Install Node.js
 # 3. Clone repository
 # 4. Install dependencies
 npm install
@@ -1367,16 +1378,40 @@ pm2 save
 
 ### Production Environment Variables
 
+**For SQLite (Simple Production):**
 ```env
-DATABASE_URL=postgresql://user:pass@host:port/dbname
-JWT_SECRET=use_strong_secret_here
+DB_TYPE=sqlite
+JWT_SECRET=use_strong_secret_here_min_32_chars
 PORT=5000
 NODE_ENV=production
-CORS_ORIGIN=https://your-frontend-domain.com
+CLIENT_URL=https://your-frontend-domain.com
+LOG_LEVEL=warn
+```
+
+**For PostgreSQL (High-Traffic Production):**
+```env
+DB_TYPE=postgres
+DATABASE_URL=postgresql://user:pass@host:port/dbname
+JWT_SECRET=use_strong_secret_here_min_32_chars
+PORT=5000
+NODE_ENV=production
+CLIENT_URL=https://your-frontend-domain.com
+LOG_LEVEL=warn
 ```
 
 ### Database Backup
 
+**SQLite (Simple):**
+```bash
+# Backup - just copy the file
+cp backend/database.sqlite backup-$(date +%Y%m%d).sqlite
+
+# Restore
+cp backup-YYYYMMDD.sqlite backend/database.sqlite
+npm start
+```
+
+**PostgreSQL (If using in production):**
 ```bash
 # Backup
 pg_dump -U postgres -d auction_portal > backup.sql
@@ -1389,8 +1424,21 @@ psql -U postgres -d auction_portal < backup.sql
 
 ## 🐛 Troubleshooting
 
-### Issue: Cannot connect to PostgreSQL
+### Issue: Cannot connect to database
 
+**For SQLite:**
+```powershell
+# Ensure database file exists
+ls backend/database.sqlite
+
+# If missing, reinitialize
+cd backend
+npm run init-db
+
+# Check file permissions (should be readable/writable)
+```
+
+**For PostgreSQL (if using in production):**
 ```powershell
 # Check if service is running
 Get-Service postgresql*
@@ -1435,10 +1483,12 @@ app.use(cors());
 ### Issue: Sequelize sync errors
 
 ```powershell
-# Drop all tables and recreate
+# SQLite: Drop database and recreate
+cd backend
+rm database.sqlite
 npm run init-db
 
-# Or manually
+# PostgreSQL (if using): Drop and recreate schema
 psql -U postgres -d auction_portal
 DROP SCHEMA public CASCADE;
 CREATE SCHEMA public;
@@ -1460,16 +1510,38 @@ taskkill /PID <PID> /F
 # Change PORT in .env
 ```
 
+### Issue: Database locked (SQLite)
+
+```powershell
+# Close all connections to database
+# Stop backend server
+# Delete lock files
+cd backend
+rm database.sqlite-shm database.sqlite-wal
+
+# Restart server
+npm start
+```
+
 ---
 
 ## 📚 Additional Resources
 
+### Documentation
 - [Express.js Documentation](https://expressjs.com/)
 - [Sequelize Documentation](https://sequelize.org/)
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [SQLite Documentation](https://www.sqlite.org/docs.html)
 - [Socket.io Documentation](https://socket.io/docs/)
 - [JWT Documentation](https://jwt.io/)
+
+### Tools
+- [DB Browser for SQLite](https://sqlitebrowser.org/) - GUI for SQLite
+- [Postman](https://www.postman.com/) - API testing
+- [Winston Logger](https://github.com/winstonjs/winston) - Logging
+
+### Best Practices
 - [Node.js Best Practices](https://github.com/goldbergyoni/nodebestpractices)
+- [Express.js Security](https://expressjs.com/en/advanced/best-practice-security.html)
 
 ---
 

@@ -106,7 +106,8 @@ The IPL Auction Portal is a **comprehensive real-time auction management system*
 │                        DATA LAYER                            │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
-│  PostgreSQL Database (via Sequelize ORM)                    │
+│  SQLite Database (via Sequelize ORM)                        │
+│  File: backend/database.sqlite                              │
 │                                                               │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
 │  │ Users Table  │  │ Players      │  │ Teams        │      │
@@ -120,7 +121,7 @@ The IPL Auction Portal is a **comprehensive real-time auction management system*
 
 ```
 User Action → React Component → API Call → Express Route → 
-Sequelize Model → PostgreSQL → Response → Update UI
+Sequelize Model → SQLite → Response → Update UI
                     │
                     └──→ Socket.io Event → Broadcast → All Clients
 ```
@@ -348,12 +349,22 @@ backend/
 │   └── teams.routes.js  # Teams CRUD
 │
 ├── middleware/          # Express middleware
-│   └── authMiddleware.js # JWT auth
+│   ├── auth.js          # JWT auth
+│   ├── rateLimiter.js   # DDoS protection
+│   └── validator.js     # Input validation
+│
+├── utils/               # Utility functions
+│   └── logger.js        # Winston logger
+│
+├── logs/                # Log files
+│   ├── error.log        # Error logs
+│   └── combined.log     # All logs
 │
 ├── docs/                # Backend docs
 │   └── BACKEND.md       # API reference
 │
-├── database.js          # PostgreSQL connection
+├── database.js          # SQLite connection
+├── database.sqlite      # SQLite database file
 ├── server.postgres.js   # Main server
 ├── init-database.js     # DB initialization
 ├── .env                 # Environment variables
@@ -380,13 +391,6 @@ backend/
 
 ### Backend Technologies
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **Node.js** | 16+ | JavaScript runtime |
-| **Express.js** | 4.18.2 | Web framework |
-| **PostgreSQL** | 15+ | Relational database |
-| **Sequelize** | 6.35.2 | ORM for PostgreSQL |
-| **Socket.io** | 4.6.0 | Real-time server |
 | Component | Version | Purpose |
 |-----------|---------|---------|
 | **Express.js** | 4.21.2 | Web framework |
@@ -559,31 +563,35 @@ npm run build
 # Create Heroku app
 heroku create auction-portal-api
 
-# Add PostgreSQL
+# Add PostgreSQL (optional for production scale)
 heroku addons:create heroku-postgresql:hobby-dev
 
 # Set environment variables
 heroku config:set JWT_SECRET=your_secret
 heroku config:set NODE_ENV=production
+heroku config:set DB_TYPE=sqlite  # or postgres if using PostgreSQL addon
 
 # Deploy
 git push heroku main
 ```
 
+> **💡 Note:** For small to medium traffic, SQLite works great on Heroku. For high traffic, add PostgreSQL addon and set `DB_TYPE=postgres`.
+
 #### Option 2: Railway
 ```bash
 # Connect GitHub repo to Railway
 # Railway auto-deploys on push
-# Add PostgreSQL plugin
+# Add PostgreSQL plugin (optional for production)
 # Set environment variables in Railway dashboard
 ```
 
 #### Option 3: AWS/Azure/GCP
 - Use EC2/App Service/Compute Engine
-- Install Node.js and PostgreSQL
+- Install Node.js
 - Clone repository
 - Install dependencies
 - Start with PM2 for process management
+- For high traffic: Add PostgreSQL
 
 ### Environment Variables
 
@@ -594,15 +602,40 @@ VITE_WS_URL=wss://your-api-domain.com
 ```
 
 #### Production Backend (.env)
+
+**For SQLite (Simple Setup):**
 ```env
+DB_TYPE=sqlite
+JWT_SECRET=your_production_secret_key
+PORT=5000
+NODE_ENV=production
+CLIENT_URL=https://your-frontend-domain.com
+LOG_LEVEL=info
+```
+
+**For PostgreSQL (High Traffic):**
+```env
+DB_TYPE=postgres
 DATABASE_URL=postgresql://user:pass@host:5432/dbname
 JWT_SECRET=your_production_secret_key
 PORT=5000
 NODE_ENV=production
+CLIENT_URL=https://your-frontend-domain.com
+LOG_LEVEL=warn
 ```
 
-### Database Migration
+### Database Backup
 
+**SQLite (Simple):**
+```bash
+# Backup - just copy the file
+cp backend/database.sqlite backup-$(date +%Y%m%d).sqlite
+
+# Restore
+cp backup-20251030.sqlite backend/database.sqlite
+```
+
+**PostgreSQL (If using in production):**
 ```bash
 # Backup production database
 pg_dump -U postgres -d auction_portal > backup.sql
@@ -617,7 +650,22 @@ psql -U postgres -d auction_portal < backup.sql
 
 ### Common Issues
 
-#### Issue 1: PostgreSQL Connection Error
+#### Issue 1: Database Connection Error
+
+**For SQLite:**
+```
+Error: SQLITE_CANTOPEN: unable to open database file
+```
+
+**Solution:**
+```powershell
+# Ensure backend directory exists and is writable
+# Database file will be created automatically
+cd backend
+npm run init-db
+```
+
+**For PostgreSQL (if using in production):**
 ```
 Error: connect ECONNREFUSED 127.0.0.1:5432
 ```

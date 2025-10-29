@@ -7,12 +7,115 @@ const { writeLimiter } = require('../middleware/rateLimiter');
 const router = express.Router();
 
 /**
+ * @route   GET /api/teams/my-team
+ * @desc    Get viewer's own team details (Viewers only)
+ * @access  Protected (Viewer)
+ */
+router.get('/my-team', authMiddleware, async (req, res) => {
+  try {
+    // Only viewers can access this endpoint
+    if (req.user.role !== 'viewer') {
+      return res.status(403).json({
+        success: false,
+        message: 'This endpoint is only for team viewers.',
+      });
+    }
+
+    // Check if user has a team assigned
+    if (!req.user.teamId) {
+      return res.status(404).json({
+        success: false,
+        message: 'You are not assigned to any team. Please contact admin.',
+      });
+    }
+
+    // Fetch viewer's team with all players
+    const team = await Team.findByPk(req.user.teamId, {
+      include: [
+        {
+          model: Player,
+          as: 'players',
+          where: { sold: true }, // Only show sold players
+          required: false,
+          attributes: ['id', 'name', 'role', 'price', 'basePrice', 'nationality', 'age'],
+        },
+      ],
+    });
+
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: 'Team not found.',
+      });
+    }
+
+    // Calculate team statistics
+    const teamData = team.toJSON();
+    const totalSpent = teamData.players.reduce((sum, p) => sum + parseFloat(p.price || 0), 0);
+    const initialPurse = 12000; // ₹120 Crores in Lakhs
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        ...teamData,
+        statistics: {
+          remainingPurse: parseFloat(team.purse),
+          totalSpent: totalSpent,
+          initialPurse: initialPurse,
+          playersCount: teamData.players.length,
+          averagePrice: teamData.players.length > 0 ? totalSpent / teamData.players.length : 0,
+          purseUsedPercentage: ((totalSpent / initialPurse) * 100).toFixed(2),
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Get my team error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch team details.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+});
+
+/**
  * @route   GET /api/teams
- * @desc    Get all teams
+ * @desc    Get all teams (Admin/Presenter see all, Viewers see only their team)
  * @access  Protected
  */
 router.get('/', authMiddleware, async (req, res) => {
   try {
+    // 🔒 VIEWER RESTRICTION: Only see their own team
+    if (req.user.role === 'viewer') {
+      if (!req.user.teamId) {
+        return res.status(403).json({
+          success: false,
+          message: 'You are not assigned to any team. Please use /api/teams/my-team endpoint.',
+        });
+      }
+      
+      // Return only viewer's team
+      const team = await Team.findByPk(req.user.teamId, {
+        include: [
+          {
+            model: Player,
+            as: 'players',
+            where: { sold: true },
+            required: false,
+            attributes: ['id', 'name', 'role', 'price', 'nationality'],
+          },
+        ],
+      });
+
+      return res.status(200).json({
+        success: true,
+        count: 1,
+        data: [team],
+        teamRestricted: true,
+      });
+    }
+
+    // Admin and Presenter see all teams
     const teams = await Team.findAll({
       include: [
         {
@@ -28,6 +131,7 @@ router.get('/', authMiddleware, async (req, res) => {
       success: true,
       count: teams.length,
       data: teams,
+      teamRestricted: false,
     });
   } catch (error) {
     console.error('Get teams error:', error);

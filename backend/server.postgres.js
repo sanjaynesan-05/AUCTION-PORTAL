@@ -236,11 +236,11 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle place bid event (Admin/Presenter only)
+  // Handle place bid event (Viewer only)
   socket.on('place-bid', async (data) => {
     try {
-      if (!['admin', 'presenter'].includes(socket.user.role)) {
-        socket.emit('error', { message: 'Unauthorized: Only admin/presenter can place bids' });
+      if (socket.user.role !== 'viewer') {
+        socket.emit('error', { message: 'Unauthorized: Only viewers can place bids' });
         return;
       }
 

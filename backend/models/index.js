@@ -23,6 +23,22 @@ Player.belongsTo(Team, {
   onUpdate: 'CASCADE',
 });
 
+// Team has many Users (viewers)
+Team.hasMany(User, {
+  foreignKey: 'teamId',
+  as: 'viewers',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE',
+});
+
+// User belongs to Team
+User.belongsTo(Team, {
+  foreignKey: 'teamId',
+  as: 'Team',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE',
+});
+
 /**
  * Sync all models with database
  * @param {boolean} force - Drop tables before creating (use with caution)

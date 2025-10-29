@@ -58,6 +58,7 @@ router.post('/register', authLimiter, validateRegister, async (req, res) => {
         id: user.id,
         username: user.username,
         role: user.role,
+        teamId: user.teamId, // Include teamId for viewer filtering
       },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
@@ -136,6 +137,7 @@ router.post('/login', authLimiter, validateLogin, async (req, res) => {
         id: user.id,
         username: user.username,
         role: user.role,
+        teamId: user.teamId, // Include teamId for viewer filtering
       },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
