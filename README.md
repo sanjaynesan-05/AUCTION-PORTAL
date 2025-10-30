@@ -1,8 +1,20 @@
-# 🏏 IPL Auction Portal# 🏏 IPL Auction Portal 2025
 
+# 🏏 IPL Auction Portal
 
+A professional, real-time cricket player auction portal with role-based access control and WebSocket synchronization. This project provides an authentic auction experience with three role types (Admin, Presenter, Viewer), real-time synchronization via Socket.IO, and persistent audit logs for all events.
 
-A professional, real-time cricket player auction portal with role-based access control and WebSocket synchronization.A professional, real-time cricket player auction portal built with React, TypeScript, and PostgreSQL. This comprehensive application provides an authentic IPL auction experience with role-based access control, real-time synchronization, and stunning modern UI design.
+## Architecture Diagram
+
+The high-level architecture shows browser clients (Admin, Presenter, Viewer) communicating with the React frontend, which uses Socket.IO and REST endpoints to interact with the Node/Express backend. The backend persists data to a relational database (Postgres in production, SQLite for development) and can use Redis as a Socket.IO adapter for scaling. Monitoring and logging are included for production readiness.
+
+![Architecture Diagram](./docs/architecture.svg)
+
+## Use Case Diagram
+
+Core actors and use cases: Admin (manage auctions and users), Presenter (run live sessions), Viewer (team-bound bidder). The diagram highlights the primary interactions: start/pause/reset auction, run live session (reveal players), place bids (team-restricted), and record sales.
+
+![Use Case Diagram](./docs/use-case.svg)
+
 
 
 

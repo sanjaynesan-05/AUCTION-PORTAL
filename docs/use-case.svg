@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="360" viewBox="0 0 1000 360">
+  <style>
+    .actor { font: bold 13px sans-serif; fill:#0f172a; }
+    .oval { fill:#fff7ed; stroke:#92400e; stroke-width:1.5px; }
+    .label { font: 12px sans-serif; fill:#111827; }
+    .line { stroke:#111827; stroke-width:1.5px; }
+  </style>
+
+  <!-- Actors -->
+  <g>
+    <rect x="20" y="40" width="140" height="60" rx="8" class="oval" />
+    <text x="30" y="78" class="actor">Admin</text>
+
+    <rect x="20" y="140" width="140" height="60" rx="8" class="oval" />
+    <text x="30" y="178" class="actor">Presenter</text>
+
+    <rect x="20" y="240" width="140" height="60" rx="8" class="oval" />
+    <text x="30" y="278" class="actor">Viewer</text>
+  </g>
+
+  <!-- Use cases (ovals) -->
+  <g>
+    <ellipse cx="500" cy="60" rx="220" ry="36" class="oval" />
+    <text x="360" y="65" class="label">Manage Auction Lifecycle (start/pause/reset)</text>
+
+    <ellipse cx="500" cy="140" rx="200" ry="36" class="oval" />
+    <text x="420" y="145" class="label">Run Live Session (reveal player, next/prev)</text>
+
+    <ellipse cx="500" cy="220" rx="220" ry="36" class="oval" />
+    <text x="380" y="225" class="label">Place Bid (team-restricted, purse validation)</text>
+
+    <ellipse cx="500" cy="300" rx="180" ry="36" class="oval" />
+  <text x="420" y="305" class="label">Record Sale &amp; Update Team Purses</text>
+  </g>
+
+  <!-- Lines from actors to use cases -->
+  <line x1="160" y1="70" x2="280" y2="60" class="line" />
+  <line x1="160" y1="160" x2="350" y2="140" class="line" />
+  <line x1="160" y1="260" x2="330" y2="220" class="line" />
+  <line x1="160" y1="260" x2="330" y2="300" class="line" />
+
+  <!-- Labels on lines -->
+  <text x="200" y="50" class="label">control</text>
+  <text x="210" y="150" class="label">operate</text>
+  <text x="210" y="220" class="label">bid</text>
+
+  <!-- Footer note -->
+  <text x="20" y="340" class="label">Actors: Admin (manages system), Presenter (runs live session), Viewer (team-bound bidder). Use cases show core interactions.</text>
+</svg>
