@@ -32,6 +32,36 @@ const initDatabase = async () => {
       console.log('ℹ️  Admin user already exists\n');
     }
 
+    // Check if presenter user exists
+    const presenterExists = await User.findOne({ where: { username: 'presenter' } });
+    
+    if (!presenterExists) {
+      console.log('👤 Creating default presenter user...');
+      await User.create({
+        username: 'presenter',
+        password: 'presenter123',
+        role: 'presenter',
+      });
+      console.log('✅ Presenter user created (username: presenter, password: presenter123)\n');
+    } else {
+      console.log('ℹ️  Presenter user already exists\n');
+    }
+
+    // Check if viewer user exists
+    const viewerExists = await User.findOne({ where: { username: 'viewer' } });
+    
+    if (!viewerExists) {
+      console.log('👤 Creating default viewer user...');
+      await User.create({
+        username: 'viewer',
+        password: 'viewer123',
+        role: 'viewer',
+      });
+      console.log('✅ Viewer user created (username: viewer, password: viewer123)\n');
+    } else {
+      console.log('ℹ️  Viewer user already exists\n');
+    }
+
     // Check if seed data needed
     const playerCount = await Player.count();
     const teamCount = await Team.count();

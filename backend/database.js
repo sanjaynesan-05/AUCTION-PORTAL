@@ -28,13 +28,12 @@ const connectDB = async () => {
     console.log('✅ SQLite Database Connected!');
     console.log(`📊 Database file: ${sequelize.options.storage}`);
 
-    // Sync models with database (creates tables if they don't exist)
-    if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync({ alter: false }); // Use alter: true to auto-update tables
-      console.log('📋 Database tables synchronized');
-    }
+    // Skip sync for now to prevent connection issues
+    // Database tables should already be created
+    console.log('📋 Database connection established (sync skipped)');
   } catch (error) {
     console.error('❌ SQLite Connection Error:', error.message);
+    console.error('Full error details:', error);
     process.exit(1);
   }
 };

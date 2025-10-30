@@ -236,4 +236,23 @@ export default {
   auth: authApi,
   players: playersApi,
   teams: teamsApi,
+  analytics: {
+    getOverview: async (): Promise<any> => {
+      return apiRequest<any>(config.endpoints.analytics.overview, {
+        method: 'GET',
+      });
+    },
+
+    getPlayers: async (): Promise<any> => {
+      return apiRequest<any>(config.endpoints.analytics.players, {
+        method: 'GET',
+      });
+    },
+
+    getTeams: async (): Promise<any> => {
+      return apiRequest<any>(config.endpoints.analytics.teams, {
+        method: 'GET',
+      });
+    },
+  },
 };

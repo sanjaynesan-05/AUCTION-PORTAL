@@ -16,6 +16,7 @@ const { apiLimiter } = require('./middleware/rateLimiter');
 const authRoutes = require('./routes/auth.routes');
 const playerRoutes = require('./routes/players.routes');
 const teamRoutes = require('./routes/teams.routes');
+const analyticsRoutes = require('./routes/analytics.routes');
 
 // Initialize Express app
 const app = express();
@@ -61,6 +62,7 @@ connectDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/players', playerRoutes);
 app.use('/api/teams', teamRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -70,6 +72,65 @@ app.get('/api/health', (req, res) => {
     database: sequelize.config.database,
     timestamp: new Date().toISOString(),
   });
+});
+
+// Admin endpoint to reset and start auction
+app.post('/api/admin/reset-and-start-auction', async (req, res) => {
+  try {
+    console.log('🔄 Admin requested auction reset and start');
+
+    // Reset all players in database
+    await Player.update(
+      { sold: false, teamId: null, price: null },
+      { where: {} }
+    );
+
+    // Reset all teams in database
+    await Team.update(
+      { purse: 12000 },
+      { where: {} }
+    );
+
+    // Reinitialize auction state
+    await initializeAuctionState();
+
+    auctionState.started = false;
+    auctionState.paused = false;
+    auctionState.currentPlayer = null;
+    auctionState.currentBid = 0;
+    auctionState.currentTeam = null;
+    auctionState.bidHistory = [];
+
+    // Now start the auction
+    auctionState.started = true;
+    auctionState.paused = false;
+
+    // Auto-select first unsold player
+    const firstPlayer = auctionState.players.find(p => !p.sold);
+    if (firstPlayer) {
+      auctionState.currentPlayer = firstPlayer;
+      auctionState.currentBid = parseFloat(firstPlayer.basePrice);
+      auctionState.currentTeam = null;
+      auctionState.bidHistory = [];
+      console.log(`👤 Auto-selected first player: ${firstPlayer.name}`);
+    }
+
+    console.log(`🎬 Auction reset and started successfully`);
+
+    // Broadcast updated state to all clients
+    io.emit('auction-state', auctionState);
+
+    res.json({
+      success: true,
+      message: 'Auction reset and started successfully',
+      currentPlayer: auctionState.currentPlayer ? auctionState.currentPlayer.name : null,
+      totalPlayers: auctionState.players.length,
+      unsoldPlayers: auctionState.players.filter(p => !p.sold).length
+    });
+  } catch (error) {
+    console.error('Reset and start auction error:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // In-memory auction state for real-time performance
@@ -129,14 +190,22 @@ const initializeAuctionState = async () => {
 sequelize
   .authenticate()
   .then(async () => {
-    console.log('📡 PostgreSQL connected. Initializing auction state...');
+    console.log('📡 Database connected. Initializing auction state...');
     await initializeAuctionState();
+    
+    // Start the server after successful initialization
+    server.listen(PORT, () => {
+      console.log(`\n🚀 Server running on port ${PORT}`);
+      console.log(`📱 Client URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🗄️  Database: SQLite\n`);
+    });
   })
   .catch((err) => {
-    console.error('❌ PostgreSQL connection error:', err.message);
+    console.error('❌ Database connection error:', err.message);
+    console.error('Full error:', err);
+    process.exit(1);
   });
-
-// Socket.io authentication middleware
 io.use((socket, next) => {
   try {
     const token = socket.handshake.auth.token;
@@ -177,6 +246,18 @@ io.on('connection', (socket) => {
 
       auctionState.started = true;
       auctionState.paused = false;
+
+      // Auto-select first unsold player if none is currently selected
+      if (!auctionState.currentPlayer) {
+        const firstPlayer = auctionState.players.find(p => !p.sold);
+        if (firstPlayer) {
+          auctionState.currentPlayer = firstPlayer;
+          auctionState.currentBid = parseFloat(firstPlayer.basePrice);
+          auctionState.currentTeam = null;
+          auctionState.bidHistory = [];
+          console.log(`👤 Auto-selected first player: ${firstPlayer.name}`);
+        }
+      }
 
       console.log(`🎬 Auction started by ${socket.user.username}`);
 
@@ -236,7 +317,35 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle place bid event (Viewer only)
+  socket.on('next-player', async (data) => {
+    try {
+      if (!['admin', 'presenter'].includes(socket.user.role)) {
+        socket.emit('error', { message: 'Unauthorized: Only admin/presenter can advance to next player' });
+        return;
+      }
+
+      // Find the next unsold player
+      const nextPlayer = auctionState.players.find(p => !p.sold);
+
+      if (!nextPlayer) {
+        socket.emit('error', { message: 'No more unsold players available' });
+        return;
+      }
+
+      auctionState.currentPlayer = nextPlayer;
+      auctionState.currentBid = parseFloat(nextPlayer.basePrice);
+      auctionState.currentTeam = null;
+      auctionState.bidHistory = [];
+
+      console.log(`👤 Next player selected: ${nextPlayer.name} by ${socket.user.username}`);
+
+      io.emit('auction-state', auctionState);
+    } catch (error) {
+      console.error('Next player error:', error);
+      socket.emit('error', { message: 'Failed to select next player' });
+    }
+  });
+
   socket.on('place-bid', async (data) => {
     try {
       if (socket.user.role !== 'viewer') {
@@ -348,10 +457,21 @@ io.on('connection', (socket) => {
 
       console.log(`✅ Player sold: ${auctionState.currentPlayer.name} to ${auctionState.currentTeam.shortName} for ₹${finalPrice}L`);
 
-      // Reset current player and bid
-      auctionState.currentPlayer = null;
-      auctionState.currentBid = 0;
-      auctionState.currentTeam = null;
+      // Select next unsold player
+      const nextPlayer = auctionState.players.find(p => !p.sold);
+      if (nextPlayer) {
+        auctionState.currentPlayer = nextPlayer;
+        auctionState.currentBid = parseFloat(nextPlayer.basePrice);
+        auctionState.currentTeam = null;
+        auctionState.bidHistory = [];
+        console.log(`👤 Auto-selected next player: ${nextPlayer.name}`);
+      } else {
+        // No more players available
+        auctionState.currentPlayer = null;
+        auctionState.currentBid = 0;
+        auctionState.currentTeam = null;
+        console.log(`🏁 Auction complete: All players have been processed`);
+      }
 
       io.emit('auction-state', auctionState);
     } catch (error) {
@@ -375,10 +495,21 @@ io.on('connection', (socket) => {
 
       console.log(`❌ Player unsold: ${auctionState.currentPlayer.name}`);
 
-      // Reset current player and bid
-      auctionState.currentPlayer = null;
-      auctionState.currentBid = 0;
-      auctionState.currentTeam = null;
+      // Select next unsold player
+      const nextPlayer = auctionState.players.find(p => !p.sold);
+      if (nextPlayer) {
+        auctionState.currentPlayer = nextPlayer;
+        auctionState.currentBid = parseFloat(nextPlayer.basePrice);
+        auctionState.currentTeam = null;
+        auctionState.bidHistory = [];
+        console.log(`👤 Auto-selected next player: ${nextPlayer.name}`);
+      } else {
+        // No more players available
+        auctionState.currentPlayer = null;
+        auctionState.currentBid = 0;
+        auctionState.currentTeam = null;
+        console.log(`🏁 Auction complete: All players have been processed`);
+      }
 
       io.emit('auction-state', auctionState);
     } catch (error) {
@@ -445,15 +576,15 @@ app.use((err, req, res, next) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => {
-  console.log(`\n🚀 Server running on port ${PORT}`);
-  console.log(`📱 Client URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🗄️  Database: PostgreSQL\n`);
-});
-
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled Promise Rejection:', err);
-  server.close(() => process.exit(1));
+  console.error('Stack:', err.stack);
+  // Don't exit, just log the error
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  console.error('Stack:', err.stack);
+  // Don't exit, just log the error
 });

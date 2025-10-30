@@ -20,6 +20,11 @@ export const config = {
       byId: (id: string) => `${API_URL}/api/teams/${id}`,
       myTeam: `${API_URL}/api/teams/my-team`,
     },
+    analytics: {
+      overview: `${API_URL}/api/analytics/overview`,
+      players: `${API_URL}/api/analytics/players`,
+      teams: `${API_URL}/api/analytics/teams`,
+    },
   },
 };
 

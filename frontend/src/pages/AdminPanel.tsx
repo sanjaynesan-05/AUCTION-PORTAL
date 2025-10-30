@@ -921,6 +921,30 @@ export default function AdminPanel() {
           </div>
         )}
 
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-6">
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
+              <h3 className="text-white font-semibold mb-4 flex items-center">
+                <TrendingUp className="w-5 h-5 mr-2" />
+                Auction Analytics
+              </h3>
+              <div className="space-y-4">
+                <button
+                  onClick={() => navigate('/analytics')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center"
+                >
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  View Detailed Analytics
+                </button>
+                <p className="text-gray-400 text-sm">
+                  Access comprehensive auction statistics, player valuations, and team performance metrics.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Settings Tab */}
         {activeTab === 'settings' && (
           <div className="space-y-6">

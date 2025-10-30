@@ -9,6 +9,7 @@ const AdminPanel = lazy(() => import('../pages/AdminPanel'));
 const PresenterPanel = lazy(() => import('../pages/PresenterPanel'));
 const ViewerScreen = lazy(() => import('../pages/ViewerScreen'));
 const Unauthorized = lazy(() => import('../pages/Unauthorized'));
+const AnalyticsDashboard = lazy(() => import('../pages/AnalyticsDashboard'));
 
 export default function AppRoutes() {
   return (
@@ -37,6 +38,14 @@ export default function AppRoutes() {
           element={
             <RoleGuard allowed={['viewer']}>
               <ViewerScreen />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            <RoleGuard allowed={['admin', 'presenter']}>
+              <AnalyticsDashboard />
             </RoleGuard>
           }
         />

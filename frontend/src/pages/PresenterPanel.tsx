@@ -114,13 +114,22 @@ export default function PresenterPanel() {
                 <p className="text-xs sm:text-sm text-gray-300">Welcome back,</p>
                 <p className="text-white font-medium text-sm sm:text-base">{user?.username}</p>
               </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => navigate('/analytics')}
+                  className="flex items-center px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
+                >
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  Analytics
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm sm:text-base"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </button>
+              </div>
             </div>
           </div>
         </div>

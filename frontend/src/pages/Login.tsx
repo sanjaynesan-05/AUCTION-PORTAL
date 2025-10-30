@@ -66,20 +66,67 @@ export default function Login() {
     }
   };
 
-  const handleQuickLogin = (role: 'admin' | 'presenter' | 'viewer', teamId?: number | string) => {
-    let user;
-    if (role === 'viewer' && teamId) {
-      user = mockUsers.find(u => u.role === 'viewer' && u.teamId === teamId);
-    } else {
-      user = mockUsers.find(u => u.role === role && !u.teamId);
-    }
+  const handleQuickLogin = async (role: 'admin' | 'presenter' | 'viewer', teamId?: number | string) => {
+    setIsLoading(true);
+    setError('');
 
-    if (user) {
+    try {
+      let credentials;
+      if (role === 'viewer' && teamId) {
+        // For viewers, use team-specific credentials
+        const user = mockUsers.find(u => u.role === 'viewer' && u.teamId === teamId);
+        if (user) {
+          credentials = { username: user.username, password: user.password };
+        }
+      } else {
+        // For admin and presenter, use simple credentials
+        credentials = {
+          username: role,
+          password: role === 'admin' ? 'admin123' : 'presenter123'
+        };
+      }
+
+      if (!credentials) {
+        throw new Error('No credentials found for this role');
+      }
+
+      // Perform real authentication with backend
+      const response = await authApi.login(credentials);
+
+      console.log('✅ Quick login response:', response);
+
+      // Validate response
+      if (!response || !response.data || !response.data.token) {
+        throw new Error('Invalid response from server - missing token');
+      }
+
+      if (!response.data.user || !response.data.user.id) {
+        throw new Error('Invalid response from server - missing user data');
+      }
+
+      // Store token
+      setToken(response.data.token);
+
+      // Login with user data
+      const user = {
+        id: response.data.user.id,
+        username: response.data.user.username,
+        password: '', // Not needed after authentication
+        role: response.data.user.role,
+        teamId: response.data.user.teamId,
+      };
+
       login(user);
+
       // Navigate to appropriate dashboard based on role
       const dashboardRoute = user.role === 'admin' ? '/admin' :
                             user.role === 'presenter' ? '/presenter' : '/viewer';
       navigate(dashboardRoute);
+    } catch (error: any) {
+      console.error('Quick login error:', error);
+      setError(error.message || 'Quick login failed. Please try manual login.');
+    } finally {
+      setIsLoading(false);
     }
   };
 

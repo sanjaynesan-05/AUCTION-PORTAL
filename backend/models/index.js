@@ -2,6 +2,7 @@ const { sequelize } = require('../database');
 const User = require('./User.model');
 const Player = require('./Player.model');
 const Team = require('./Team.model');
+const AuctionEvent = require('./AuctionEvent.model');
 
 /**
  * Define model associations
@@ -39,6 +40,28 @@ User.belongsTo(Team, {
   onUpdate: 'CASCADE',
 });
 
+// AuctionEvent associations
+AuctionEvent.belongsTo(Player, {
+  foreignKey: 'playerId',
+  as: 'Player',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE',
+});
+
+AuctionEvent.belongsTo(Team, {
+  foreignKey: 'teamId',
+  as: 'Team',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE',
+});
+
+AuctionEvent.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'User',
+  onDelete: 'SET NULL',
+  onUpdate: 'CASCADE',
+});
+
 /**
  * Sync all models with database
  * @param {boolean} force - Drop tables before creating (use with caution)
@@ -60,5 +83,6 @@ module.exports = {
   User,
   Player,
   Team,
+  AuctionEvent,
   syncDatabase,
 };
