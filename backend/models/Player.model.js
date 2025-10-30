@@ -85,8 +85,8 @@ const Player = sequelize.define(
       allowNull: false,
       validate: {
         min: {
-          args: [16],
-          msg: 'Age must be at least 16',
+          args: [12],
+          msg: 'Age must be at least 12',
         },
         max: {
           args: [50],

@@ -129,11 +129,11 @@ const initializeAuctionState = async () => {
 sequelize
   .authenticate()
   .then(async () => {
-    console.log('📡 SQLite Database connected. Initializing auction state...');
+    console.log('📡 PostgreSQL connected. Initializing auction state...');
     await initializeAuctionState();
   })
   .catch((err) => {
-    console.error('❌ SQLite connection error:', err.message);
+    console.error('❌ PostgreSQL connection error:', err.message);
   });
 
 // Socket.io authentication middleware
@@ -449,7 +449,7 @@ server.listen(PORT, () => {
   console.log(`\n🚀 Server running on port ${PORT}`);
   console.log(`📱 Client URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🗄️  Database: SQLite (file-based)\n`);
+  console.log(`🗄️  Database: PostgreSQL\n`);
 });
 
 // Handle unhandled promise rejections

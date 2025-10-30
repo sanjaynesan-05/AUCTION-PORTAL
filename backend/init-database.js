@@ -71,16 +71,76 @@ const initDatabase = async () => {
  */
 const createSampleTeams = async () => {
   const teams = [
-    { name: 'Chennai Super Kings', shortName: 'CSK', color: '#FDB913', purse: 12000 },
-    { name: 'Mumbai Indians', shortName: 'MI', color: '#004BA0', purse: 12000 },
-    { name: 'Royal Challengers Bangalore', shortName: 'RCB', color: '#EC1C24', purse: 12000 },
-    { name: 'Kolkata Knight Riders', shortName: 'KKR', color: '#3A225D', purse: 12000 },
-    { name: 'Delhi Capitals', shortName: 'DC', color: '#004C93', purse: 12000 },
-    { name: 'Rajasthan Royals', shortName: 'RR', color: '#254AA5', purse: 12000 },
-    { name: 'Punjab Kings', shortName: 'PBKS', color: '#DD1F2D', purse: 12000 },
-    { name: 'Sunrisers Hyderabad', shortName: 'SRH', color: '#FF822A', purse: 12000 },
-    { name: 'Gujarat Titans', shortName: 'GT', color: '#1C2A3A', purse: 12000 },
-    { name: 'Lucknow Super Giants', shortName: 'LSG', color: '#D4AF37', purse: 12000 },
+    { 
+      name: 'Chennai Super Kings', 
+      shortName: 'CSK', 
+      color: '#FDB913', 
+      purse: 12000,
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2b/Chennai_Super_Kings_Logo.svg/1200px-Chennai_Super_Kings_Logo.svg.png'
+    },
+    { 
+      name: 'Mumbai Indians', 
+      shortName: 'MI', 
+      color: '#004BA0', 
+      purse: 12000,
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/c/cd/Mumbai_Indians_Logo.svg/1200px-Mumbai_Indians_Logo.svg.png'
+    },
+    { 
+      name: 'Royal Challengers Bangalore', 
+      shortName: 'RCB', 
+      color: '#EC1C24', 
+      purse: 12000,
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/2a/Royal_Challengers_Bangalore_2020.svg/1200px-Royal_Challengers_Bangalore_2020.svg.png'
+    },
+    { 
+      name: 'Kolkata Knight Riders', 
+      shortName: 'KKR', 
+      color: '#3A225D', 
+      purse: 12000,
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4c/Kolkata_Knight_Riders_Logo.svg/1200px-Kolkata_Knight_Riders_Logo.svg.png'
+    },
+    { 
+      name: 'Delhi Capitals', 
+      shortName: 'DC', 
+      color: '#004C93', 
+      purse: 12000,
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f5/Delhi_Capitals_Logo.svg/1200px-Delhi_Capitals_Logo.svg.png'
+    },
+    { 
+      name: 'Rajasthan Royals', 
+      shortName: 'RR', 
+      color: '#254AA5', 
+      purse: 12000,
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/6/60/Rajasthan_Royals_Logo.svg/1200px-Rajasthan_Royals_Logo.svg.png'
+    },
+    { 
+      name: 'Punjab Kings', 
+      shortName: 'PBKS', 
+      color: '#DD1F2D', 
+      purse: 12000,
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f0/Punjab_Kings_Logo.svg/1200px-Punjab_Kings_Logo.svg.png'
+    },
+    { 
+      name: 'Sunrisers Hyderabad', 
+      shortName: 'SRH', 
+      color: '#FF822A', 
+      purse: 12000,
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/8/81/Sunrisers_Hyderabad.svg/1200px-Sunrisers_Hyderabad.svg.png'
+    },
+    { 
+      name: 'Gujarat Titans', 
+      shortName: 'GT', 
+      color: '#1C2A3A', 
+      purse: 12000,
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/99/Gujarat_Titans_Logo.svg/1200px-Gujarat_Titans_Logo.svg.png'
+    },
+    { 
+      name: 'Lucknow Super Giants', 
+      shortName: 'LSG', 
+      color: '#D4AF37', 
+      purse: 12000,
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/7/7a/Lucknow_Super_Giants_Logo.svg/1200px-Lucknow_Super_Giants_Logo.svg.png'
+    },
   ];
 
   for (const team of teams) {

@@ -1,7 +1,7 @@
 {
   "name": "auction-portal-backend",
   "version": "1.0.0",
-  "description": "Backend server for IPL Auction Portal with PostgreSQL",
+  "description": "Backend server for IPL Auction Portal with SQLite",
   "main": "server.postgres.js",
   "scripts": {
     "start": "node server.postgres.js",
@@ -17,7 +17,7 @@
     "ipl",
     "socket.io",
     "express",
-    "postgresql"
+    "sqlite"
   ],
   "author": "",
   "license": "MIT",

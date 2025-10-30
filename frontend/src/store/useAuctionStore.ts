@@ -85,7 +85,8 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const response = await playersApi.getAll();
-      const players: Player[] = response.players.map((p: ApiPlayer) => ({
+      console.log('API Response:', response); // Debug log
+      const players: Player[] = response.data.map((p: ApiPlayer) => ({
         id: p.id,
         name: p.name,
         role: p.role,
@@ -112,7 +113,8 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const response = await teamsApi.getAll();
-      const teams: Team[] = response.teams.map((t: ApiTeam) => ({
+      console.log('Teams API Response:', response); // Debug log
+      const teams: Team[] = response.data.map((t: ApiTeam) => ({
         id: t.id,
         name: t.name,
         shortName: t.shortName,

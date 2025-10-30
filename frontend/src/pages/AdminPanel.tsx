@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
-import { useAuctionSync } from '../hooks/useAuctionSync';
+import { useInitializeAuction } from '../store/useAuctionStore';
+import { playersApi } from '../services/api.service';
 import {
   LogOut,
   Users,
@@ -16,30 +17,43 @@ import {
   Crown,
   Activity,
   Target,
-  Star,
   Search,
-  Filter,
   Download,
-  Upload,
   X,
   Save,
-  Eye,
-  EyeOff
 } from 'lucide-react';
 
 export default function AdminPanel() {
   const { user, logout } = useRole();
   const navigate = useNavigate();
   const {
+    initialize,
     players,
     teams,
     auctionStarted,
     currentPlayer,
     resetAuction,
-    addPlayer,
-    removePlayer,
-    updateTeamPurse,
-  } = useAuctionSync();
+    loadPlayers,
+    disconnectWebSocket,
+  } = useInitializeAuction();
+
+  // Initialize data on mount
+  useEffect(() => {
+    console.log('🔵 AdminPanel: Initializing...');
+    initialize()
+      .then(() => {
+        console.log('✅ AdminPanel: Initialized successfully');
+        console.log('📊 Players loaded:', players.length);
+        console.log('🏆 Teams loaded:', teams.length);
+      })
+      .catch((error) => {
+        console.error('❌ AdminPanel: Initialization failed:', error);
+      });
+    
+    return () => {
+      disconnectWebSocket();
+    };
+  }, []);
 
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
@@ -71,6 +85,48 @@ export default function AdminPanel() {
     navigate('/login');
   };
 
+  const handleAddPlayer = async () => {
+    if (newPlayer.name) {
+      try {
+        await playersApi.create({
+          name: newPlayer.name,
+          role: newPlayer.role,
+          basePrice: newPlayer.basePrice,
+          nationality: newPlayer.nationality,
+          age: newPlayer.age,
+          battingStyle: newPlayer.battingStyle,
+          bowlingStyle: newPlayer.bowlingStyle,
+          stats: newPlayer.stats,
+        });
+        
+        // Reload players from backend
+        await loadPlayers();
+        
+        setShowAddModal(false);
+        setNewPlayer({
+          name: '',
+          role: 'Batsman',
+          basePrice: 50,
+          nationality: 'India',
+          age: 25,
+          battingStyle: 'Right-handed',
+          bowlingStyle: '',
+          image: '',
+          stats: {
+            matches: 0,
+            runs: 0,
+            wickets: 0,
+            average: 0,
+            strikeRate: 0
+          }
+        });
+      } catch (error) {
+        console.error('Failed to add player:', error);
+        alert('Failed to add player. Please try again.');
+      }
+    }
+  };
+
   const handleEditPlayer = (player: any) => {
     setEditingPlayer(player);
     setNewPlayer({
@@ -93,43 +149,60 @@ export default function AdminPanel() {
     setShowEditModal(true);
   };
 
-  const handleUpdatePlayer = () => {
+  const handleUpdatePlayer = async () => {
     if (editingPlayer && newPlayer.name) {
-      // Remove the old player and add the updated one
-      removePlayer(editingPlayer.id);
-      addPlayer({
-        ...editingPlayer,
-        ...newPlayer,
-        id: editingPlayer.id,
-        sold: editingPlayer.sold,
-        teamId: editingPlayer.teamId,
-        price: editingPlayer.price
-      });
-      setShowEditModal(false);
-      setEditingPlayer(null);
-      setNewPlayer({
-        name: '',
-        role: 'Batsman',
-        basePrice: 50,
-        nationality: 'India',
-        age: 25,
-        battingStyle: 'Right-handed',
-        bowlingStyle: '',
-        image: '',
-        stats: {
-          matches: 0,
-          runs: 0,
-          wickets: 0,
-          average: 0,
-          strikeRate: 0
-        }
-      });
+      try {
+        await playersApi.update(editingPlayer.id, {
+          name: newPlayer.name,
+          role: newPlayer.role,
+          basePrice: newPlayer.basePrice,
+          nationality: newPlayer.nationality,
+          age: newPlayer.age,
+          battingStyle: newPlayer.battingStyle,
+          bowlingStyle: newPlayer.bowlingStyle,
+          stats: newPlayer.stats,
+        });
+        
+        // Reload players from backend
+        await loadPlayers();
+        
+        setShowEditModal(false);
+        setEditingPlayer(null);
+        setNewPlayer({
+          name: '',
+          role: 'Batsman',
+          basePrice: 50,
+          nationality: 'India',
+          age: 25,
+          battingStyle: 'Right-handed',
+          bowlingStyle: '',
+          image: '',
+          stats: {
+            matches: 0,
+            runs: 0,
+            wickets: 0,
+            average: 0,
+            strikeRate: 0
+          }
+        });
+      } catch (error) {
+        console.error('Failed to update player:', error);
+        alert('Failed to update player. Please try again.');
+      }
     }
   };
 
-  const handleDeletePlayer = (playerId: number) => {
+  const handleDeletePlayer = async (playerId: string) => {
     if (window.confirm('Are you sure you want to delete this player?')) {
-      removePlayer(playerId);
+      try {
+        await playersApi.delete(playerId);
+        
+        // Reload players from backend
+        await loadPlayers();
+      } catch (error) {
+        console.error('Failed to delete player:', error);
+        alert('Failed to delete player. Please try again.');
+      }
     }
   };
 

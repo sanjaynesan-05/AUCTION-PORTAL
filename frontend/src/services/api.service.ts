@@ -134,11 +134,16 @@ export interface Player {
 }
 
 export interface PlayersResponse {
-  players: Player[];
+  success: boolean;
+  count: number;
+  data: Player[];
+  teamRestricted?: boolean;
 }
 
 export interface PlayerResponse {
-  player: Player;
+  success: boolean;
+  data: Player;
+  message?: string;
 }
 
 export const playersApi = {
@@ -188,11 +193,16 @@ export interface Team {
 }
 
 export interface TeamsResponse {
-  teams: Team[];
+  success: boolean;
+  count: number;
+  data: Team[];
+  teamRestricted?: boolean;
 }
 
 export interface TeamResponse {
-  team: Team;
+  success: boolean;
+  data: Team;
+  message?: string;
 }
 
 export const teamsApi = {
