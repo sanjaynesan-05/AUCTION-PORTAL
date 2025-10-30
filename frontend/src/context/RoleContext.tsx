@@ -7,6 +7,7 @@ interface RoleContextType {
   logout: () => void;
   username: string;
   role: 'admin' | 'presenter' | 'viewer' | null;
+  teamId: string | number | null;
 }
 
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
@@ -28,7 +29,8 @@ export const RoleProvider = ({ children }: { children: ReactNode }) => {
       login,
       logout,
       username: user?.username || '',
-      role: user?.role || null
+      role: user?.role || null,
+      teamId: user?.teamId || null
     }}>
       {children}
     </RoleContext.Provider>

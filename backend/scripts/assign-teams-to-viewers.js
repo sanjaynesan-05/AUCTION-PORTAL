@@ -62,7 +62,7 @@ const assignTeamsToViewers = async () => {
     
     const viewers = await User.findAll({
       where: { role: 'viewer' },
-      include: [{ model: Team, as: 'team', attributes: ['name', 'shortName', 'color'] }],
+      include: [{ model: Team, as: 'Team', attributes: ['name', 'shortName', 'color'] }],
     });
 
     if (viewers.length === 0) {
@@ -71,8 +71,8 @@ const assignTeamsToViewers = async () => {
       console.log(`   Username             | Team      | Full Name`);
       console.log('─'.repeat(60));
       viewers.forEach(viewer => {
-        const teamInfo = viewer.team 
-          ? `${viewer.team.shortName.padEnd(9)}| ${viewer.team.name}` 
+        const teamInfo = viewer.Team 
+          ? `${viewer.Team.shortName.padEnd(9)}| ${viewer.Team.name}` 
           : 'Not Assigned';
         console.log(`   ${viewer.username.padEnd(20)}| ${teamInfo}`);
       });

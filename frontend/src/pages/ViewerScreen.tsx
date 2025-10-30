@@ -28,6 +28,7 @@ export default function ViewerScreen() {
     currentBidder,
     bidHistory,
     placeBid,
+    isConnected,
     disconnectWebSocket,
   } = useInitializeAuction();
 
@@ -71,7 +72,7 @@ export default function ViewerScreen() {
       return;
     }
     const bidAmount = currentBid + increment;
-    const result = placeBid(bidAmount);
+    const result = placeBid(authenticatedTeam.id.toString(), bidAmount);
     setBidMessage({type: result.success ? 'success' : 'error', text: result.message});
   };
 
@@ -81,7 +82,7 @@ export default function ViewerScreen() {
       return;
     }
     // Place bid at base price
-    const result = placeBid(currentPlayer.basePrice);
+    const result = placeBid(authenticatedTeam.id.toString(), currentPlayer.basePrice);
     setBidMessage({type: result.success ? 'success' : 'error', text: result.message});
   };
 
@@ -162,6 +163,21 @@ export default function ViewerScreen() {
               {currentTime.toLocaleTimeString()}
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading if team data not loaded yet
+  if (!authenticatedTeam) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-32 h-32 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse">
+            <Users className="w-16 h-16 text-white" />
+          </div>
+          <h2 className="text-4xl font-bold text-white mb-4">Loading Team Data...</h2>
+          <p className="text-xl text-gray-300">Please wait while we load your team information</p>
         </div>
       </div>
     );

@@ -35,7 +35,7 @@ export default function PresenterPanel() {
     previousPlayer,
     markSold,
     markUnsold,
-    // isConnected,
+    isConnected,
     // isLoading,
     disconnectWebSocket,
   } = useInitializeAuction();
@@ -178,10 +178,11 @@ export default function PresenterPanel() {
                   {!auctionStarted ? (
                     <button
                       onClick={startAuction}
-                      className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg flex items-center transition-colors font-semibold"
+                      disabled={!isConnected}
+                      className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg flex items-center transition-colors font-semibold"
                     >
                       <Play className="w-5 h-5 mr-2" />
-                      Start Auction
+                      {isConnected ? 'Start Auction' : 'Connecting...'}
                     </button>
                   ) : (
                     <>

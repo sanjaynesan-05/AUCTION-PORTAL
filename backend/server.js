@@ -220,6 +220,7 @@ io.use((socket, next) => {
       id: decoded.id,
       username: decoded.username,
       role: decoded.role,
+      teamId: decoded.teamId,
     };
 
     next();
@@ -354,6 +355,12 @@ io.on('connection', (socket) => {
       }
 
       const { teamId, bidAmount } = data;
+
+      // Check if viewer is authorized to bid for this team
+      if (socket.user.teamId && socket.user.teamId !== teamId) {
+        socket.emit('error', { message: 'Unauthorized: You can only bid for your assigned team' });
+        return;
+      }
 
       if (!auctionState.currentPlayer) {
         socket.emit('error', { message: 'No player is currently being auctioned' });

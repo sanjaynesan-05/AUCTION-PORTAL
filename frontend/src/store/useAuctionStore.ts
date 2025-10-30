@@ -63,7 +63,7 @@ interface AuctionState {
   markUnsold: (playerId: string) => void;
   endAuction: () => void;
   resetAuction: () => void;
-  placeBid: (amount: number) => { success: boolean; message: string };
+  placeBid: (teamId: string, amount: number) => { success: boolean; message: string };
   getNextBidIncrement: (currentBid: number) => number;
   updateAuctionState: (state: Partial<AuctionState>) => void;
 }
@@ -253,7 +253,7 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
           auctionPaused: data.paused,
           currentPlayer: data.currentPlayer,
           currentBid: data.currentBid,
-          currentBidder: data.currentBidder,
+          currentBidder: data.currentTeam?.id || null,
           bidHistory: data.bidHistory || [],
           lastUpdate: Date.now(),
         });
@@ -319,7 +319,7 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
     console.log('Resetting auction');
     wsService.resetAuction();
   },
-  placeBid: (amount: number) => {
+  placeBid: (teamId: string, amount: number) => {
     const state = get();
     if (!state.auctionStarted) {
       return { success: false, message: 'Auction has not started' };
@@ -345,8 +345,8 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
           : `Bid must be at least ?${minValidBid}L (current: ?${state.currentBid}L)` 
       };
     }
-    console.log('Placing bid:', amount);
-    wsService.placeBid(amount);
+    console.log('Placing bid:', teamId, amount);
+    wsService.placeBid(teamId, amount);
     return { success: true, message: 'Bid placed successfully' };
   },
 

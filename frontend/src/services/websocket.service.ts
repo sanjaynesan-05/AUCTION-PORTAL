@@ -7,11 +7,17 @@ export interface AuctionState {
   paused: boolean;
   currentPlayer: any;
   currentBid: number;
-  currentBidder: string | null;
+  currentTeam: any;
+  players: any[];
+  teams: any[];
   bidHistory: Array<{
+    playerId: string;
+    playerName: string;
     teamId: string;
+    teamName: string;
     amount: number;
-    timestamp: number;
+    timestamp: Date;
+    user: string;
   }>;
 }
 
@@ -121,8 +127,8 @@ class WebSocketService {
   }
 
   // Viewer Events (emit)
-  placeBid(amount: number): void {
-    this.socket?.emit('place-bid', { amount });
+  placeBid(teamId: string, bidAmount: number): void {
+    this.socket?.emit('place-bid', { teamId, bidAmount });
   }
 
   // Listen for server events
