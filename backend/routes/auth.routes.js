@@ -73,6 +73,7 @@ router.post('/register', authLimiter, validateRegister, async (req, res) => {
           id: user.id,
           username: user.username,
           role: user.role,
+          teamId: user.teamId,
         },
       },
     });
@@ -152,6 +153,7 @@ router.post('/login', authLimiter, validateLogin, async (req, res) => {
           id: user.id,
           username: user.username,
           role: user.role,
+          teamId: user.teamId,
         },
       },
     });

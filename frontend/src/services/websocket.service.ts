@@ -159,7 +159,7 @@ class WebSocketService {
   }
 
   onAuctionStateUpdate(callback: (data: AuctionState) => void): void {
-    this.socket?.on('auction-state-update', callback);
+    this.socket?.on('auction-state', callback);
   }
 
   // Remove listeners
@@ -196,7 +196,7 @@ class WebSocketService {
   }
 
   offAuctionStateUpdate(callback?: (data: AuctionState) => void): void {
-    this.socket?.off('auction-state-update', callback);
+    this.socket?.off('auction-state', callback);
   }
 
   // Remove all listeners
