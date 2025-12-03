@@ -1,17 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { mockUsers } from '../data/mockUsers';
-import { mockTeams } from '../data/mockTeams';
 import { Crown, ArrowRight, Trophy, Users, LogIn, Sparkles } from 'lucide-react';
+import { apiClient, API_CONFIG } from '../services/apiClient';
+import { dataService, Team } from '../services/dataService';
 
 export default function Login() {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'quick'>('login');
+  const [teams, setTeams] = useState<Team[]>([]);
   const { login } = useRole();
   const navigate = useNavigate();
+
+  // Fetch teams on component mount
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        const teamsData = await dataService.getTeams();
+        setTeams(teamsData || []);
+      } catch (error) {
+        console.error('Failed to fetch teams:', error);
+        setTeams([]);
+      }
+    };
+    fetchTeams();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,41 +35,120 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const user = mockUsers.find(u =>
-        u.username === credentials.username &&
-        u.password === credentials.password
-      );
+      // Call backend API for authentication
+      const response = await fetch(API_CONFIG.AUTH.LOGIN, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: credentials.username,
+          password: credentials.password,
+        }),
+      });
 
-      if (user) {
-        login(user);
-        // Navigate to appropriate dashboard based on role
-        const dashboardRoute = user.role === 'admin' ? '/admin' :
-                              user.role === 'presenter' ? '/presenter' : '/viewer';
-        navigate(dashboardRoute);
-      } else {
-        setError('Invalid credentials');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.detail || 'Invalid credentials');
+        setIsLoading(false);
+        return;
       }
+
+      const data = await response.json();
+      
+      // Store token
+      apiClient.setToken(data.access_token);
+      
+      // Create user object from response
+      const user = {
+        id: data.user.id || credentials.username,
+        username: data.user.username,
+        password: credentials.password, // Store locally for reference
+        role: data.user.role as 'admin' | 'presenter' | 'viewer',
+        teamId: data.user.teamId,
+        teamName: data.user.teamName,
+      };
+
+      // Login with the user data
+      login(user);
+      
+      // Navigate to appropriate dashboard based on role
+      const dashboardRoute = user.role === 'admin' ? '/admin' :
+                            user.role === 'presenter' ? '/presenter' : '/viewer';
+      navigate(dashboardRoute);
     } catch (err) {
-      setError('Login failed');
+      console.error('Login error:', err);
+      setError('Login failed. Please check your credentials or try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleQuickLogin = (role: 'admin' | 'presenter' | 'viewer', teamId?: number) => {
-    let user;
-    if (role === 'viewer' && teamId) {
-      user = mockUsers.find(u => u.role === 'viewer' && u.teamId === teamId);
-    } else {
-      user = mockUsers.find(u => u.role === role && !u.teamId);
-    }
+  const handleQuickLogin = async (role: 'admin' | 'presenter' | 'viewer', teamId?: number) => {
+    setError('');
+    setIsLoading(true);
 
-    if (user) {
-      login(user);
+    try {
+      // Find the user from mock data for quick access
+      let user;
+      if (role === 'viewer' && teamId) {
+        user = mockUsers.find(u => u.role === 'viewer' && u.teamId === teamId);
+      } else {
+        user = mockUsers.find(u => u.role === role && !u.teamId);
+      }
+
+      if (!user) {
+        setError('User account not found');
+        setIsLoading(false);
+        return;
+      }
+
+      // Call backend API with the quick access credentials
+      const response = await fetch(API_CONFIG.AUTH.LOGIN, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: user.username,
+          password: user.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.detail || 'Invalid credentials');
+        setIsLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      
+      // Store token
+      apiClient.setToken(data.access_token);
+      
+      // Create user object from response
+      const loginUser = {
+        id: data.user.id || user.id,
+        username: data.user.username,
+        password: user.password,
+        role: data.user.role as 'admin' | 'presenter' | 'viewer',
+        teamId: data.user.teamId,
+        teamName: data.user.teamName,
+      };
+
+      // Login with the user data
+      login(loginUser);
+      
       // Navigate to appropriate dashboard based on role
-      const dashboardRoute = user.role === 'admin' ? '/admin' :
-                            user.role === 'presenter' ? '/presenter' : '/viewer';
+      const dashboardRoute = loginUser.role === 'admin' ? '/admin' :
+                            loginUser.role === 'presenter' ? '/presenter' : '/viewer';
       navigate(dashboardRoute);
+    } catch (err) {
+      console.error('Quick login error:', err);
+      setError('Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -238,33 +333,35 @@ export default function Login() {
                       <span className="text-gray-400 font-medium">Team Viewers</span>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                      {mockUsers.filter(u => u.role === 'viewer').map(team => {
-                        const teamData = mockTeams.find(t => t.id === team.teamId);
+                      {teams.length > 0 ? teams.map(team => {
+                        const teamUser = mockUsers.find(u => u.role === 'viewer' && u.teamName === team.name);
                         return (
                           <button
-                            key={team.teamId}
-                            onClick={() => handleQuickLogin('viewer', team.teamId)}
+                            key={team.id}
+                            onClick={() => handleQuickLogin('viewer', team.id)}
                             className="group relative overflow-hidden bg-white/5 border border-white/20 rounded-xl p-4 hover:bg-white/10 transition-all duration-200 hover:scale-105 hover:shadow-lg"
                             style={{
-                              background: teamData ? `linear-gradient(135deg, ${teamData.primaryColor}15, ${teamData.secondaryColor}15)` : undefined,
-                              borderColor: teamData ? `${teamData.primaryColor}30` : undefined
+                              background: team.color ? `${team.color}15` : undefined,
+                              borderColor: team.color ? `${team.color}30` : undefined
                             }}
                           >
                             <div className="flex flex-col items-center space-y-2">
-                              {teamData && (
+                              {team.logo && (
                                 <img
-                                  src={teamData.logo}
-                                  alt={teamData.name}
+                                  src={team.logo}
+                                  alt={team.name}
                                   className="w-8 h-8 object-contain group-hover:scale-110 transition-transform"
                                 />
                               )}
-                              <span className="text-xs text-gray-300 font-medium text-center">{team.teamName?.split(' ')[0]}</span>
+                              <span className="text-xs text-gray-300 font-medium text-center">{team.shortName || team.name.split(' ')[0]}</span>
                             </div>
                             <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity rounded-xl"
-                                 style={{ backgroundColor: teamData?.primaryColor }}></div>
+                                 style={{ backgroundColor: team.color }}></div>
                           </button>
                         );
-                      })}
+                      }) : (
+                        <div className="col-span-full text-center text-gray-400">Loading teams...</div>
+                      )}
                     </div>
                   </div>
                 </div>
