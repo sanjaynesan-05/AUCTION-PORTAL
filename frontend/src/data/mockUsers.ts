@@ -1,24 +1,28 @@
 export interface User {
   id: string;
   username: string;
-  password: string;
+  password?: string; // Should NOT be exposed in frontend in production
   role: 'admin' | 'presenter' | 'viewer';
   teamId?: number;
   teamName?: string;
 }
 
-export const mockUsers: User[] = [
-  // Admin user
-  { id: 'admin', username: 'admin', password: 'admin@123', role: 'admin' },
+// IMPORTANT: Mock credentials are for development/testing ONLY
+// Do NOT hardcode credentials in production code
+// Load from environment variables or secure credential management system
 
-  // Presenter user
-  { id: 'presenter', username: 'presenter', password: 'presenter@123', role: 'presenter' },
+export const mockUsers: User[] = [
+  // Admin user - CREDENTIALS MUST BE PROVIDED SECURELY
+  { id: 'admin', username: 'admin', role: 'admin' },
+
+  // Presenter user - CREDENTIALS MUST BE PROVIDED SECURELY
+  { id: 'presenter', username: 'presenter', role: 'presenter' },
 
   // Team-specific viewer accounts (10 IPL Teams)
+  // CREDENTIALS MUST BE PROVIDED SECURELY IN PRODUCTION
   {
     id: 'team-csk',
     username: 'csk',
-    password: 'csk@123',
     role: 'viewer',
     teamId: 1,
     teamName: 'Chennai Super Kings'
@@ -26,7 +30,6 @@ export const mockUsers: User[] = [
   {
     id: 'team-mi',
     username: 'mi',
-    password: 'mi@123',
     role: 'viewer',
     teamId: 2,
     teamName: 'Mumbai Indians'
@@ -34,7 +37,6 @@ export const mockUsers: User[] = [
   {
     id: 'team-rcb',
     username: 'rcb',
-    password: 'rcb@123',
     role: 'viewer',
     teamId: 3,
     teamName: 'Royal Challengers Bangalore'
@@ -42,7 +44,6 @@ export const mockUsers: User[] = [
   {
     id: 'team-kkr',
     username: 'kkr',
-    password: 'kkr@123',
     role: 'viewer',
     teamId: 4,
     teamName: 'Kolkata Knight Riders'
@@ -50,7 +51,6 @@ export const mockUsers: User[] = [
   {
     id: 'team-dc',
     username: 'dc',
-    password: 'dc@123',
     role: 'viewer',
     teamId: 5,
     teamName: 'Delhi Capitals'
@@ -58,7 +58,6 @@ export const mockUsers: User[] = [
   {
     id: 'team-rr',
     username: 'rr',
-    password: 'rr@123',
     role: 'viewer',
     teamId: 6,
     teamName: 'Rajasthan Royals'
@@ -66,7 +65,6 @@ export const mockUsers: User[] = [
   {
     id: 'team-pbks',
     username: 'pbks',
-    password: 'pbks@123',
     role: 'viewer',
     teamId: 7,
     teamName: 'Punjab Kings'
@@ -74,7 +72,6 @@ export const mockUsers: User[] = [
   {
     id: 'team-srh',
     username: 'srh',
-    password: 'srh@123',
     role: 'viewer',
     teamId: 8,
     teamName: 'Sunrisers Hyderabad'
@@ -82,7 +79,6 @@ export const mockUsers: User[] = [
   {
     id: 'team-gt',
     username: 'gt',
-    password: 'gt@123',
     role: 'viewer',
     teamId: 9,
     teamName: 'Gujarat Titans'
@@ -90,7 +86,6 @@ export const mockUsers: User[] = [
   {
     id: 'team-lsg',
     username: 'lsg',
-    password: 'lsg@123',
     role: 'viewer',
     teamId: 10,
     teamName: 'Lucknow Super Giants'

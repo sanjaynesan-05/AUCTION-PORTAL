@@ -4,9 +4,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database Configuration
+# IMPORTANT: DATABASE_URL must be set via environment variables in production
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql+psycopg://neondb_owner:npg_EyX0teJ9ZjMo@ep-holy-snow-a13hmayg-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+    "postgresql://localhost/auctiondb"  # Safe default for development
 )
 
 # JWT Configuration
