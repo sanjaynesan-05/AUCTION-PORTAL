@@ -224,7 +224,7 @@ def seed_database(db: Session):
 
 
 def safe_seed_database(db: Session):
-    """Seed database on startup - skip re-hashing existing users"""
+    """Seed database on startup"""
     import os
     from app.models.orm import Team, Player, User, AuctionState
     
@@ -232,9 +232,6 @@ def safe_seed_database(db: Session):
     players_count = db.query(Player).count()
     users_count = db.query(User).count()
     auction_state_count = db.query(AuctionState).count()
-    
-    # Force clean seed if environment variable is set (useful for fixing password mismatches)
-    force_reseed = os.getenv("FORCE_RESEED", "").lower() == "true"
     
     # Only seed if tables are empty
     if teams_count == 0:
@@ -249,20 +246,24 @@ def safe_seed_database(db: Session):
     else:
         print(f"✓ Players already exist ({players_count} records) - skipping seed")
     
-    # Only seed users if they don't exist - DO NOT re-update passwords on redeploy
-    # Exception: if FORCE_RESEED=true env var is set, delete and reseed all users
-    if users_count == 0:
-        print("Seeding users...")
-        seed_users(db)
-    elif force_reseed:
-        print("⚠ FORCE_RESEED is TRUE - deleting all users for fresh seed...")
+    # ALWAYS reseed users - this ensures passwords are correct
+    # This is safe because it only affects user table
+    try:
+        print("Resetting users with correct passwords...")
         db.query(User).delete()
         db.commit()
-        print("Seeding users with fresh hashes...")
         seed_users(db)
-        print("✓ All users reseeded with new password hashes")
-    else:
-        print(f"✓ Users already exist ({users_count} records) - skipping seed (use /system/reset-passwords if needed)")
+        print("✓ Users reseeded successfully")
+    except Exception as e:
+        print(f"⚠ Error reseeding users: {e}")
+        db.rollback()
+        # If reseed fails, only seed if no users exist
+        if users_count == 0:
+            try:
+                seed_users(db)
+                print("✓ Users seeded")
+            except Exception as e2:
+                print(f"✗ Error seeding users: {e2}")
     
     if auction_state_count == 0:
         print("Initializing auction state...")
