@@ -218,7 +218,7 @@ def seed_database(db: Session):
 
 
 def safe_seed_database(db: Session):
-    """Seed database only if data doesn't already exist - prevents re-seeding on every deployment"""
+    """Seed database on startup. Always update user passwords."""
     from app.models.orm import Team, Player, User, AuctionState
     
     teams_count = db.query(Team).count()
@@ -239,11 +239,14 @@ def safe_seed_database(db: Session):
     else:
         print(f"✓ Players already exist ({players_count} records) - skipping seed")
     
+    # ALWAYS update user passwords with defaults (even if users exist)
+    # This ensures that after code deployment, the new default passwords work
     if users_count == 0:
         print("Seeding users...")
         seed_users(db)
     else:
-        print(f"✓ Users already exist ({users_count} records) - skipping seed")
+        print(f"✓ Users already exist ({users_count} records) - updating passwords with defaults")
+        update_user_passwords_with_defaults(db)
     
     if auction_state_count == 0:
         print("Initializing auction state...")
@@ -252,3 +255,45 @@ def safe_seed_database(db: Session):
         print(f"✓ Auction state already exists - skipping initialization")
     
     print("Database seeding check complete!")
+
+
+def update_user_passwords_with_defaults(db: Session):
+    """Update all existing users with default passwords"""
+    from app.models.orm import User
+    import os
+    
+    # Default passwords - same as in seed_users
+    default_admin_pwd = os.getenv("ADMIN_PASSWORD", "admin123")
+    default_presenter_pwd = os.getenv("PRESENTER_PASSWORD", "presenter123")
+    default_team_pwd = os.getenv("TEAM_PASSWORD", "team123")
+    
+    password_map = {
+        "admin": default_admin_pwd,
+        "presenter": default_presenter_pwd,
+        "csk": default_team_pwd,
+        "mi": default_team_pwd,
+        "rcb": default_team_pwd,
+        "kkr": default_team_pwd,
+        "dc": default_team_pwd,
+        "rr": default_team_pwd,
+        "pbks": default_team_pwd,
+        "srh": default_team_pwd,
+        "gt": default_team_pwd,
+        "lsg": default_team_pwd
+    }
+    
+    try:
+        users = db.query(User).all()
+        updated = 0
+        for user in users:
+            if user.username in password_map:
+                new_hash = pwd_context.hash(password_map[user.username])
+                user.password_hash = new_hash
+                updated += 1
+        
+        if updated > 0:
+            db.commit()
+            print(f"  ✓ Updated {updated} user password(s) with defaults")
+    except Exception as e:
+        print(f"  ✗ Error updating passwords: {e}")
+        db.rollback()
