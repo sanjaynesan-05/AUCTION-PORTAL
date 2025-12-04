@@ -210,3 +210,40 @@ def seed_database(db: Session):
     print("Initializing auction state...")
     init_auction_state(db)
     print("Database seeded successfully!")
+
+
+def safe_seed_database(db: Session):
+    """Seed database only if data doesn't already exist - prevents re-seeding on every deployment"""
+    from app.models.orm import Team, Player, User, AuctionState
+    
+    teams_count = db.query(Team).count()
+    players_count = db.query(Player).count()
+    users_count = db.query(User).count()
+    auction_state_count = db.query(AuctionState).count()
+    
+    # Only seed if tables are empty
+    if teams_count == 0:
+        print("Seeding teams...")
+        seed_teams(db)
+    else:
+        print(f"✓ Teams already exist ({teams_count} records) - skipping seed")
+    
+    if players_count == 0:
+        print("Seeding players...")
+        seed_players(db)
+    else:
+        print(f"✓ Players already exist ({players_count} records) - skipping seed")
+    
+    if users_count == 0:
+        print("Seeding users...")
+        seed_users(db)
+    else:
+        print(f"✓ Users already exist ({users_count} records) - skipping seed")
+    
+    if auction_state_count == 0:
+        print("Initializing auction state...")
+        init_auction_state(db)
+    else:
+        print(f"✓ Auction state already exists - skipping initialization")
+    
+    print("Database seeding check complete!")
