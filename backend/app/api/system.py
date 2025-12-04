@@ -15,38 +15,29 @@ async def reset_passwords(db: Session = Depends(get_db)):
     try:
         from app.models.orm import User
         
-        password_map = {
-            "admin": "admin123",
-            "presenter": "presenter123",
-            "csk": "team123",
-            "mi": "team123",
-            "rcb": "team123",
-            "kkr": "team123",
-            "dc": "team123",
-            "rr": "team123",
-            "pbks": "team123",
-            "srh": "team123",
-            "gt": "team123",
-            "lsg": "team123"
-        }
+        # All users use the same password for development/testing
+        # This is < 72 chars to avoid bcrypt truncation
+        default_password = "auction123"
         
         users = db.query(User).all()
         updated = 0
         
         for user in users:
-            if user.username in password_map:
-                user.password_hash = pwd_context.hash(password_map[user.username])
-                updated += 1
+            user.password_hash = pwd_context.hash(default_password)
+            updated += 1
         
         db.commit()
         
         return {
             "status": "success",
-            "message": f"Reset {updated} user passwords",
+            "message": f"Reset {updated} user passwords to 'auction123'",
             "credentials": {
-                "admin": {"username": "admin", "password": "admin123"},
-                "presenter": {"username": "presenter", "password": "presenter123"},
-                "teams": {"usernames": ["csk", "mi", "rcb", "kkr", "dc", "rr", "pbks", "srh", "gt", "lsg"], "password": "team123"}
+                "admin": {"username": "admin", "password": "auction123"},
+                "presenter": {"username": "presenter", "password": "auction123"},
+                "teams": {
+                    "usernames": ["csk", "mi", "rcb", "kkr", "dc", "rr", "pbks", "srh", "gt", "lsg"], 
+                    "password": "auction123"
+                }
             }
         }
     except Exception as e:
