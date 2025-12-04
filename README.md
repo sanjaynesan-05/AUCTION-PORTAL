@@ -4,6 +4,8 @@ A complete production-ready Full Stack application for managing IPL (Indian Prem
 
 **Architecture:** React Frontend (Vite) + FastAPI Backend + PostgreSQL Database + WebSocket Real-time Updates
 
+> 📚 **Documentation Organization**: Detailed reports, credentials, and guides are organized in the `/docs` folder. See [/docs/README.md](/docs/README.md) for the complete guide.
+
 ## ✨ Features
 
 ### 🔐 Advanced Authentication System
