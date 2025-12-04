@@ -1,6 +1,10 @@
-# 🏏 IPL Auction Portal 2025
+# IPL Auction Portal - Full Stack Application
 
-A professional, real-time cricket player auction portal built with React, TypeScript, and Vite. This comprehensive application provides an authentic IPL auction experience with role-based access control, real-time synchronization, and stunning modern UI design.
+A complete production-ready Full Stack application for managing IPL (Indian Premier League) cricket auctions with real-time updates, role-based access control, WebSocket integration, and PostgreSQL database.
+
+**Architecture:** React Frontend (Vite) + FastAPI Backend + PostgreSQL Database + WebSocket Real-time Updates
+
+> 📚 **Documentation Organization**: Detailed reports, credentials, and guides are organized in the `/docs` folder. See [/docs/README.md](/docs/README.md) for the complete guide.
 
 ## ✨ Features
 
