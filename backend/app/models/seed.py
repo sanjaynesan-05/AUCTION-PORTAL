@@ -143,30 +143,35 @@ def seed_players(db: Session):
 
 
 def seed_users(db: Session):
-    """Seed users into database - Load from environment variables in production"""
+    """Seed users into database - Use sensible defaults for development/testing"""
     import os
     
-    # Get credentials from environment variables (with safe defaults for development only)
-    # NOTE: In production, these MUST be loaded from secure environment variables
-    default_admin_pwd = os.getenv("ADMIN_PASSWORD", "change-me-in-production")
-    default_presenter_pwd = os.getenv("PRESENTER_PASSWORD", "change-me-in-production")
+    # Get credentials from environment variables OR use sensible defaults
+    # These defaults are safe for development, test, and demo purposes
+    # IMPORTANT: In production, ALWAYS override these via environment variables
+    default_admin_pwd = os.getenv("ADMIN_PASSWORD", "admin123")
+    default_presenter_pwd = os.getenv("PRESENTER_PASSWORD", "presenter123")
+    default_team_pwd = os.getenv("TEAM_PASSWORD", "team123")
     
     mock_users = [
-        # Admin & Presenter - PASSWORDS MUST BE SET VIA ENVIRONMENT VARIABLES
+        # Admin & Presenter - Default credentials for testing
+        # Usernames: admin, Password: admin123
+        # Usernames: presenter, Password: presenter123
         {"id": "admin", "username": "admin", "password": default_admin_pwd, "role": "admin"},
         {"id": "presenter", "username": "presenter", "password": default_presenter_pwd, "role": "presenter"},
         
-        # 10 Team Representatives - PASSWORDS MUST BE SET VIA ENVIRONMENT VARIABLES
-        {"id": "team-csk", "username": "csk", "password": os.getenv("TEAM_CSK_PASSWORD", "change-me-in-production"), "role": "viewer", "team_id": 1, "team_name": "Chennai Super Kings"},
-        {"id": "team-mi", "username": "mi", "password": os.getenv("TEAM_MI_PASSWORD", "change-me-in-production"), "role": "viewer", "team_id": 2, "team_name": "Mumbai Indians"},
-        {"id": "team-rcb", "username": "rcb", "password": os.getenv("TEAM_RCB_PASSWORD", "change-me-in-production"), "role": "viewer", "team_id": 3, "team_name": "Royal Challengers Bangalore"},
-        {"id": "team-kkr", "username": "kkr", "password": os.getenv("TEAM_KKR_PASSWORD", "change-me-in-production"), "role": "viewer", "team_id": 4, "team_name": "Kolkata Knight Riders"},
-        {"id": "team-dc", "username": "dc", "password": os.getenv("TEAM_DC_PASSWORD", "change-me-in-production"), "role": "viewer", "team_id": 5, "team_name": "Delhi Capitals"},
-        {"id": "team-rr", "username": "rr", "password": os.getenv("TEAM_RR_PASSWORD", "change-me-in-production"), "role": "viewer", "team_id": 6, "team_name": "Rajasthan Royals"},
-        {"id": "team-pbks", "username": "pbks", "password": os.getenv("TEAM_PBKS_PASSWORD", "change-me-in-production"), "role": "viewer", "team_id": 7, "team_name": "Punjab Kings"},
-        {"id": "team-srh", "username": "srh", "password": os.getenv("TEAM_SRH_PASSWORD", "change-me-in-production"), "role": "viewer", "team_id": 8, "team_name": "Sunrisers Hyderabad"},
-        {"id": "team-gt", "username": "gt", "password": os.getenv("TEAM_GT_PASSWORD", "change-me-in-production"), "role": "viewer", "team_id": 9, "team_name": "Gujarat Titans"},
-        {"id": "team-lsg", "username": "lsg", "password": os.getenv("TEAM_LSG_PASSWORD", "change-me-in-production"), "role": "viewer", "team_id": 10, "team_name": "Lucknow Super Giants"}
+        # 10 Team Representatives - Default password: team123
+        # Can login with username: csk/mi/rcb/kkr/dc/rr/pbks/srh/gt/lsg, password: team123
+        {"id": "team-csk", "username": "csk", "password": default_team_pwd, "role": "viewer", "team_id": 1, "team_name": "Chennai Super Kings"},
+        {"id": "team-mi", "username": "mi", "password": default_team_pwd, "role": "viewer", "team_id": 2, "team_name": "Mumbai Indians"},
+        {"id": "team-rcb", "username": "rcb", "password": default_team_pwd, "role": "viewer", "team_id": 3, "team_name": "Royal Challengers Bangalore"},
+        {"id": "team-kkr", "username": "kkr", "password": default_team_pwd, "role": "viewer", "team_id": 4, "team_name": "Kolkata Knight Riders"},
+        {"id": "team-dc", "username": "dc", "password": default_team_pwd, "role": "viewer", "team_id": 5, "team_name": "Delhi Capitals"},
+        {"id": "team-rr", "username": "rr", "password": default_team_pwd, "role": "viewer", "team_id": 6, "team_name": "Rajasthan Royals"},
+        {"id": "team-pbks", "username": "pbks", "password": default_team_pwd, "role": "viewer", "team_id": 7, "team_name": "Punjab Kings"},
+        {"id": "team-srh", "username": "srh", "password": default_team_pwd, "role": "viewer", "team_id": 8, "team_name": "Sunrisers Hyderabad"},
+        {"id": "team-gt", "username": "gt", "password": default_team_pwd, "role": "viewer", "team_id": 9, "team_name": "Gujarat Titans"},
+        {"id": "team-lsg", "username": "lsg", "password": default_team_pwd, "role": "viewer", "team_id": 10, "team_name": "Lucknow Super Giants"}
     ]
 
     for user_data in mock_users:
