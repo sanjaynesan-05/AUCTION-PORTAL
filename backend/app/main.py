@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import endpoints, auction, management, websocket, admin
+from app.api import endpoints, auction, management, websocket, system
 from app.database import init_db, SessionLocal
 from app.models.seed import safe_seed_database
 from app.config import API_TITLE, API_DESCRIPTION, API_VERSION
@@ -39,7 +39,7 @@ app.include_router(endpoints.router)
 app.include_router(auction.router)
 app.include_router(management.router)
 app.include_router(websocket.router)
-app.include_router(admin.router)
+app.include_router(system.router)
 
 
 @app.get("/")
