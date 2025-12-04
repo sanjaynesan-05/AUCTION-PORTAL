@@ -54,7 +54,6 @@ async def reset_passwords(db: Session = Depends(get_db)):
                 }
             }
         }
-        )
 
 
 @router.get("/status")
