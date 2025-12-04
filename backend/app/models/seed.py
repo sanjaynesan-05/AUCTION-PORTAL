@@ -246,24 +246,20 @@ def safe_seed_database(db: Session):
     else:
         print(f"✓ Players already exist ({players_count} records) - skipping seed")
     
-    # ALWAYS reseed users - this ensures passwords are correct
-    # This is safe because it only affects user table
-    try:
-        print("Resetting users with correct passwords...")
-        db.query(User).delete()
-        db.commit()
-        seed_users(db)
-        print("✓ Users reseeded successfully")
-    except Exception as e:
-        print(f"⚠ Error reseeding users: {e}")
-        db.rollback()
-        # If reseed fails, only seed if no users exist
-        if users_count == 0:
-            try:
-                seed_users(db)
-                print("✓ Users seeded")
-            except Exception as e2:
-                print(f"✗ Error seeding users: {e2}")
+    # Only seed users if they don't exist yet
+    if users_count == 0:
+        print("Seeding users with password 'auction123'...")
+        try:
+            seed_users(db)
+            print("✓ Users seeded successfully")
+        except Exception as e:
+            print(f"✗ Error seeding users: {e}")
+            import traceback
+            traceback.print_exc()
+            db.rollback()
+    else:
+        print(f"✓ Users already exist ({users_count} records) - skipping seed")
+        # If you need to reset passwords, use /system/reset-passwords endpoint
     
     if auction_state_count == 0:
         print("Initializing auction state...")
