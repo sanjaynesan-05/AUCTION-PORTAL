@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.schemas import UserLogin, Token, UserResponse
 from app.models.orm import User
 from app.database import get_db
-from app.api.auth import create_access_token, verify_password
+from app.api.auth import create_access_token, verify_password, get_current_user
 from datetime import timedelta
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -53,7 +54,7 @@ async def logout():
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_me(current_user: dict = None, db: Session = Depends(get_db)):
+async def get_me(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Get current authenticated user
     """

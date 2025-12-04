@@ -144,7 +144,7 @@ if ($adminToken) {
         Write-Host "  Role: $($d.role)" -ForegroundColor Gray
         $pass++
     } catch {
-        Write-Host "  Status: FAILED" -ForegroundColor Red
+        Write-Host "  Status: FAILED - $($_.Exception.Message)" -ForegroundColor Red
         $fail++
     }
 } else {
