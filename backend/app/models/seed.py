@@ -147,21 +147,22 @@ def seed_users(db: Session):
     import os
     
     # Get credentials from environment variables OR use sensible defaults
+    # Passwords must be < 72 chars for bcrypt compatibility
     # These defaults are safe for development, test, and demo purposes
     # IMPORTANT: In production, ALWAYS override these via environment variables
-    default_admin_pwd = os.getenv("ADMIN_PASSWORD", "admin123")
-    default_presenter_pwd = os.getenv("PRESENTER_PASSWORD", "presenter123")
-    default_team_pwd = os.getenv("TEAM_PASSWORD", "team123")
+    default_admin_pwd = os.getenv("ADMIN_PASSWORD", "auction123")
+    default_presenter_pwd = os.getenv("PRESENTER_PASSWORD", "auction123")
+    default_team_pwd = os.getenv("TEAM_PASSWORD", "auction123")
     
     mock_users = [
         # Admin & Presenter - Default credentials for testing
-        # Usernames: admin, Password: admin123
-        # Usernames: presenter, Password: presenter123
+        # Username: admin, Password: auction123
+        # Username: presenter, Password: auction123
         {"id": "admin", "username": "admin", "password": default_admin_pwd, "role": "admin"},
         {"id": "presenter", "username": "presenter", "password": default_presenter_pwd, "role": "presenter"},
         
-        # 10 Team Representatives - Default password: team123
-        # Can login with username: csk/mi/rcb/kkr/dc/rr/pbks/srh/gt/lsg, password: team123
+        # 10 Team Representatives - Default password: auction123
+        # Can login with username: csk/mi/rcb/kkr/dc/rr/pbks/srh/gt/lsg, password: auction123
         {"id": "team-csk", "username": "csk", "password": default_team_pwd, "role": "viewer", "team_id": 1, "team_name": "Chennai Super Kings"},
         {"id": "team-mi", "username": "mi", "password": default_team_pwd, "role": "viewer", "team_id": 2, "team_name": "Mumbai Indians"},
         {"id": "team-rcb", "username": "rcb", "password": default_team_pwd, "role": "viewer", "team_id": 3, "team_name": "Royal Challengers Bangalore"},
@@ -177,15 +178,20 @@ def seed_users(db: Session):
     for user_data in mock_users:
         existing = db.query(User).filter(User.id == user_data["id"]).first()
         if not existing:
-            user = User(
-                id=user_data["id"],
-                username=user_data["username"],
-                password_hash=pwd_context.hash(user_data["password"]),
-                role=user_data["role"],
-                team_id=user_data.get("team_id"),
-                team_name=user_data.get("team_name")
-            )
-            db.add(user)
+            try:
+                user = User(
+                    id=user_data["id"],
+                    username=user_data["username"],
+                    password_hash=pwd_context.hash(user_data["password"]),
+                    role=user_data["role"],
+                    team_id=user_data.get("team_id"),
+                    team_name=user_data.get("team_name")
+                )
+                db.add(user)
+            except Exception as e:
+                print(f"  ✗ Error hashing password for {user_data['username']}: {e}")
+                db.rollback()
+                continue
     
     db.commit()
 
@@ -218,7 +224,7 @@ def seed_database(db: Session):
 
 
 def safe_seed_database(db: Session):
-    """Seed database on startup. Always update user passwords."""
+    """Seed database on startup - skip re-hashing existing users"""
     from app.models.orm import Team, Player, User, AuctionState
     
     teams_count = db.query(Team).count()
@@ -239,14 +245,12 @@ def safe_seed_database(db: Session):
     else:
         print(f"✓ Players already exist ({players_count} records) - skipping seed")
     
-    # ALWAYS update user passwords with defaults (even if users exist)
-    # This ensures that after code deployment, the new default passwords work
+    # Only seed users if they don't exist - DO NOT re-update passwords on redeploy
     if users_count == 0:
         print("Seeding users...")
         seed_users(db)
     else:
-        print(f"✓ Users already exist ({users_count} records) - updating passwords with defaults")
-        update_user_passwords_with_defaults(db)
+        print(f"✓ Users already exist ({users_count} records) - skipping seed (use /system/reset-passwords if needed)")
     
     if auction_state_count == 0:
         print("Initializing auction state...")
@@ -257,43 +261,6 @@ def safe_seed_database(db: Session):
     print("Database seeding check complete!")
 
 
-def update_user_passwords_with_defaults(db: Session):
-    """Update all existing users with default passwords"""
-    from app.models.orm import User
-    import os
-    
-    # Default passwords - same as in seed_users
-    default_admin_pwd = os.getenv("ADMIN_PASSWORD", "admin123")
-    default_presenter_pwd = os.getenv("PRESENTER_PASSWORD", "presenter123")
-    default_team_pwd = os.getenv("TEAM_PASSWORD", "team123")
-    
-    password_map = {
-        "admin": default_admin_pwd,
-        "presenter": default_presenter_pwd,
-        "csk": default_team_pwd,
-        "mi": default_team_pwd,
-        "rcb": default_team_pwd,
-        "kkr": default_team_pwd,
-        "dc": default_team_pwd,
-        "rr": default_team_pwd,
-        "pbks": default_team_pwd,
-        "srh": default_team_pwd,
-        "gt": default_team_pwd,
-        "lsg": default_team_pwd
-    }
-    
-    try:
-        users = db.query(User).all()
-        updated = 0
-        for user in users:
-            if user.username in password_map:
-                new_hash = pwd_context.hash(password_map[user.username])
-                user.password_hash = new_hash
-                updated += 1
-        
-        if updated > 0:
-            db.commit()
-            print(f"  ✓ Updated {updated} user password(s) with defaults")
-    except Exception as e:
-        print(f"  ✗ Error updating passwords: {e}")
-        db.rollback()
+# Note: update_user_passwords_with_defaults function removed
+# Users are not re-hashed on redeploy for stability
+# Use POST /system/reset-passwords endpoint if password reset is needed
