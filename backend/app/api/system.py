@@ -15,42 +15,63 @@ async def reset_passwords(db: Session = Depends(get_db)):
     try:
         from app.models.orm import User
         
-        # All users use the same password for development/testing
         default_password = "auction123"
         
         # Get all users
         users = db.query(User).all()
         if not users:
-            return {"status": "info", "message": "No users found in database", "updated": 0}
+            return {
+                "status": "info",
+                "message": "No users found in database",
+                "updated": 0,
+                "total_users": 0
+            }
         
-        # Reset each user's password
+        # Reset each user's password with error handling
         updated = 0
+        errors = []
+        
         for user in users:
             try:
-                hashed = pwd_context.hash(default_password)
-                user.password_hash = hashed
+                hashed_pwd = pwd_context.hash(default_password)
+                user.password_hash = hashed_pwd
                 updated += 1
-            except Exception as user_error:
-                print(f"Error hashing password for user {user.username}: {user_error}")
+            except Exception as e:
+                errors.append(f"User {user.username}: {str(e)}")
                 continue
         
-        # Commit all changes
-        db.commit()
+        # Try to commit
+        try:
+            db.commit()
+        except Exception as commit_error:
+            db.rollback()
+            return {
+                "status": "error",
+                "message": "Failed to commit password changes",
+                "updated": 0,
+                "error": str(commit_error)
+            }
         
-        return {
+        response = {
             "status": "success",
-            "message": f"Reset {updated} user passwords to 'auction123'",
+            "message": f"Successfully reset {updated}/{len(users)} user passwords to 'auction123'",
             "updated": updated,
             "total_users": len(users),
             "credentials": {
                 "admin": {"username": "admin", "password": "auction123"},
                 "presenter": {"username": "presenter", "password": "auction123"},
                 "teams": {
-                    "usernames": ["csk", "mi", "rcb", "kkr", "dc", "rr", "pbks", "srh", "gt", "lsg"], 
+                    "usernames": ["csk", "mi", "rcb", "kkr", "dc", "rr", "pbks", "srh", "gt", "lsg"],
                     "password": "auction123"
                 }
             }
         }
+        
+        if errors:
+            response["errors"] = errors
+        
+        return response
+        
     except Exception as e:
         try:
             db.rollback()
@@ -59,6 +80,7 @@ async def reset_passwords(db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error resetting passwords: {str(e)}"
+        )
         )
 
 
