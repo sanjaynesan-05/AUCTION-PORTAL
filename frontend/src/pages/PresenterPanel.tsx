@@ -4,6 +4,7 @@ import { useAuctionSync } from '../hooks/useAuctionSync';
 import { useState } from 'react';
 import { TVBroadcastPlayer } from '../components/TVBroadcastPlayer';
 import { FloatingTeamPurse } from '../components/FloatingTeamPurse';
+import SoldModal from '../components/SoldModal';
 import {
   LogOut,
   Play,
@@ -40,6 +41,10 @@ export default function PresenterPanel() {
     type: null,
     show: false
   });
+  const [showSoldModal, setShowSoldModal] = useState(false);
+  const [lastSoldPlayer, setLastSoldPlayer] = useState<any>(null);
+  const [lastSoldTeam, setLastSoldTeam] = useState<any>(null);
+  const [lastSoldAmount, setLastSoldAmount] = useState(0);
 
   const handleLogout = () => {
     logout();
@@ -48,13 +53,29 @@ export default function PresenterPanel() {
 
   const handleSold = () => {
     if (currentPlayer && currentBidder) {
+      const soldTeam = teams.find(t => t.id === currentBidder);
+      
+      // Show modal with sold details
+      setLastSoldPlayer(currentPlayer);
+      setLastSoldTeam(soldTeam);
+      setLastSoldAmount(currentBid);
+      setShowSoldModal(true);
+      
       markSold(currentPlayer.id, currentBidder, currentBid);
       setStampAnimation({ type: 'sold', show: true });
       setTimeout(() => {
         setStampAnimation({ type: null, show: false });
+        setShowSoldModal(false);
         nextPlayer();
       }, 2000);
     }
+  };
+
+  const handleSoldModalClose = async () => {
+    setShowSoldModal(false);
+    setTimeout(() => {
+      nextPlayer();
+    }, 300);
   };
 
   const handleUnsold = () => {
@@ -269,6 +290,15 @@ export default function PresenterPanel() {
 
         </div>
       </div>
+
+      {/* Sold Modal */}
+      <SoldModal
+        isOpen={showSoldModal}
+        player={lastSoldPlayer}
+        team={lastSoldTeam}
+        soldAmount={lastSoldAmount}
+        onClose={handleSoldModalClose}
+      />
 
       {/* Floating Team Purse Button */}
       <FloatingTeamPurse teams={teams} />

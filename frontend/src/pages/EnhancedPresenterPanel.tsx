@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { useAuctionSync } from '../hooks/useAuctionSync';
+import SoldModal from '../components/SoldModal';
 import {
   LogOut,
   Play,
@@ -42,34 +43,62 @@ export default function PresenterPanel() {
 
   const [selectedTeam, setSelectedTeam] = useState<number | null>(null);
   const [bidAmount, setBidAmount] = useState(0);
+  const [showSoldModal, setShowSoldModal] = useState(false);
+  const [lastSoldPlayer, setLastSoldPlayer] = useState<any>(null);
+  const [lastSoldTeam, setLastSoldTeam] = useState<any>(null);
+  const [lastSoldAmount, setLastSoldAmount] = useState(0);
+
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const handleQuickBid = (amount: number) => {
+  const handleQuickBid = async (amount: number) => {
     if (selectedTeam) {
-      placeBid(selectedTeam, amount);
+      await placeBid(selectedTeam, amount);
       setBidAmount(amount);
     }
   };
 
-  const handleSold = () => {
+  const handleSold = async () => {
     if (currentPlayer && currentBidder) {
-      markSold(currentPlayer.id, currentBidder, currentBid);
+      const soldTeam = teams.find(t => t.id === currentBidder);
+      
+      console.log('Marking player sold:', {
+        player: currentPlayer,
+        team: soldTeam,
+        bidder: currentBidder,
+        bid: currentBid
+      });
+      
+      // Show modal with sold details FIRST
+      setLastSoldPlayer({ ...currentPlayer });
+      setLastSoldTeam(soldTeam ? { ...soldTeam } : null);
+      setLastSoldAmount(currentBid);
+      setShowSoldModal(true);
+      
+      // Then mark sold in backend
+      await markSold(currentPlayer.id, currentBidder, currentBid);
       setSelectedTeam(null);
       setBidAmount(0);
-      nextPlayer();
     }
   };
 
-  const handleUnsold = () => {
+  const handleSoldModalClose = async () => {
+    setShowSoldModal(false);
+    // Add small delay before moving to next player to allow UI update
+    setTimeout(async () => {
+      await nextPlayer();
+    }, 300);
+  };
+
+  const handleUnsold = async () => {
     if (currentPlayer) {
-      markUnsold(currentPlayer.id);
+      await markUnsold(currentPlayer.id);
       setSelectedTeam(null);
       setBidAmount(0);
-      nextPlayer();
+      await nextPlayer();
     }
   };
 
@@ -564,6 +593,15 @@ export default function PresenterPanel() {
           </div>
         </div>
       </div>
+
+      {/* Sold Modal */}
+      <SoldModal
+        isOpen={showSoldModal}
+        player={lastSoldPlayer}
+        team={lastSoldTeam}
+        soldAmount={lastSoldAmount}
+        onClose={handleSoldModalClose}
+      />
     </div>
   );
 }

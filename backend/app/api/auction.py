@@ -152,12 +152,14 @@ async def next_player(db: Session = Depends(get_db)):
     unsold_players = get_unsold_players(db)
     next_index = state.current_index + 1
     
+    current_player = None
     if next_index < len(unsold_players):
         state.current_index = next_index
         state.current_player_id = unsold_players[next_index].id
         state.current_bid = 0
         state.current_bidder_id = None
         state.last_update = datetime.utcnow()
+        current_player = player_to_schema(unsold_players[next_index]).model_dump()
     else:
         state.current_player_id = None
         state.auction_started = False
@@ -167,7 +169,16 @@ async def next_player(db: Session = Depends(get_db)):
     
     db.commit()
     
-    return {"message": "Moved to next player"}
+    return {"message": "Moved to next player", "state": {
+        "currentIndex": state.current_index,
+        "currentPlayer": current_player,
+        "auctionStarted": state.auction_started,
+        "auctionPaused": state.auction_paused,
+        "currentBid": state.current_bid,
+        "currentBidder": state.current_bidder_id,
+        "bidHistory": [],
+        "lastUpdate": int(time.time() * 1000)
+    }}
 
 
 @router.post("/previous", operation_id="move_to_previous_player")
@@ -183,16 +194,27 @@ async def previous_player(db: Session = Depends(get_db)):
     unsold_players = get_unsold_players(db)
     prev_index = max(0, state.current_index - 1)
     
+    current_player = None
     if prev_index >= 0 and prev_index < len(unsold_players):
         state.current_index = prev_index
         state.current_player_id = unsold_players[prev_index].id
         state.current_bid = 0
         state.current_bidder_id = None
         state.last_update = datetime.utcnow()
+        current_player = player_to_schema(unsold_players[prev_index]).model_dump()
     
     db.commit()
     
-    return {"message": "Moved to previous player"}
+    return {"message": "Moved to previous player", "state": {
+        "currentIndex": state.current_index,
+        "currentPlayer": current_player,
+        "auctionStarted": state.auction_started,
+        "auctionPaused": state.auction_paused,
+        "currentBid": state.current_bid,
+        "currentBidder": state.current_bidder_id,
+        "bidHistory": [],
+        "lastUpdate": int(time.time() * 1000)
+    }}
 
 
 @router.post("/bid", response_model=PlaceBidResponse, operation_id="place_bid_on_player")
@@ -272,7 +294,23 @@ async def mark_sold(request: MarkSoldRequest, db: Session = Depends(get_db)):
     
     db.commit()
     
-    return {"message": "Player marked as sold"}
+    # Get current player after marking sold
+    current_player = None
+    if state and state.current_player_id:
+        current_player_obj = db.query(PlayerORM).filter(PlayerORM.id == state.current_player_id).first()
+        if current_player_obj:
+            current_player = player_to_schema(current_player_obj).model_dump()
+    
+    return {"message": "Player marked as sold", "state": {
+        "currentIndex": state.current_index if state else 0,
+        "currentPlayer": current_player,
+        "auctionStarted": state.auction_started if state else False,
+        "auctionPaused": state.auction_paused if state else False,
+        "currentBid": state.current_bid if state else 0,
+        "currentBidder": state.current_bidder_id if state else None,
+        "bidHistory": [],
+        "lastUpdate": int(time.time() * 1000)
+    }}
 
 
 @router.post("/mark-unsold", operation_id="mark_player_as_unsold")
@@ -299,7 +337,23 @@ async def mark_unsold(request: MarkUnsoldRequest, db: Session = Depends(get_db))
     
     db.commit()
     
-    return {"message": "Player marked as unsold"}
+    # Get current player after marking unsold
+    current_player = None
+    if state and state.current_player_id:
+        current_player_obj = db.query(PlayerORM).filter(PlayerORM.id == state.current_player_id).first()
+        if current_player_obj:
+            current_player = player_to_schema(current_player_obj).model_dump()
+    
+    return {"message": "Player marked as unsold", "state": {
+        "currentIndex": state.current_index if state else 0,
+        "currentPlayer": current_player,
+        "auctionStarted": state.auction_started if state else False,
+        "auctionPaused": state.auction_paused if state else False,
+        "currentBid": state.current_bid if state else 0,
+        "currentBidder": state.current_bidder_id if state else None,
+        "bidHistory": [],
+        "lastUpdate": int(time.time() * 1000)
+    }}
 
 
 @router.post("/reset", operation_id="reset_auction_to_initial_state")

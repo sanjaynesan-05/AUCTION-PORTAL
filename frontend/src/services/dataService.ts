@@ -233,9 +233,8 @@ class DataService {
   async placeBid(playerId: number, teamId: number, bidAmount: number): Promise<AuctionState | null> {
     try {
       const response = await apiClient.post<any>('/auction/bid', {
-        player_id: playerId,
-        team_id: teamId,
-        bid_amount: bidAmount,
+        teamId: teamId,
+        amount: bidAmount,
       });
       return response?.state || response || null;
     } catch (error) {
@@ -250,9 +249,9 @@ class DataService {
   async markSold(playerId: number, teamId: number, finalPrice: number): Promise<AuctionState | null> {
     try {
       const response = await apiClient.post<any>('/auction/mark-sold', {
-        player_id: playerId,
-        team_id: teamId,
-        final_price: finalPrice,
+        playerId: playerId,
+        teamId: teamId,
+        price: finalPrice,
       });
       return response?.state || response || null;
     } catch (error) {
@@ -267,7 +266,7 @@ class DataService {
   async markUnsold(playerId: number): Promise<AuctionState | null> {
     try {
       const response = await apiClient.post<any>('/auction/mark-unsold', {
-        player_id: playerId,
+        playerId: playerId,
       });
       return response?.state || response || null;
     } catch (error) {

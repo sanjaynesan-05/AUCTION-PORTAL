@@ -333,6 +333,12 @@ export const useAuctionStore = create<AuctionState>((set, get) => {
           currentBidder: null,
           bidHistory: [],
         });
+        // After an admin reset, automatically start the auction so presenter/viewer begin from first player
+        try {
+          await get().startAuction();
+        } catch (err) {
+          console.error('Failed to auto-start auction after reset:', err);
+        }
       }
     } catch (error) {
       console.error('Failed to reset auction:', error);

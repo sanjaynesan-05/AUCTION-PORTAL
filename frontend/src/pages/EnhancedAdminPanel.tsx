@@ -49,9 +49,9 @@ export default function AdminPanel() {
     navigate('/login');
   };
 
-  const handleAddPlayer = () => {
+  const handleAddPlayer = async () => {
     if (newPlayer.name) {
-      addPlayer({
+      await addPlayer({
         ...newPlayer,
         sold: false,
         image: `https://ui-avatars.com/api/?name=${newPlayer.name}&background=6366f1&color=fff&size=128`,
