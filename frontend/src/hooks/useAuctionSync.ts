@@ -1,10 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuctionStore } from '../store/useAuctionStore';
 import { auctionSync } from '../utils/auctionSync';
 import { dataService } from '../services/dataService';
 
 export const useAuctionSync = () => {
   const store = useAuctionStore();
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Subscribe to store changes directly
@@ -42,46 +45,128 @@ export const useAuctionSync = () => {
       useAuctionStore.setState(storedState);
     }
 
-    // Poll backend every 2 seconds to sync auction state across different devices
-    const pollInterval = setInterval(async () => {
+    // Establish WebSocket connection for real-time updates (primary)
+    const connectWebSocket = () => {
       try {
-        const auctionState = await dataService.getAuctionState();
-        if (auctionState) {
-          const currentState = useAuctionStore.getState();
-          
-          // Check if significant state changes occurred
-          const hasStateChanges = 
-            auctionState.auctionStarted !== currentState.auctionStarted ||
-            auctionState.auctionPaused !== currentState.auctionPaused ||
-            auctionState.currentIndex !== currentState.currentIndex ||
-            auctionState.currentBid !== currentState.currentBid ||
-            auctionState.currentBidder !== currentState.currentBidder;
-          
-          // Only update if there are actual state changes to avoid unnecessary re-renders
-          if (hasStateChanges) {
-            const currentPlayerFromAPI = currentState.players[auctionState.currentIndex] || null;
-            
-            useAuctionStore.setState({
-              auctionStarted: auctionState.auctionStarted,
-              auctionPaused: auctionState.auctionPaused,
-              currentIndex: auctionState.currentIndex,
-              currentPlayer: currentPlayerFromAPI,
-              currentBid: auctionState.currentBid,
-              currentBidder: auctionState.currentBidder,
-              lastUpdate: Date.now(),
-            });
+        const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
+        wsRef.current = new WebSocket(`${wsUrl}/ws/auction`);
+
+        wsRef.current.onopen = () => {
+          console.log('✓ WebSocket connected for real-time auction updates');
+          // Clear polling interval if WebSocket is connected
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
           }
-        }
+        };
+
+        wsRef.current.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            
+            if (message.type === 'auction_state_update' && message.data) {
+              const data = message.data;
+              const currentState = useAuctionStore.getState();
+              
+              // Check if significant state changes occurred
+              const hasStateChanges = 
+                data.auctionStarted !== currentState.auctionStarted ||
+                data.auctionPaused !== currentState.auctionPaused ||
+                data.currentIndex !== currentState.currentIndex ||
+                data.currentBid !== currentState.currentBid ||
+                data.currentBidder !== currentState.currentBidder;
+              
+              // Only update if there are actual state changes to avoid unnecessary re-renders
+              if (hasStateChanges) {
+                useAuctionStore.setState({
+                  auctionStarted: data.auctionStarted || false,
+                  auctionPaused: data.auctionPaused || false,
+                  currentIndex: data.currentIndex || 0,
+                  currentPlayer: data.currentPlayer || null,
+                  currentBid: data.currentBid || 0,
+                  currentBidder: data.currentBidder || null,
+                  bidHistory: data.bidHistory || [],
+                  lastUpdate: Date.now(),
+                });
+              }
+            }
+          } catch (error) {
+            console.error('Error processing WebSocket message:', error);
+          }
+        };
+
+        wsRef.current.onerror = (error) => {
+          console.error('WebSocket error:', error);
+        };
+
+        wsRef.current.onclose = () => {
+          console.log('WebSocket disconnected, attempting to reconnect in 3 seconds...');
+          // Start fallback polling immediately
+          startFallbackPolling();
+          // Attempt to reconnect after 3 seconds
+          reconnectTimeoutRef.current = setTimeout(connectWebSocket, 3000);
+        };
       } catch (error) {
-        // Silently fail on polling errors to avoid console spam
-        // Connection will be retried on next interval
+        console.error('Failed to establish WebSocket connection:', error);
+        // Start fallback polling if WebSocket fails
+        startFallbackPolling();
       }
-    }, 2000);
+    };
+
+    // Fallback polling (500ms interval) if WebSocket unavailable
+    const startFallbackPolling = () => {
+      // Only start polling if not already polling
+      if (pollIntervalRef.current) return;
+      
+      console.log('Starting fallback polling (500ms interval)');
+      pollIntervalRef.current = setInterval(async () => {
+        try {
+          const auctionState = await dataService.getAuctionState();
+          if (auctionState) {
+            const currentState = useAuctionStore.getState();
+            
+            const hasStateChanges = 
+              auctionState.auctionStarted !== currentState.auctionStarted ||
+              auctionState.auctionPaused !== currentState.auctionPaused ||
+              auctionState.currentIndex !== currentState.currentIndex ||
+              auctionState.currentBid !== currentState.currentBid ||
+              auctionState.currentBidder !== currentState.currentBidder;
+            
+            if (hasStateChanges) {
+              const currentPlayerFromAPI = currentState.players[auctionState.currentIndex] || null;
+              
+              useAuctionStore.setState({
+                auctionStarted: auctionState.auctionStarted,
+                auctionPaused: auctionState.auctionPaused,
+                currentIndex: auctionState.currentIndex,
+                currentPlayer: currentPlayerFromAPI,
+                currentBid: auctionState.currentBid,
+                currentBidder: auctionState.currentBidder,
+                lastUpdate: Date.now(),
+              });
+            }
+          }
+        } catch (error) {
+          // Silently fail on polling errors
+        }
+      }, 500);
+    };
+
+    // Attempt initial WebSocket connection
+    connectWebSocket();
 
     return () => {
       unsubscribeStore();
       unsubscribeSync();
-      clearInterval(pollInterval);
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
     };
   }, []);
 
