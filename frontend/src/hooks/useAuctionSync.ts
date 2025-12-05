@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useAuctionStore } from '../store/useAuctionStore';
 import { auctionSync } from '../utils/auctionSync';
+import { dataService } from '../services/dataService';
 
 export const useAuctionSync = () => {
   const store = useAuctionStore();
@@ -41,9 +42,46 @@ export const useAuctionSync = () => {
       useAuctionStore.setState(storedState);
     }
 
+    // Poll backend every 2 seconds to sync auction state across different devices
+    const pollInterval = setInterval(async () => {
+      try {
+        const auctionState = await dataService.getAuctionState();
+        if (auctionState) {
+          const currentState = useAuctionStore.getState();
+          
+          // Check if significant state changes occurred
+          const hasStateChanges = 
+            auctionState.auctionStarted !== currentState.auctionStarted ||
+            auctionState.auctionPaused !== currentState.auctionPaused ||
+            auctionState.currentIndex !== currentState.currentIndex ||
+            auctionState.currentBid !== currentState.currentBid ||
+            auctionState.currentBidder !== currentState.currentBidder;
+          
+          // Only update if there are actual state changes to avoid unnecessary re-renders
+          if (hasStateChanges) {
+            const currentPlayerFromAPI = currentState.players[auctionState.currentIndex] || null;
+            
+            useAuctionStore.setState({
+              auctionStarted: auctionState.auctionStarted,
+              auctionPaused: auctionState.auctionPaused,
+              currentIndex: auctionState.currentIndex,
+              currentPlayer: currentPlayerFromAPI,
+              currentBid: auctionState.currentBid,
+              currentBidder: auctionState.currentBidder,
+              lastUpdate: Date.now(),
+            });
+          }
+        }
+      } catch (error) {
+        // Silently fail on polling errors to avoid console spam
+        // Connection will be retried on next interval
+      }
+    }, 2000);
+
     return () => {
       unsubscribeStore();
       unsubscribeSync();
+      clearInterval(pollInterval);
     };
   }, []);
 
