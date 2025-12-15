@@ -25,10 +25,11 @@ app = FastAPI(
     version=API_VERSION
 )
 
-# Configure CORS
+# Configure CORS - Allow all origins for development/testing
+# In production, replace ["*"] with specific domain list
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "https://auction-portal-frontend.onrender.com", "https://auctioncontrol.netlify.app"],
+    allow_origins=["*"],  # Allow all origins for multi-device testing
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
