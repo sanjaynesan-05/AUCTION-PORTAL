@@ -153,28 +153,6 @@ async def websocket_endpoint(websocket: WebSocket):
     finally:
         manager.disconnect(websocket)
 
-            
-            # Handle state refresh requests
-            elif message.get("type") == "refresh":
-                await manager.broadcast_auction_update()
-            
-            # Handle custom messages
-            elif message.get("type") == "message":
-                response = {
-                    "type": "message_response",
-                    "data": message.get("data"),
-                    "timestamp": int(asyncio.get_event_loop().time())
-                }
-                await manager.broadcast(response)
-    
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-        print("Client disconnected normally")
-    except Exception as e:
-        print(f"WebSocket error: {e}")
-        if websocket in manager.active_connections:
-            manager.disconnect(websocket)
-
 
 async def broadcast_auction_state():
     """
