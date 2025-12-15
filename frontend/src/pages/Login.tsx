@@ -1,33 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { mockUsers } from '../data/mockUsers';
-import { Crown, ArrowRight, Trophy, Users, LogIn, Sparkles } from 'lucide-react';
+import { Crown, ArrowRight, Trophy, LogIn, Sparkles } from 'lucide-react';
 import { apiClient, API_CONFIG } from '../services/apiClient';
-import { dataService, Team } from '../services/dataService';
 
 export default function Login() {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'quick'>('login');
-  const [teams, setTeams] = useState<Team[]>([]);
   const { login } = useRole();
   const navigate = useNavigate();
-
-  // Fetch teams on component mount
-  useEffect(() => {
-    const fetchTeams = async () => {
-      try {
-        const teamsData = await dataService.getTeams();
-        setTeams(teamsData || []);
-      } catch (error) {
-        console.error('Failed to fetch teams:', error);
-        setTeams([]);
-      }
-    };
-    fetchTeams();
-  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,8 +57,7 @@ export default function Login() {
       login(user);
       
       // Navigate to appropriate dashboard based on role
-      const dashboardRoute = user.role === 'admin' ? '/admin' :
-                            user.role === 'presenter' ? '/presenter' : '/viewer';
+      const dashboardRoute = user.role === 'admin' ? '/admin' : '/presenter';
       navigate(dashboardRoute);
     } catch (err) {
       console.error('Login error:', err);
@@ -84,18 +67,13 @@ export default function Login() {
     }
   };
 
-  const handleQuickLogin = async (role: 'admin' | 'presenter' | 'viewer', teamId?: number) => {
+  const handleQuickLogin = async (role: 'admin' | 'presenter') => {
     setError('');
     setIsLoading(true);
 
     try {
       // Find the user from mock data for quick access
-      let user;
-      if (role === 'viewer' && teamId) {
-        user = mockUsers.find(u => u.role === 'viewer' && u.teamId === teamId);
-      } else {
-        user = mockUsers.find(u => u.role === role && !u.teamId);
-      }
+      const user = mockUsers.find(u => u.role === role);
 
       if (!user) {
         setError('User account not found');
@@ -141,8 +119,7 @@ export default function Login() {
       login(loginUser);
       
       // Navigate to appropriate dashboard based on role
-      const dashboardRoute = loginUser.role === 'admin' ? '/admin' :
-                            loginUser.role === 'presenter' ? '/presenter' : '/viewer';
+      const dashboardRoute = loginUser.role === 'admin' ? '/admin' : '/presenter';
       navigate(dashboardRoute);
     } catch (err) {
       console.error('Quick login error:', err);
@@ -303,7 +280,7 @@ export default function Login() {
                         </div>
                         <div className="text-left">
                           <h3 className="text-lg font-bold text-white">Admin</h3>
-                          <p className="text-sm text-gray-300">Full system control</p>
+                          <p className="text-sm text-gray-300">Full auction control</p>
                         </div>
                       </div>
                       <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
@@ -319,50 +296,11 @@ export default function Login() {
                         </div>
                         <div className="text-left">
                           <h3 className="text-lg font-bold text-white">Presenter</h3>
-                          <p className="text-sm text-gray-300">Live auction control</p>
+                          <p className="text-sm text-gray-300">Display-only mode</p>
                         </div>
                       </div>
                       <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
                     </button>
-                  </div>
-
-                  {/* Team Viewers */}
-                  <div>
-                    <div className="flex items-center justify-center mb-6">
-                      <Users className="w-5 h-5 text-gray-400 mr-2" />
-                      <span className="text-gray-400 font-medium">Team Viewers</span>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                      {teams.length > 0 ? teams.map(team => {
-                        const teamUser = mockUsers.find(u => u.role === 'viewer' && u.teamName === team.name);
-                        return (
-                          <button
-                            key={team.id}
-                            onClick={() => handleQuickLogin('viewer', team.id)}
-                            className="group relative overflow-hidden bg-white/5 border border-white/20 rounded-xl p-4 hover:bg-white/10 transition-all duration-200 hover:scale-105 hover:shadow-lg"
-                            style={{
-                              background: team.color ? `${team.color}15` : undefined,
-                              borderColor: team.color ? `${team.color}30` : undefined
-                            }}
-                          >
-                            <div className="flex flex-col items-center space-y-2">
-                              {team.logo && (
-                                <img
-                                  src={team.logo}
-                                  alt={team.name}
-                                  className="w-8 h-8 object-contain group-hover:scale-110 transition-transform"
-                                />
-                              )}
-                              <span className="text-xs text-gray-300 font-medium text-center">{team.shortName || team.name.split(' ')[0]}</span>
-                            </div>
-                            <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity rounded-xl"
-                                 style={{ backgroundColor: team.color }}></div>
-                          </button>
-                        );
-                      }) : (
-                        <div className="col-span-full text-center text-gray-400">Loading teams...</div>
-                      )}
-                    </div>
                   </div>
                 </div>
               )}
