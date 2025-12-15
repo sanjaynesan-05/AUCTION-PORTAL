@@ -1,16 +1,19 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from typing import List
 import json
 import asyncio
-from app.database import SessionLocal, get_db
-from app.models.orm import AuctionState as AuctionStateORM, Player as PlayerORM
+from app.database import SessionLocal
+from app.models.orm import AuctionState as AuctionStateORM, Player as PlayerORM, Team as TeamORM, PlayerStatus, AuctionStatus
 
 router = APIRouter()
 
 
 class ConnectionManager:
-    """Manage WebSocket connections and broadcasting"""
+    """
+    Manage WebSocket connections for broadcast-only updates
+    Clients cannot send messages - WebSocket is one-way (server -> clients)
+    """
     
     def __init__(self):
         self.active_connections: List[WebSocket] = []
@@ -19,71 +22,97 @@ class ConnectionManager:
         """Accept a new WebSocket connection"""
         await websocket.accept()
         self.active_connections.append(websocket)
-        print(f"Client connected. Total connections: {len(self.active_connections)}")
+        print(f"✓ WebSocket client connected. Total: {len(self.active_connections)}")
 
     def disconnect(self, websocket: WebSocket):
         """Remove a disconnected WebSocket"""
-        self.active_connections.remove(websocket)
-        print(f"Client disconnected. Total connections: {len(self.active_connections)}")
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+            print(f"✗ WebSocket client disconnected. Total: {len(self.active_connections)}")
 
     async def broadcast(self, message: dict):
-        """Broadcast message to all connected clients"""
+        """
+        Broadcast message to all connected clients
+        Thread-safe broadcasting with automatic cleanup of dead connections
+        """
         disconnected = []
         for connection in self.active_connections:
             try:
                 await connection.send_json(message)
             except Exception as e:
-                print(f"Error broadcasting: {e}")
+                print(f"Error broadcasting to client: {e}")
                 disconnected.append(connection)
         
-        # Remove failed connections
+        # Clean up failed connections
         for conn in disconnected:
-            if conn in self.active_connections:
-                self.active_connections.remove(conn)
+            self.disconnect(conn)
 
-    async def broadcast_auction_update(self):
-        """Broadcast current auction state to all clients"""
-        db = SessionLocal()
+    async def broadcast_auction_update(self, db: Session = None):
+        """
+        Broadcast current auction state to all clients
+        Called automatically when admin makes changes
+        """
+        if db is None:
+            db = SessionLocal()
+            should_close = True
+        else:
+            should_close = False
+            
         try:
-            state = db.query(AuctionStateORM).first()
-            if state:
-                current_player = None
-                if state.current_player_id:
-                    player = db.query(PlayerORM).filter(PlayerORM.id == state.current_player_id).first()
-                    if player:
-                        current_player = {
-                            "id": player.id,
-                            "name": player.name,
-                            "role": player.role,
-                            "basePrice": player.base_price,
-                            "sold": player.sold,
-                            "teamId": player.team_id,
-                            "price": player.price,
-                            "nationality": player.nationality,
-                            "age": player.age,
-                            "battingStyle": player.batting_style,
-                            "bowlingStyle": player.bowling_style,
-                            "image": player.image,
-                            "stats": player.stats
-                        }
-                
-                message = {
-                    "type": "auction_state_update",
-                    "data": {
-                        "currentIndex": state.current_index,
-                        "currentPlayer": current_player,
-                        "auctionStarted": state.auction_started,
-                        "auctionPaused": state.auction_paused,
-                        "currentBid": state.current_bid,
-                        "currentBidder": state.current_bidder_id,
-                        "bidHistory": [],
-                        "lastUpdate": int(state.last_update.timestamp() * 1000) if state.last_update else 0
+            state = db.query(AuctionStateORM).filter(AuctionStateORM.id == 1).first()
+            if not state:
+                return
+            
+            # Build player data
+            current_player = None
+            if state.current_player_id:
+                player = db.query(PlayerORM).filter(PlayerORM.id == state.current_player_id).first()
+                if player:
+                    current_player = {
+                        "id": player.id,
+                        "name": player.name,
+                        "role": player.role,
+                        "basePrice": player.base_price,
+                        "status": player.status.value,
+                        "soldPrice": player.sold_price,
+                        "soldToTeamId": player.sold_to_team_id,
+                        "nationality": player.nationality,
+                        "age": player.age,
+                        "battingStyle": player.batting_style,
+                        "bowlingStyle": player.bowling_style,
+                        "image": player.image,
+                        "stats": player.stats
                     }
+            
+            # Build winning team data
+            winning_team = None
+            if state.winning_team_id:
+                team = db.query(TeamORM).filter(TeamORM.id == state.winning_team_id).first()
+                if team:
+                    winning_team = {
+                        "id": team.id,
+                        "name": team.name,
+                        "color": team.color
+                    }
+            
+            # Build message payload
+            message = {
+                "type": "auction_state_update",
+                "data": {
+                    "currentPlayer": current_player,
+                    "status": state.status.value,
+                    "currentBid": state.current_bid,
+                    "winningTeam": winning_team,
+                    "lastUpdate": int(state.last_update.timestamp() * 1000) if state.last_update else 0
                 }
-                
-                await self.broadcast(message)
+            }
+            
+            await self.broadcast(message)
+            print(f"📡 Broadcasted auction update to {len(self.active_connections)} clients")
+            
         finally:
-            db.close()
+            if should_close:
+                db.close()
 
 
 # Global connection manager
@@ -95,24 +124,35 @@ async def websocket_endpoint(websocket: WebSocket):
     """
     WebSocket endpoint for real-time auction updates
     
-    Maintains persistent connection and broadcasts:
-    - Auction state changes (player, bid, status)
-    - Real-time updates for all connected clients
+    BROADCAST-ONLY: Server pushes updates, clients cannot send messages
+    Maintains persistent connection for instant updates across all devices
     """
     await manager.connect(websocket)
     
     try:
-        # Send initial state immediately
+        # Send initial state immediately on connection
         await manager.broadcast_auction_update()
         
+        # Keep connection alive - ignore all client messages
+        # This is broadcast-only, clients cannot send updates
         while True:
-            # Receive message from client
-            data = await websocket.receive_text()
-            message = json.loads(data)
-            
-            # Handle ping/pong for keep-alive
-            if message.get("type") == "ping":
-                await websocket.send_json({"type": "pong"})
+            try:
+                # Receive and discard any client messages (keep-alive, etc)
+                data = await websocket.receive_text()
+                # Optionally handle ping/pong for connection health
+                try:
+                    message = json.loads(data)
+                    if message.get("type") == "ping":
+                        await websocket.send_json({"type": "pong"})
+                except json.JSONDecodeError:
+                    pass  # Ignore invalid JSON
+            except WebSocketDisconnect:
+                break
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+    finally:
+        manager.disconnect(websocket)
+
             
             # Handle state refresh requests
             elif message.get("type") == "refresh":

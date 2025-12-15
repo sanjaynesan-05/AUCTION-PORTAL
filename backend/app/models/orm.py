@@ -1,40 +1,42 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, JSON, Text, Table
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, JSON, Text, Enum as SQLEnum
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from datetime import datetime
-import json
+from datetime import datetime, timezone
+import enum
 
 Base = declarative_base()
 
-# Association table for Team-Player many-to-many relationship
-team_players = Table(
-    'team_players',
-    Base.metadata,
-    Column('team_id', Integer, ForeignKey('teams.id'), primary_key=True),
-    Column('player_id', Integer, ForeignKey('players.id'), primary_key=True)
-)
+
+class PlayerStatus(str, enum.Enum):
+    """Player auction status"""
+    PENDING = "PENDING"
+    SOLD = "SOLD"
+
+
+class AuctionStatus(str, enum.Enum):
+    """Auction state status"""
+    IDLE = "IDLE"
+    LIVE = "LIVE"
+    SOLD = "SOLD"
 
 
 class User(Base):
+    """Admin users only - simplified authentication"""
     __tablename__ = "users"
 
     id = Column(String, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     password_hash = Column(String)
-    role = Column(String)  # admin, presenter, viewer
-    team_id = Column(Integer, ForeignKey('teams.id'), nullable=True)
-    team_name = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # Relationships
-    team = relationship("Team", back_populates="users")
+    role = Column(String, default="admin")  # Only admin role needed
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     def __repr__(self):
         return f"<User {self.username} - {self.role}>"
 
 
 class Player(Base):
+    """Player model - simplified for admin-only auction"""
     __tablename__ = "players"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -46,86 +48,59 @@ class Player(Base):
     batting_style = Column(String, nullable=True)
     bowling_style = Column(String, nullable=True)
     image = Column(String)
-    stats = Column(JSON, nullable=True)  # matches, runs, wickets, average, strikeRate
+    stats = Column(JSON, nullable=True)
     
-    # Auction fields
-    sold = Column(Boolean, default=False)
-    team_id = Column(Integer, ForeignKey('teams.id'), nullable=True)
-    price = Column(Integer, nullable=True)  # Sold price in lakhs
+    # Auction fields - simplified
+    status = Column(SQLEnum(PlayerStatus), default=PlayerStatus.PENDING, nullable=False)
+    sold_price = Column(Integer, nullable=True)  # Final sold price in lakhs
+    sold_to_team_id = Column(Integer, ForeignKey('teams.id'), nullable=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
-    team = relationship("Team", back_populates="players")
-    bids = relationship("BidHistory", back_populates="player", cascade="all, delete-orphan")
+    sold_to_team = relationship("Team", back_populates="players")
 
     def __repr__(self):
-        return f"<Player {self.name}>"
+        return f"<Player {self.name} - {self.status.value}>"
 
 
 class Team(Base):
+    """Team model - simplified"""
     __tablename__ = "teams"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
-    short_name = Column(String, unique=True)
-    initial_purse = Column(Integer, default=12000)  # in lakhs
-    remaining_purse = Column(Integer, default=12000)  # in lakhs
-    logo = Column(String)
-    color = Column(String)
-    primary_color = Column(String)
-    secondary_color = Column(String)
+    color = Column(String)  # Primary color for UI display
+    logo = Column(String, nullable=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
-    players = relationship("Player", back_populates="team")
-    users = relationship("User", back_populates="team")
-    bids = relationship("BidHistory", back_populates="team")
+    players = relationship("Player", back_populates="sold_to_team")
 
     def __repr__(self):
         return f"<Team {self.name}>"
 
 
 class AuctionState(Base):
+    """Singleton auction state - single source of truth"""
     __tablename__ = "auction_state"
 
-    id = Column(Integer, primary_key=True, index=True)
-    current_index = Column(Integer, default=0)
+    id = Column(Integer, primary_key=True, default=1)  # Singleton - only id=1 exists
     current_player_id = Column(Integer, ForeignKey('players.id'), nullable=True)
-    auction_started = Column(Boolean, default=False)
-    auction_paused = Column(Boolean, default=False)
+    status = Column(SQLEnum(AuctionStatus), default=AuctionStatus.IDLE, nullable=False)
     current_bid = Column(Integer, default=0)
-    current_bidder_id = Column(Integer, ForeignKey('teams.id'), nullable=True)
-    last_update = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    winning_team_id = Column(Integer, ForeignKey('teams.id'), nullable=True)
+    last_update = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
-    current_player = relationship("Player")
-    current_bidder = relationship("Team")
+    current_player = relationship("Player", foreign_keys=[current_player_id])
+    winning_team = relationship("Team", foreign_keys=[winning_team_id])
 
     def __repr__(self):
-        return f"<AuctionState started={self.auction_started}>"
-
-
-class BidHistory(Base):
-    __tablename__ = "bid_history"
-
-    id = Column(Integer, primary_key=True, index=True)
-    player_id = Column(Integer, ForeignKey('players.id'), index=True)
-    team_id = Column(Integer, ForeignKey('teams.id'), index=True)
-    amount = Column(Integer)  # in lakhs
-    bid_time = Column(DateTime, default=datetime.utcnow)
-    
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    # Relationships
-    player = relationship("Player", back_populates="bids")
-    team = relationship("Team", back_populates="bids")
-
-    def __repr__(self):
-        return f"<BidHistory player={self.player_id} team={self.team_id} amount={self.amount}>"
+        return f"<AuctionState status={self.status.value} player={self.current_player_id}>"

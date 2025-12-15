@@ -1,24 +1,25 @@
 """Database seed and initialization"""
 from sqlalchemy.orm import Session
-from app.models.orm import User, Player, Team, AuctionState
+from app.models.orm import User, Player, Team, AuctionState, PlayerStatus, AuctionStatus
 from passlib.context import CryptContext
+from datetime import datetime, timezone
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def seed_teams(db: Session):
-    """Seed teams into database"""
+    """Seed teams into database - simplified schema"""
     mock_teams = [
-        {"id": 1, "name": "Chennai Super Kings", "short_name": "CSK", "logo": "https://documents.iplt20.com/ipl/CSK/logos/Logooutline/CSKoutline.png", "color": "#FFCC00", "primary_color": "#FFCC00", "secondary_color": "#003366"},
-        {"id": 2, "name": "Mumbai Indians", "short_name": "MI", "logo": "https://documents.iplt20.com/ipl/MI/Logos/Logooutline/MIoutline.png", "color": "#004BA0", "primary_color": "#004BA0", "secondary_color": "#FFD700"},
-        {"id": 3, "name": "Royal Challengers Bangalore", "short_name": "RCB", "logo": "https://documents.iplt20.com/ipl/RCB/Logos/Logooutline/RCBoutline.png", "color": "#EC1C24", "primary_color": "#EC1C24", "secondary_color": "#FFD700"},
-        {"id": 4, "name": "Kolkata Knight Riders", "short_name": "KKR", "logo": "https://documents.iplt20.com/ipl/KKR/Logos/Logooutline/KKRoutline.png", "color": "#3A225D", "primary_color": "#3A225D", "secondary_color": "#FFD700"},
-        {"id": 5, "name": "Delhi Capitals", "short_name": "DC", "logo": "https://documents.iplt20.com/ipl/DC/Logos/LogoOutline/DCoutline.png", "color": "#004C93", "primary_color": "#004C93", "secondary_color": "#DC143C"},
-        {"id": 6, "name": "Rajasthan Royals", "short_name": "RR", "logo": "https://documents.iplt20.com/ipl/RR/Logos/Logooutline/RRoutline.png", "color": "#254AA5", "primary_color": "#254AA5", "secondary_color": "#FFB6C1"},
-        {"id": 7, "name": "Punjab Kings", "short_name": "PBKS", "logo": "https://documents.iplt20.com/ipl/PBKS/Logos/Logooutline/PBKSoutline.png", "color": "#ED1B24", "primary_color": "#ED1B24", "secondary_color": "#FFD700"},
-        {"id": 8, "name": "Sunrisers Hyderabad", "short_name": "SRH", "logo": "https://documents.iplt20.com/ipl/SRH/Logos/Logooutline/SRHoutline.png", "color": "#FF822A", "primary_color": "#FF822A", "secondary_color": "#000000"},
-        {"id": 9, "name": "Gujarat Titans", "short_name": "GT", "logo": "https://documents.iplt20.com/ipl/GT/Logos/Logooutline/GToutline.png", "color": "#1B2631", "primary_color": "#1B2631", "secondary_color": "#FFD700"},
-        {"id": 10, "name": "Lucknow Super Giants", "short_name": "LSG", "logo": "https://documents.iplt20.com/ipl/LSG/Logos/Logooutline/LSGoutline.png", "color": "#00A0E3", "primary_color": "#00A0E3", "secondary_color": "#FFD700"}
+        {"id": 1, "name": "Chennai Super Kings", "color": "#FFCC00", "logo": "https://documents.iplt20.com/ipl/CSK/logos/Logooutline/CSKoutline.png"},
+        {"id": 2, "name": "Mumbai Indians", "color": "#004BA0", "logo": "https://documents.iplt20.com/ipl/MI/Logos/Logooutline/MIoutline.png"},
+        {"id": 3, "name": "Royal Challengers Bangalore", "color": "#EC1C24", "logo": "https://documents.iplt20.com/ipl/RCB/Logos/Logooutline/RCBoutline.png"},
+        {"id": 4, "name": "Kolkata Knight Riders", "color": "#3A225D", "logo": "https://documents.iplt20.com/ipl/KKR/Logos/Logooutline/KKRoutline.png"},
+        {"id": 5, "name": "Delhi Capitals", "color": "#004C93", "logo": "https://documents.iplt20.com/ipl/DC/Logos/LogoOutline/DCoutline.png"},
+        {"id": 6, "name": "Rajasthan Royals", "color": "#254AA5", "logo": "https://documents.iplt20.com/ipl/RR/Logos/Logooutline/RRoutline.png"},
+        {"id": 7, "name": "Punjab Kings", "color": "#ED1B24", "logo": "https://documents.iplt20.com/ipl/PBKS/Logos/Logooutline/PBKSoutline.png"},
+        {"id": 8, "name": "Sunrisers Hyderabad", "color": "#FF822A", "logo": "https://documents.iplt20.com/ipl/SRH/Logos/Logooutline/SRHoutline.png"},
+        {"id": 9, "name": "Gujarat Titans", "color": "#1B2631", "logo": "https://documents.iplt20.com/ipl/GT/Logos/Logooutline/GToutline.png"},
+        {"id": 10, "name": "Lucknow Super Giants", "color": "#00A0E3", "logo": "https://documents.iplt20.com/ipl/LSG/Logos/Logooutline/LSGoutline.png"}
     ]
 
     for team_data in mock_teams:
@@ -27,13 +28,8 @@ def seed_teams(db: Session):
             team = Team(
                 id=team_data["id"],
                 name=team_data["name"],
-                short_name=team_data["short_name"],
-                initial_purse=12000,
-                remaining_purse=12000,
-                logo=team_data["logo"],
                 color=team_data["color"],
-                primary_color=team_data["primary_color"],
-                secondary_color=team_data["secondary_color"]
+                logo=team_data.get("logo")
             )
             db.add(team)
     
@@ -41,7 +37,7 @@ def seed_teams(db: Session):
 
 
 def seed_players(db: Session):
-    """Seed players into database"""
+    """Seed players into database with PENDING status"""
     mock_players = [
         # Indian Top Order Batsmen
         {"id": 1, "name": "Virat Kohli", "role": "Batsman", "base_price": 200, "nationality": "India", "age": 35, "batting_style": "Right-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/1.png", "stats": {"matches": 223, "runs": 7263, "average": 37.25, "strikeRate": 131.97}},
@@ -72,32 +68,108 @@ def seed_players(db: Session):
         {"id": 18, "name": "Quinton de Kock", "role": "Wicketkeeper", "base_price": 110, "nationality": "South Africa", "age": 31, "batting_style": "Left-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/16.png", "stats": {"matches": 89, "runs": 2987, "average": 35.67, "strikeRate": 142.34}},
         {"id": 19, "name": "Reece Topley", "role": "Bowler", "base_price": 105, "nationality": "England", "age": 29, "bowling_style": "Left-arm fast", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/17.png", "stats": {"matches": 34, "wickets": 48, "average": 24.78, "strikeRate": 18.67}},
         {"id": 20, "name": "Marco Jansen", "role": "All-rounder", "base_price": 95, "nationality": "South Africa", "age": 24, "batting_style": "Left-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/18.png", "stats": {"matches": 28, "runs": 876, "wickets": 34, "average": 18.45, "strikeRate": 142.56}},
-        
-        # Young Indian Talents
-        {"id": 21, "name": "Abhishek Sharma", "role": "Batsman", "base_price": 90, "nationality": "India", "age": 24, "batting_style": "Left-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/19.png", "stats": {"matches": 45, "runs": 1456, "average": 32.35, "strikeRate": 148.34}},
-        {"id": 22, "name": "Arjun Tendulkar", "role": "All-rounder", "base_price": 75, "nationality": "India", "age": 23, "batting_style": "Left-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/20.png", "stats": {"matches": 15, "runs": 234, "wickets": 8, "average": 29.25, "strikeRate": 125.67}},
-        {"id": 23, "name": "Tilak Varma", "role": "Batsman", "base_price": 85, "nationality": "India", "age": 22, "batting_style": "Left-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/21.png", "stats": {"matches": 34, "runs": 1289, "average": 37.89, "strikeRate": 139.45}},
-        {"id": 24, "name": "Yashasvi Jaiswal", "role": "Batsman", "base_price": 88, "nationality": "India", "age": 21, "batting_style": "Left-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/22.png", "stats": {"matches": 28, "runs": 987, "average": 35.25, "strikeRate": 141.23}},
-        {"id": 25, "name": "Mahipal Lomror", "role": "Batsman", "base_price": 70, "nationality": "India", "age": 24, "batting_style": "Left-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/23.png", "stats": {"matches": 42, "runs": 1234, "average": 29.38, "strikeRate": 145.67}},
-        
-        # More Bowlers
-        {"id": 26, "name": "Varun Chakaravarthy", "role": "Bowler", "base_price": 110, "nationality": "India", "age": 31, "bowling_style": "Right-arm leg-spin", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/24.png", "stats": {"matches": 76, "wickets": 89, "average": 27.34, "strikeRate": 20.67}},
-        {"id": 27, "name": "Navdeep Saini", "role": "Bowler", "base_price": 95, "nationality": "India", "age": 29, "bowling_style": "Right-arm fast", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/25.png", "stats": {"matches": 64, "wickets": 79, "average": 28.45, "strikeRate": 21.34}},
-        {"id": 28, "name": "Avesh Khan", "role": "Bowler", "base_price": 100, "nationality": "India", "age": 26, "bowling_style": "Right-arm fast", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/26.png", "stats": {"matches": 52, "wickets": 71, "average": 26.78, "strikeRate": 19.45}},
-        {"id": 29, "name": "Prasidh Krishna", "role": "Bowler", "base_price": 92, "nationality": "India", "age": 26, "bowling_style": "Right-arm fast", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/27.png", "stats": {"matches": 38, "runs": 234, "wickets": 52, "average": 28.34, "strikeRate": 20.12}},
-        {"id": 30, "name": "Umran Malik", "role": "Bowler", "base_price": 88, "nationality": "India", "age": 24, "bowling_style": "Right-arm fast", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/29.png", "stats": {"matches": 28, "wickets": 36, "average": 26.45, "strikeRate": 18.67}},
-        
-        # More Batsmen
-        {"id": 31, "name": "Sanju Samson", "role": "Batsman", "base_price": 125, "nationality": "India", "age": 28, "batting_style": "Right-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/30.png", "stats": {"matches": 145, "runs": 4567, "average": 31.56, "strikeRate": 137.89}},
-        {"id": 32, "name": "Ajinkya Rahane", "role": "Batsman", "base_price": 80, "nationality": "India", "age": 35, "batting_style": "Right-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/31.png", "stats": {"matches": 178, "runs": 4823, "average": 28.67, "strikeRate": 121.45}},
-        {"id": 33, "name": "Manish Pandey", "role": "Batsman", "base_price": 75, "nationality": "India", "age": 35, "batting_style": "Right-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/32.png", "stats": {"matches": 168, "runs": 4567, "average": 28.34, "strikeRate": 128.34}},
-        {"id": 34, "name": "Shreyas Iyer", "role": "Batsman", "base_price": 110, "nationality": "India", "age": 28, "batting_style": "Right-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/33.png", "stats": {"matches": 123, "runs": 3876, "average": 31.56, "strikeRate": 139.23}},
-        {"id": 35, "name": "Aiden Markram", "role": "Batsman", "base_price": 95, "nationality": "South Africa", "age": 28, "batting_style": "Right-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/34.png", "stats": {"matches": 67, "runs": 2234, "average": 33.34, "strikeRate": 135.45}},
-        
-        # All-rounders
-        {"id": 36, "name": "Ravindra Jadeja", "role": "All-rounder", "base_price": 130, "nationality": "India", "age": 34, "batting_style": "Left-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/35.png", "stats": {"matches": 189, "runs": 3543, "wickets": 145, "average": 32.34, "strikeRate": 134.56}},
-        {"id": 37, "name": "Sam Curran", "role": "All-rounder", "base_price": 105, "nationality": "England", "age": 25, "batting_style": "Left-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/36.png", "stats": {"matches": 48, "runs": 1234, "wickets": 52, "average": 28.45, "strikeRate": 143.45}},
-        {"id": 38, "name": "Marcus Stoinis", "role": "All-rounder", "base_price": 98, "nationality": "Australia", "age": 34, "batting_style": "Right-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/37.png", "stats": {"matches": 89, "runs": 2876, "wickets": 78, "average": 32.34, "strikeRate": 142.56}},
+    ]
+
+    for player_data in mock_players:
+        existing = db.query(Player).filter(Player.id == player_data["id"]).first()
+        if not existing:
+            player = Player(
+                id=player_data["id"],
+                name=player_data["name"],
+                role=player_data["role"],
+                base_price=player_data["base_price"],
+                nationality=player_data["nationality"],
+                age=player_data["age"],
+                batting_style=player_data.get("batting_style"),
+                bowling_style=player_data.get("bowling_style"),
+                image=player_data["image"],
+                stats=player_data.get("stats"),
+                status=PlayerStatus.PENDING  # All players start as PENDING
+            )
+            db.add(player)
+    
+    db.commit()
+
+
+def seed_users(db: Session):
+    """Seed admin users only"""
+    import os
+    
+    # Get admin password from env or use default
+    default_admin_pwd = os.getenv("ADMIN_PASSWORD", "auction123")
+    
+    mock_users = [
+        {"id": "admin", "username": "admin", "password": default_admin_pwd, "role": "admin"},
+        {"id": "admin2", "username": "presenter", "password": default_admin_pwd, "role": "admin"},  # Presenter is also admin for simplicity
+    ]
+
+    for user_data in mock_users:
+        existing = db.query(User).filter(User.id == user_data["id"]).first()
+        if not existing:
+            try:
+                user = User(
+                    id=user_data["id"],
+                    username=user_data["username"],
+                    password_hash=pwd_context.hash(user_data["password"]),
+                    role=user_data["role"]
+                )
+                db.add(user)
+            except Exception as e:
+                print(f"  ✗ Error creating user {user_data['username']}: {e}")
+                db.rollback()
+                continue
+    
+    db.commit()
+
+
+def init_auction_state(db: Session):
+    """Initialize auction state singleton"""
+    existing = db.query(AuctionState).filter(AuctionState.id == 1).first()
+    if not existing:
+        state = AuctionState(
+            id=1,
+            status=AuctionStatus.IDLE,
+            current_bid=0
+        )
+        db.add(state)
+        db.commit()
+
+
+def safe_seed_database(db: Session):
+    """Seed database on startup - only seed if empty"""
+    teams_count = db.query(Team).count()
+    players_count = db.query(Player).count()
+    users_count = db.query(User).count()
+    
+    # Only seed if tables are empty
+    if teams_count == 0:
+        print("📋 Seeding teams...")
+        seed_teams(db)
+    else:
+        print(f"✓ Teams already exist ({teams_count} records)")
+    
+    if players_count == 0:
+        print("📋 Seeding players...")
+        seed_players(db)
+    else:
+        print(f"✓ Players already exist ({players_count} records)")
+    
+    if users_count == 0:
+        print("📋 Seeding admin users...")
+        try:
+            seed_users(db)
+            print("✓ Admin users seeded successfully")
+        except Exception as e:
+            print(f"✗ Error seeding users: {e}")
+            db.rollback()
+    else:
+        print(f"✓ Users already exist ({users_count} records)")
+    
+    print("📋 Initializing auction state...")
+    init_auction_state(db)
+    
+    print("✓ Database seeding complete!")
+
         {"id": 39, "name": "Andre Russell", "role": "All-rounder", "base_price": 115, "nationality": "West Indies", "age": 36, "batting_style": "Right-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/38.png", "stats": {"matches": 156, "runs": 3987, "wickets": 123, "average": 34.56, "strikeRate": 178.23}},
         {"id": 40, "name": "Axar Patel", "role": "All-rounder", "base_price": 100, "nationality": "India", "age": 29, "batting_style": "Left-handed", "image": "https://documents.iplt20.com/ipl/IPLHeadshot2024/39.png", "stats": {"matches": 98, "runs": 2345, "wickets": 87, "average": 27.34, "strikeRate": 138.45}},
         

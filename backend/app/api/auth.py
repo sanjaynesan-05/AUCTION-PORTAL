@@ -57,3 +57,15 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             detail="Could not validate credentials",
         )
     return payload
+
+
+def require_admin(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    """Require admin role for protected endpoints"""
+    payload = get_current_user(credentials)
+    role = payload.get("role")
+    if role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return payload
