@@ -92,7 +92,7 @@ def seed_players(db: Session):
 
 
 def seed_users(db: Session):
-    """Seed admin users only"""
+    """Seed admin and presenter users"""
     import os
     
     # Get admin password from env or use default
@@ -100,7 +100,7 @@ def seed_users(db: Session):
     
     mock_users = [
         {"id": "admin", "username": "admin", "password": default_admin_pwd, "role": "admin"},
-        {"id": "admin2", "username": "presenter", "password": default_admin_pwd, "role": "admin"},  # Presenter is also admin for simplicity
+        {"id": "presenter", "username": "presenter", "password": default_admin_pwd, "role": "presenter"},  # Presenter has read-only access
     ]
 
     for user_data in mock_users:

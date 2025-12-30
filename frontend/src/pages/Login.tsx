@@ -209,6 +209,7 @@ export default function Login() {
                           className="w-full px-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all text-lg"
                           placeholder="Enter your username"
                           required
+                          autoComplete="username"
                           aria-label="Username"
                           aria-describedby={error ? "login-error" : undefined}
                         />
@@ -226,6 +227,7 @@ export default function Login() {
                           className="w-full px-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all text-lg"
                           placeholder="Enter your password"
                           required
+                          autoComplete="current-password"
                           aria-label="Password"
                           aria-describedby={error ? "login-error" : undefined}
                         />

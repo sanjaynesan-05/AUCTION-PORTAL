@@ -26,7 +26,7 @@ export default function AppRoutes() {
         <Route
           path="/presenter"
           element={
-            <RoleGuard allowed={['presenter', 'admin']}>
+            <RoleGuard allowed={['presenter']}>
               <PresenterPanel />
             </RoleGuard>
           }

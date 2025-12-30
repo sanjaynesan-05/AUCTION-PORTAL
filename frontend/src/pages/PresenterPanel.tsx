@@ -9,7 +9,9 @@
  * - Smooth animations
  */
 import { useState, useEffect, useRef } from 'react';
-import { Gavel, Trophy, TrendingUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useRole } from '../context/RoleContext';
+import { Gavel, Trophy, TrendingUp, LogOut } from 'lucide-react';
 
 const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
 
@@ -39,6 +41,8 @@ interface AuctionState {
 }
 
 export default function PresenterPanel() {
+  const navigate = useNavigate();
+  const { logout, user } = useRole();
   const [auctionState, setAuctionState] = useState<AuctionState>({
     status: 'IDLE',
     currentBid: 0,
@@ -50,6 +54,12 @@ export default function PresenterPanel() {
   const [previousBid, setPreviousBid] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+
+  const handleLogout = () => {
+    logout();
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
 
   useEffect(() => {
     connectWebSocket();
@@ -163,15 +173,26 @@ export default function PresenterPanel() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-white">IPL Auction 2025</h1>
-                <p className="text-lg text-gray-300">Live Presentation Mode</p>
+                <p className="text-lg text-gray-300">🎙️ Presenter Mode (Read-Only Display)</p>
               </div>
             </div>
             
-            {/* Status Badge */}
-            <div className={`px-8 py-4 rounded-2xl bg-gradient-to-r ${getStatusColor()} text-white text-2xl font-bold ${
-              auctionState.status === 'LIVE' ? 'animate-pulse' : ''
-            }`}>
-              {getStatusText()}
+            <div className="flex items-center space-x-4">
+              {/* Status Badge */}
+              <div className={`px-8 py-4 rounded-2xl bg-gradient-to-r ${getStatusColor()} text-white text-2xl font-bold ${
+                auctionState.status === 'LIVE' ? 'animate-pulse' : ''
+              }`}>
+                {getStatusText()}
+              </div>
+              
+              {/* Logout Button */}
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all duration-200"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Logout</span>
+              </button>
             </div>
           </div>
         </div>
