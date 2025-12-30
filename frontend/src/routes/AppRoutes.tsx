@@ -5,7 +5,7 @@ import { LoadingSpinner } from '../components/Loading';
 
 // Lazy load components for better performance
 const Login = lazy(() => import('../pages/Login'));
-const AdminPanel = lazy(() => import('../pages/AdminPanel'));
+const EnhancedAdminPanel = lazy(() => import('../pages/EnhancedAdminPanel'));
 const PresenterPanel = lazy(() => import('../pages/PresenterPanel'));
 const Unauthorized = lazy(() => import('../pages/Unauthorized'));
 
@@ -19,7 +19,7 @@ export default function AppRoutes() {
           path="/admin"
           element={
             <RoleGuard allowed={['admin']}>
-              <AdminPanel />
+              <EnhancedAdminPanel />
             </RoleGuard>
           }
         />
