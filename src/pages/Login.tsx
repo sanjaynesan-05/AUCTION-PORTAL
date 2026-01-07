@@ -13,12 +13,13 @@ export default function Login() {
   const { login } = useRole();
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    try {
+    // Simulate a very brief loading state for UX
+    setTimeout(() => {
       const user = mockUsers.find(u =>
         u.username === credentials.username &&
         u.password === credentials.password
@@ -32,12 +33,9 @@ export default function Login() {
         navigate(dashboardRoute);
       } else {
         setError('Invalid credentials');
+        setIsLoading(false);
       }
-    } catch (err) {
-      setError('Login failed');
-    } finally {
-      setIsLoading(false);
-    }
+    }, 300);
   };
 
   const handleQuickLogin = (role: 'admin' | 'presenter' | 'viewer', teamId?: number) => {
