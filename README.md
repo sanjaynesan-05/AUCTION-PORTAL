@@ -2,11 +2,12 @@
 
 ## 📋 Executive Summary
 
-**IPL Auction Portal 2025** is a professional-grade, production-ready web application that simulates an authentic Indian Premier League (IPL) cricket player auction experience. Built with modern web technologies and featuring real-time synchronization, role-based access control, and a stunning UI, this application demonstrates enterprise-level React architecture and advanced state management patterns.
+**IPL Auction Portal 2025** is a professional-grade, production-ready web application that simulates an authentic Indian Premier League (IPL) cricket player auction experience. Built with modern web technologies and featuring real-time synchronization, dual-role access control, and a stunning UI, this application demonstrates enterprise-level React architecture.
 
 **Project Type:** Single Page Application (SPA) - Frontend Only (No Backend Required)  
 **Architecture:** Client-Side Rendered with localStorage Persistence  
 **Real-Time Sync:** Cross-Tab Communication via Web Storage API  
+**Authentication:** Dual-Role System (Admin & Presenter)  
 **Development Status:** Production-Ready ✅  
 **Last Updated:** January 2026
 
@@ -18,9 +19,9 @@
 ### Core Purpose
 This application provides a complete simulation of IPL auction proceedings, enabling:
 - **Live Auction Management**: Control player bidding, pricing, and team assignments
-- **Multi-Role Experience**: Admin controls, presenter broadcasting, and team viewing
+- **Dual-Role System**: Admin for management, Presenter for broadcasting
 - **Real-Time Synchronization**: Instant updates across multiple browser tabs without server dependency
-- **Professional UI/UX**: IPL-branded interface with authentic team colors, logos, and styling
+- **Professional Interface**: IPL-branded interface with authentic team colors and logos
 
 ### Key Differentiators
 1. **Zero Backend Dependency**: Runs entirely client-side using localStorage
@@ -243,10 +244,9 @@ class AuctionSync {
 **Purpose:** Global authentication state management  
 **Pattern:** React Context API with custom hook
 
-**User Roles:**
-- **Admin**: Full auction control, player management, system reset
-- **Presenter**: Live auction presentation, bid management, navigation
-- **Viewer**: Read-only access, team-specific dashboard (10 teams)
+**Supported Roles:**
+- **Admin**: Full system access and auction control
+- **Presenter**: Live presentation and bid management
 
 #### `RoleGuard.tsx` (45 lines)
 **Purpose:** Protected route wrapper component  
@@ -256,17 +256,12 @@ class AuctionSync {
 - Fallback to /unauthorized page
 - Integration with React Router
 
-#### `mockUsers.ts` (20 lines)
+#### `mockUsers.ts` (15 lines)
 **Authentication Database:**
 ```typescript
 2 User Accounts:
-├── admin (admin123)       → Admin Dashboard
-└── presenter (presenter123) → Presenter Panel
-
-10 Team Viewer Implicit Logins:
-├── CSK, MI, RCB, KKR, DC
-├── RR, PBKS, SRH, GT, LSG
-└── Auto-login via Quick Access buttons
+├── admin (admin123)          → Admin Dashboard
+└── presenter (presenter123)  → Presenter Panel
 ```
 
 ### 4. **Routing System** (`src/routes/`)
@@ -282,10 +277,9 @@ class AuctionSync {
 **Route Structure:**
 ```
 /                → Redirect to /login
-/login           → Public (Login page with tabs)
+/login           → Public (Login page - 2 roles)
 /admin           → Protected (Admin only)
 /presenter       → Protected (Presenter only)
-/viewer          → Protected (Viewer only)
 /unauthorized    → Public (Access denied)
 *                → Redirect to /login
 ```
@@ -658,141 +652,114 @@ dist/
 
 ## 🔐 Authentication & User Access
 
-### Login Interface
+The application features a **streamlined 2-role authentication system** designed for professional auction management:
+
+| Feature | Admin | Presenter |
+|---------|-------|-----------|
+| **Access Control** | Full system access | Auction presentation only |
+| **Player Management** | ✅ Add/Remove | ❌ Read-only |
+| **Team Purse Control** | ✅ Modify | ❌ View only |
+| **Auction Control** | ✅ Full (start/pause/reset) | ✅ Bid management |
+| **Dashboard** | `/admin` | `/presenter` |
+
+---
+
+### 🏐 Login Interface
 
 **Two-Tab Design:**
 
-#### **Tab 1: Sign In (Traditional)**
-- Username input field
-- Password input field
-- Sign In button
-- Form validation
-- Error messaging
+#### **Tab 1: Sign In**
+- Username & password input
+- Sign In button with validation
+- Real-time error messaging
 
-#### **Tab 2: Quick Access (One-Click)**
-- **Admin** button → Instant admin access
-- **Presenter** button → Instant presenter access
-- **10 Team Buttons** → Auto-login for team viewers
-  - CSK, MI, RCB, KKR, DC
-  - RR, PBKS, SRH, GT, LSG
+**Credentials:**
+```
+Admin:     admin / admin123
+Presenter: presenter / presenter123
+```
+
+#### **Tab 2: Quick Access**
+- **Admin Button** → Instant admin access
+- **Presenter Button** → Instant presenter access
+
+---
 
 ### User Roles & Credentials
 
-#### 🔴 **Admin Access**
-**Credentials:**
-```
-Username: admin
-Password: admin123
-```
+#### 🔴 **Admin Role**
 
-**Capabilities:**
-- ✅ Start/pause/reset auction
-- ✅ Add/remove players
-- ✅ Modify team purses
-- ✅ Place bids on behalf of any team
-- ✅ Mark players sold/unsold
-- ✅ Navigate player list
-- ✅ View complete statistics
-- ✅ Access all admin controls
+**Credentials:** `admin` / `admin123`
 
-**Dashboard URL:** `/admin`
+**Dashboard:** `/admin`
 
-**Use Cases:**
+**Permissions:**
+- ✅ Full auction control (start/pause/resume/reset)
+- ✅ Player management (add/remove)
+- ✅ Team purse modification
+- ✅ All bid operations
+- ✅ Complete system access
+
+**Best For:**
 - System administration
 - Auction setup and configuration
 - Player database management
-- Emergency controls
+- System oversight
 
-#### 🟢 **Presenter Access**
-**Credentials:**
-```
-Username: presenter
-Password: presenter123
-```
+#### 🟢 **Presenter Role**
 
-**Capabilities:**
-- ✅ Control live auction flow
-- ✅ Navigate between players
-- ✅ Place and manage bids
+**Credentials:** `presenter` / `presenter123`
+
+**Dashboard:** `/presenter`
+
+**Permissions:**
+- ✅ Auction flow control (pause/resume)
+- ✅ Bid management and placement
+- ✅ Player navigation
 - ✅ Mark players sold/unsold
-- ✅ Pause/resume auction
-- ✅ View bid history
 - ❌ Cannot modify players
 - ❌ Cannot adjust team purses
 - ❌ Cannot reset auction
 
-**Dashboard URL:** `/presenter`
-
-**Use Cases:**
+**Best For:**
 - Live auction broadcasting
-- Professional presentation mode
-- Bid management during live event
-- Player showcase and narration
+- Professional presentation
+- Real-time bid management
+- Player showcase
 
-#### 🔵 **Team Viewer Access**
-**Quick Access Only** (No username/password)
+---
 
-**10 Available Teams:**
-1. **Chennai Super Kings** - CSK button
-2. **Mumbai Indians** - MI button
-3. **Royal Challengers Bangalore** - RCB button
-4. **Kolkata Knight Riders** - KKR button
-5. **Delhi Capitals** - DC button
-6. **Rajasthan Royals** - RR button
-7. **Punjab Kings** - PBKS button
-8. **Sunrisers Hyderabad** - SRH button
-9. **Gujarat Titans** - GT button
-10. **Lucknow Super Giants** - LSG button
+### Route Protection
 
-**Capabilities:**
-- ✅ View live auction progress
-- ✅ See current player details
-- ✅ Monitor team-specific data
-- ✅ Track team purse remaining
-- ✅ View team roster
-- ❌ Cannot place bids
-- ❌ Cannot control auction
-- ❌ Read-only access
-
-**Dashboard URL:** `/viewer`
-
-**Use Cases:**
-- Team management viewing
-- Ownership perspective
-- Strategic planning during auction
-- Real-time team tracking
-
-### Role-Based Routing
-
-```typescript
-Route Protection Matrix:
-┌──────────────┬────────┬───────────┬────────┐
-│ Route        │ Admin  │ Presenter │ Viewer │
-├──────────────┼────────┼───────────┼────────┤
-│ /login       │   ✓    │     ✓     │   ✓    │
-│ /admin       │   ✓    │     ✗     │   ✗    │
-│ /presenter   │   ✗    │     ✓     │   ✗    │
-│ /viewer      │   ✗    │     ✗     │   ✓    │
-│ /unauthorized│   ✓    │     ✓     │   ✓    │
-└──────────────┴────────┴───────────┴────────┘
-
-✓ = Allowed
-✗ = Redirected to /unauthorized
+**Access Control Matrix:**
 ```
+┌──────────────┬────────┬───────────┐
+│ Route        │ Admin  │ Presenter │
+├──────────────┼────────┼───────────┤
+│ /login       │   ✓    │     ✓     │
+│ /admin       │   ✓    │     ✗     │
+│ /presenter   │   ✗    │     ✓     │
+│ /unauthorized│   ✓    │     ✓     │
+└──────────────┴────────┴───────────┘
+
+✓ = Accessible | ✗ = Blocked (→ /unauthorized)
+```
+
+---
 
 ### Session Management
 
 **Current Implementation:**
-- In-memory session (lost on refresh)
-- No token-based authentication
+- In-memory session (lost on page refresh)
+- Client-side authentication only
 - Role stored in React Context
 
 **Future Enhancement (Supabase Ready):**
 - JWT-based authentication
-- Persistent sessions
-- Secure token storage
-- Automatic token refresh
-- Role-based access control in database
+- Persistent sessions with token storage
+- Secure cookie-based tokens
+- Automatic token refresh mechanism
+- Enhanced security with encryption
 
 ---
 
@@ -1688,7 +1655,7 @@ test('complete auction flow', async ({ page }) => {
 - [x] **React 18.3 with TypeScript**: Modern type-safe development
 - [x] **Zustand State Management**: Lightweight, performant state handling
 - [x] **Cross-Tab Synchronization**: Real-time updates without WebSockets
-- [x] **Role-Based Access Control**: Admin, Presenter, Viewer roles
+- [x] **Dual-Role Authentication**: Admin & Presenter access control
 - [x] **10 IPL Teams**: Complete roster with official branding
 - [x] **20 Professional Players**: Authentic stats and images
 - [x] **Responsive Design**: Mobile, tablet, desktop optimized
@@ -1707,7 +1674,7 @@ test('complete auction flow', async ({ page }) => {
 - [x] **Player Management**: Add, remove, mark sold/unsold
 - [x] **Bid History**: Complete transaction logging
 - [x] **Team Analytics**: Statistics and leaderboards
-- [x] **Quick Access Login**: One-click authentication for all roles
+- [x] **Quick Access Login**: One-click authentication
 - [x] **Offline Support**: Service worker caching
 - [x] **localStorage Persistence**: State survives page refresh
 
