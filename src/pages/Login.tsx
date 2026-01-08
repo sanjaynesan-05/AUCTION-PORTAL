@@ -28,8 +28,7 @@ export default function Login() {
       if (user) {
         login(user);
         // Navigate to appropriate dashboard based on role
-        const dashboardRoute = user.role === 'admin' ? '/admin' :
-                              user.role === 'presenter' ? '/presenter' : '/viewer';
+        const dashboardRoute = user.role === 'admin' ? '/admin' : '/presenter';
         navigate(dashboardRoute);
       } else {
         setError('Invalid credentials');
@@ -38,19 +37,13 @@ export default function Login() {
     }, 300);
   };
 
-  const handleQuickLogin = (role: 'admin' | 'presenter' | 'viewer', teamId?: number) => {
-    let user;
-    if (role === 'viewer' && teamId) {
-      user = mockUsers.find(u => u.role === 'viewer' && u.teamId === teamId);
-    } else {
-      user = mockUsers.find(u => u.role === role && !u.teamId);
-    }
+  const handleQuickLogin = (role: 'admin' | 'presenter') => {
+    const user = mockUsers.find(u => u.role === role);
 
     if (user) {
       login(user);
       // Navigate to appropriate dashboard based on role
-      const dashboardRoute = user.role === 'admin' ? '/admin' :
-                            user.role === 'presenter' ? '/presenter' : '/viewer';
+      const dashboardRoute = user.role === 'admin' ? '/admin' : '/presenter';
       navigate(dashboardRoute);
     }
   };
@@ -194,7 +187,7 @@ export default function Login() {
                     <p className="text-gray-400">Choose your role to get started instantly</p>
                   </div>
 
-                  {/* Admin & Presenter */}
+                  {/* Admin & Presenter Quick Access */}
                   <div className="grid md:grid-cols-2 gap-4">
                     <button
                       onClick={() => handleQuickLogin('admin')}
@@ -206,7 +199,7 @@ export default function Login() {
                         </div>
                         <div className="text-left">
                           <h3 className="text-lg font-bold text-white">Admin</h3>
-                          <p className="text-sm text-gray-300">Full system control</p>
+                          <p className="text-sm text-gray-300">Full system control & bidding</p>
                         </div>
                       </div>
                       <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
@@ -222,48 +215,11 @@ export default function Login() {
                         </div>
                         <div className="text-left">
                           <h3 className="text-lg font-bold text-white">Presenter</h3>
-                          <p className="text-sm text-gray-300">Live auction control</p>
+                          <p className="text-sm text-gray-300">Live auction display</p>
                         </div>
                       </div>
                       <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
                     </button>
-                  </div>
-
-                  {/* Team Viewers */}
-                  <div>
-                    <div className="flex items-center justify-center mb-6">
-                      <Users className="w-5 h-5 text-gray-400 mr-2" />
-                      <span className="text-gray-400 font-medium">Team Viewers</span>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                      {mockUsers.filter(u => u.role === 'viewer').map(team => {
-                        const teamData = mockTeams.find(t => t.id === team.teamId);
-                        return (
-                          <button
-                            key={team.teamId}
-                            onClick={() => handleQuickLogin('viewer', team.teamId)}
-                            className="group relative overflow-hidden bg-white/5 border border-white/20 rounded-xl p-4 hover:bg-white/10 transition-all duration-200 hover:scale-105 hover:shadow-lg"
-                            style={{
-                              background: teamData ? `linear-gradient(135deg, ${teamData.primaryColor}15, ${teamData.secondaryColor}15)` : undefined,
-                              borderColor: teamData ? `${teamData.primaryColor}30` : undefined
-                            }}
-                          >
-                            <div className="flex flex-col items-center space-y-2">
-                              {teamData && (
-                                <img
-                                  src={teamData.logo}
-                                  alt={teamData.name}
-                                  className="w-8 h-8 object-contain group-hover:scale-110 transition-transform"
-                                />
-                              )}
-                              <span className="text-xs text-gray-300 font-medium text-center">{team.teamName?.split(' ')[0]}</span>
-                            </div>
-                            <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity rounded-xl"
-                                 style={{ backgroundColor: teamData?.primaryColor }}></div>
-                          </button>
-                        );
-                      })}
-                    </div>
                   </div>
                 </div>
               )}

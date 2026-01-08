@@ -51,13 +51,48 @@ export const useAuctionSync = () => {
       const newState = useAuctionStore.getState();
       auctionSync.broadcast({ ...newState, lastUpdate: Date.now() });
     },
+    setCurrentPlayer: (player: any) => {
+      store.setCurrentPlayer(player);
+      const newState = useAuctionStore.getState();
+      auctionSync.broadcast({ ...newState, lastUpdate: Date.now() });
+    },
     placeBid: (teamId: number, amount: number) => {
       store.placeBid(teamId, amount);
       const newState = useAuctionStore.getState();
       auctionSync.broadcast({ ...newState, lastUpdate: Date.now() });
     },
+    updateBidDisplay: (amount: number, teamId: number) => {
+      store.updateBidDisplay(amount, teamId);
+      const newState = useAuctionStore.getState();
+      auctionSync.broadcast({ ...newState, lastUpdate: Date.now() });
+    },
     markSold: (playerId: number, teamId: number, price: number) => {
       store.markSold(playerId, teamId, price);
+      const newState = useAuctionStore.getState();
+      auctionSync.broadcast({ ...newState, lastUpdate: Date.now() });
+    },
+    markUnsold: (playerId: number) => {
+      store.markUnsold(playerId);
+      const newState = useAuctionStore.getState();
+      auctionSync.broadcast({ ...newState, lastUpdate: Date.now() });
+    },
+    resetAuction: () => {
+      store.resetAuction();
+      const newState = useAuctionStore.getState();
+      auctionSync.broadcast({ ...newState, lastUpdate: Date.now() });
+    },
+    addPlayer: (player: any) => {
+      store.addPlayer(player);
+      const newState = useAuctionStore.getState();
+      auctionSync.broadcast({ ...newState, lastUpdate: Date.now() });
+    },
+    removePlayer: (playerId: number) => {
+      store.removePlayer(playerId);
+      const newState = useAuctionStore.getState();
+      auctionSync.broadcast({ ...newState, lastUpdate: Date.now() });
+    },
+    updateTeamPurse: (teamId: number, amount: number) => {
+      store.updateTeamPurse(teamId, amount);
       const newState = useAuctionStore.getState();
       auctionSync.broadcast({ ...newState, lastUpdate: Date.now() });
     },

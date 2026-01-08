@@ -6,7 +6,7 @@ interface RoleContextType {
   login: (user: User) => void;
   logout: () => void;
   username: string;
-  role: 'admin' | 'presenter' | 'viewer' | null;
+  role: 'admin' | 'presenter' | null;
 }
 
 const RoleContext = createContext<RoleContextType | undefined>(undefined);

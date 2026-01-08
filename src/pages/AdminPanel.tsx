@@ -16,15 +16,10 @@ import {
   Crown,
   Activity,
   Target,
-  Star,
   Search,
-  Filter,
   Download,
-  Upload,
   X,
-  Save,
-  Eye,
-  EyeOff
+  Save
 } from 'lucide-react';
 
 export default function AdminPanel() {
@@ -35,10 +30,15 @@ export default function AdminPanel() {
     teams,
     auctionStarted,
     currentPlayer,
+    currentBid,
     resetAuction,
     addPlayer,
     removePlayer,
-    updateTeamPurse,
+    markSold,
+    markUnsold,
+    setCurrentPlayer,
+    getNextBidIncrement,
+    updateBidDisplay,
   } = useAuctionSync();
 
   const [activeTab, setActiveTab] = useState('overview');
@@ -48,6 +48,13 @@ export default function AdminPanel() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<any>(null);
+  
+  // Bidding controls
+  const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
+  const [bidAmount, setBidAmount] = useState<number>(0);
+  const [selectedPlayerForBid, setSelectedPlayerForBid] = useState<any>(null);
+  const [showSoldModal, setShowSoldModal] = useState(false);
+  
   const [newPlayer, setNewPlayer] = useState({
     name: '',
     role: 'Batsman',
@@ -196,6 +203,7 @@ export default function AdminPanel() {
           <div className="bg-white/10 backdrop-blur-lg rounded-lg p-1 flex flex-wrap gap-1">
             {[
               { id: 'overview', label: 'Overview', icon: BarChart3 },
+              { id: 'bidding', label: 'Bidding', icon: Target },
               { id: 'players', label: 'Players', icon: Users },
               { id: 'teams', label: 'Teams', icon: Trophy },
               { id: 'analytics', label: 'Analytics', icon: TrendingUp },
@@ -351,6 +359,248 @@ export default function AdminPanel() {
                         <span className="text-yellow-400 font-bold">₹{team.spent}L</span>
                       </div>
                     ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Bidding Tab */}
+        {activeTab === 'bidding' && (
+          <div className="space-y-6">
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
+              <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+                <Target className="w-6 h-6 mr-2" />
+                Bidding Management
+              </h2>
+
+              {/* Player Selection for Bidding */}
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-4">Select Player to Bid On</h3>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {players.filter(p => !p.sold).map(player => (
+                      <button
+                        key={player.id}
+                        onClick={() => {
+                          setSelectedPlayerForBid(player);
+                          setBidAmount(player.basePrice);
+                          setCurrentPlayer(player); // Sync to presenter display
+                        }}
+                        className={`w-full flex items-center p-4 rounded-lg border transition-all ${
+                          selectedPlayerForBid?.id === player.id
+                            ? 'bg-blue-500/20 border-blue-400'
+                            : 'bg-white/5 border-white/20 hover:bg-white/10'
+                        }`}
+                      >
+                        <img
+                          src={player.image}
+                          alt={player.name}
+                          className="w-12 h-12 rounded-full mr-3"
+                          onError={(e) => {
+                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${player.name}&background=6366f1&color=fff&size=48`;
+                          }}
+                        />
+                        <div className="text-left flex-1">
+                          <p className="text-white font-medium">{player.name}</p>
+                          <p className="text-gray-400 text-sm">{player.role} • Base: ₹{player.basePrice}L</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bidding Controls */}
+                {selectedPlayerForBid && (
+                  <div className="bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-xl p-6 border border-purple-400/30">
+                    <h3 className="text-lg font-semibold text-white mb-4">Place Bid</h3>
+                    
+                    <div className="space-y-4">
+                      {/* Player Info */}
+                      <div className="bg-white/10 rounded-lg p-4">
+                        <img
+                          src={selectedPlayerForBid.image}
+                          alt={selectedPlayerForBid.name}
+                          className="w-16 h-16 rounded-full mb-2 mx-auto"
+                          onError={(e) => {
+                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${selectedPlayerForBid.name}&background=6366f1&color=fff&size=64`;
+                          }}
+                        />
+                        <h4 className="text-xl font-bold text-white text-center">{selectedPlayerForBid.name}</h4>
+                        <p className="text-gray-300 text-center">{selectedPlayerForBid.role}</p>
+                        <p className="text-yellow-400 text-center font-bold mt-2">Base: ₹{selectedPlayerForBid.basePrice}L</p>
+                        {currentBid > 0 && (
+                          <p className="text-green-400 text-center font-bold mt-1">Current Bid: ₹{currentBid}L</p>
+                        )}
+                      </div>
+
+                      {/* Bid Amount with IPL Increment Logic */}
+                      <div>
+                        <label className="block text-white mb-3 font-medium text-lg">
+                          💰 Place Your Bid
+                        </label>
+
+                        {/* Quick Bid Buttons */}
+                        <div className="mb-4">
+                          <p className="text-gray-300 text-sm mb-2 font-medium">Quick Bids (Click to bid):</p>
+                          <div className="grid grid-cols-4 gap-2">
+                            {(() => {
+                              const quickBids = [];
+                              let currentBid = Math.max(selectedPlayerForBid.basePrice, bidAmount);
+                              
+                              // Generate 8 quick bid options
+                              for (let i = 0; i < 8; i++) {
+                                if (i === 0 && currentBid === bidAmount) {
+                                  quickBids.push(currentBid);
+                                } else {
+                                  const nextIncrement = getNextBidIncrement(currentBid);
+                                  currentBid = currentBid + nextIncrement;
+                                  quickBids.push(currentBid);
+                                }
+                              }
+                              
+                              return quickBids.map((amount, index) => (
+                                <button
+                                  key={index}
+                                  onClick={() => {
+                                    setBidAmount(amount);
+                                    // Broadcast just the bid amount, no team association yet
+                                    updateBidDisplay(amount, 0); // 0 = no team assigned
+                                  }}
+                                  className={`px-3 py-2 rounded-lg font-bold text-sm transition-all ${
+                                    bidAmount === amount
+                                      ? 'bg-yellow-500 text-black shadow-lg scale-105'
+                                      : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white'
+                                  }`}
+                                >
+                                  ₹{amount}L
+                                </button>
+                              ));
+                            })()}
+                          </div>
+                          <p className="text-gray-400 text-xs mt-2">
+                            {bidAmount < 100 && '💡 Increment: +₹5L per step'}
+                            {bidAmount >= 100 && bidAmount < 200 && '💡 Increment: +₹10L per step'}
+                            {bidAmount >= 200 && bidAmount < 500 && '💡 Increment: +₹20L per step'}
+                            {bidAmount >= 500 && bidAmount < 1000 && '💡 Increment: +₹25L per step'}
+                            {bidAmount >= 1000 && '💡 Increment: +₹50L per step'}
+                          </p>
+                        </div>
+
+                        {/* Manual Input Option */}
+                        <div>
+                          <p className="text-gray-300 text-sm mb-2 font-medium">Manual Bid:</p>
+                          <div className="flex items-center gap-2">
+                            {/* Decrement Button */}
+                            <button
+                              onClick={() => {
+                                const increment = getNextBidIncrement(bidAmount - 1);
+                                const newAmount = Math.max(selectedPlayerForBid.basePrice, bidAmount - increment);
+                                setBidAmount(newAmount);
+                                updateBidDisplay(newAmount, 0); // 0 = no team
+                              }}
+                              disabled={bidAmount <= selectedPlayerForBid.basePrice}
+                              className="px-4 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-bold text-xl transition-colors"
+                            >
+                              -
+                            </button>
+                            
+                            {/* Manual Input Field */}
+                            <input
+                              type="number"
+                              value={bidAmount}
+                              onChange={(e) => {
+                                const newAmount = Number(e.target.value);
+                                setBidAmount(newAmount);
+                                updateBidDisplay(newAmount, 0); // 0 = no team
+                              }}
+                              min={selectedPlayerForBid.basePrice}
+                              placeholder="Enter amount"
+                              className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white text-center text-xl font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            
+                            {/* Increment Button */}
+                            <button
+                              onClick={() => {
+                                const increment = getNextBidIncrement(bidAmount);
+                                const newAmount = bidAmount + increment;
+                                setBidAmount(newAmount);
+                                updateBidDisplay(newAmount, 0); // 0 = no team
+                              }}
+                              className="px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xl transition-colors"
+                            >
+                              +
+                            </button>
+                          </div>
+                          <p className="text-gray-400 text-xs mt-1">
+                            Min: ₹{selectedPlayerForBid.basePrice}L | Next: +₹{getNextBidIncrement(bidAmount)}L
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Mark as Sold Button */}
+                      <button
+                        onClick={() => setShowSoldModal(true)}
+                        disabled={bidAmount < selectedPlayerForBid.basePrice}
+                        className="w-full flex items-center justify-center px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-colors"
+                      >
+                        <Trophy className="w-5 h-5 mr-2" />
+                        Mark as SOLD
+                      </button>
+
+                      {/* Mark as Unsold Button */}
+                      <button
+                        onClick={() => {
+                          markUnsold(selectedPlayerForBid.id);
+                          setSelectedPlayerForBid(null);
+                          setBidAmount(0);
+                        }}
+                        className="w-full flex items-center justify-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
+                      >
+                        <X className="w-5 h-5 mr-2" />
+                        Mark as Unsold
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Sold Players List */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Sold Players</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {players.filter(p => p.sold && p.teamId).map(player => {
+                    const team = teams.find(t => t.id === player.teamId);
+                    return (
+                      <div key={player.id} className="bg-white/5 rounded-lg p-4 border border-white/20">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <img
+                              src={player.image}
+                              alt={player.name}
+                              className="w-12 h-12 rounded-full mr-3"
+                              onError={(e) => {
+                                e.currentTarget.src = `https://ui-avatars.com/api/?name=${player.name}&background=6366f1&color=fff&size=48`;
+                              }}
+                            />
+                            <div>
+                              <p className="text-white font-medium">{player.name}</p>
+                              <p className="text-gray-400 text-sm">{player.role}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-green-400 font-bold">₹{player.price}L</p>
+                            {team && (
+                              <div className="flex items-center mt-1">
+                                <img src={team.logo} alt={team.name} className="w-4 h-4 mr-1" />
+                                <p className="text-gray-300 text-sm">{team.shortName}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -765,7 +1015,35 @@ export default function AdminPanel() {
                     Cancel
                   </button>
                   <button
-                    onClick={showAddModal ? handleAddPlayer : handleUpdatePlayer}
+                    onClick={() => {
+                      if (showAddModal) {
+                        // Add new player
+                        if (newPlayer.name) {
+                          addPlayer(newPlayer);
+                          setShowAddModal(false);
+                          setNewPlayer({
+                            name: '',
+                            role: 'Batsman',
+                            basePrice: 50,
+                            nationality: 'India',
+                            age: 25,
+                            battingStyle: 'Right-handed',
+                            bowlingStyle: '',
+                            image: '',
+                            stats: {
+                              matches: 0,
+                              runs: 0,
+                              wickets: 0,
+                              average: 0,
+                              strikeRate: 0
+                            }
+                          });
+                        }
+                      } else {
+                        // Update existing player
+                        handleUpdatePlayer();
+                      }
+                    }}
                     disabled={!newPlayer.name.trim()}
                     className="px-6 py-2 bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center"
                   >
@@ -871,6 +1149,110 @@ export default function AdminPanel() {
           </div>
         )}
       </div>
+
+      {/* Sold Modal - Team Selection (Compact) */}
+      {showSoldModal && selectedPlayerForBid && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-slate-900 to-purple-900 rounded-2xl border border-white/30 w-full max-w-lg shadow-2xl overflow-y-auto max-h-[85vh]">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-white/10 sticky top-0 bg-slate-900/95">
+              <h3 className="text-lg font-bold text-white flex items-center">
+                <Trophy className="w-5 h-5 mr-2 text-yellow-400" />
+                Select Winning Team
+              </h3>
+              <button
+                onClick={() => setShowSoldModal(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5">
+              {/* Player Info - Compact */}
+              <div className="bg-white/5 rounded-lg p-3 mb-5 text-center border border-white/10">
+                <img
+                  src={selectedPlayerForBid.image}
+                  alt={selectedPlayerForBid.name}
+                  className="w-14 h-14 rounded-full mx-auto mb-2 border-2 border-yellow-400"
+                  onError={(e) => {
+                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${selectedPlayerForBid.name}&background=6366f1&color=fff&size=56`;
+                  }}
+                />
+                <h4 className="text-base font-bold text-white">{selectedPlayerForBid.name}</h4>
+                <p className="text-gray-400 text-xs">{selectedPlayerForBid.role}</p>
+                <p className="text-yellow-400 font-bold text-lg mt-2">₹{bidAmount}L</p>
+              </div>
+
+              {/* Team Selection - Grid */}
+              <div className="mb-5">
+                <label className="block text-white mb-2 font-semibold text-sm">Winning Team:</label>
+                <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                  {teams.map(team => (
+                    <button
+                      key={team.id}
+                      onClick={() => setSelectedTeamId(team.id)}
+                      disabled={team.purse < bidAmount}
+                      title={team.purse < bidAmount ? `Insufficient purse (needs ₹${bidAmount}L, has ₹${team.purse}L)` : team.name}
+                      className={`p-2 rounded-lg border-2 transition-all text-center transform ${
+                        selectedTeamId === team.id
+                          ? 'border-yellow-400 bg-yellow-500/30 scale-105 shadow-lg shadow-yellow-400/50'
+                          : team.purse < bidAmount
+                          ? 'border-gray-600 bg-gray-800/40 opacity-50 cursor-not-allowed'
+                          : 'border-white/30 bg-white/5 hover:bg-white/10 hover:border-white/50 hover:scale-105'
+                      }`}
+                    >
+                      <img
+                        src={team.logo}
+                        alt={team.name}
+                        className="w-10 h-10 mx-auto mb-1 object-contain"
+                        onError={(e) => {
+                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${team.shortName}&background=${team.color?.slice(1) || '6366f1'}&color=fff&size=40`;
+                        }}
+                      />
+                      <p className="text-xs font-bold text-white">{team.shortName}</p>
+                      <p className={`text-xs font-semibold mt-0.5 ${team.purse >= bidAmount ? 'text-green-400' : 'text-red-400'}`}>
+                        ₹{team.purse}L
+                      </p>
+                      {selectedTeamId === team.id && (
+                        <div className="text-yellow-400 text-xl font-bold">✓</div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Confirm Button */}
+              <button
+                onClick={() => {
+                  if (selectedTeamId) {
+                    const team = teams.find(t => t.id === selectedTeamId);
+                    markSold(selectedPlayerForBid.id, selectedTeamId, bidAmount);
+                    
+                    localStorage.setItem('soldConfirmation', JSON.stringify({
+                      playerName: selectedPlayerForBid.name,
+                      teamName: team?.name,
+                      teamLogo: team?.logo,
+                      price: bidAmount,
+                      timestamp: Date.now()
+                    }));
+                    
+                    setShowSoldModal(false);
+                    setSelectedPlayerForBid(null);
+                    setBidAmount(0);
+                    setSelectedTeamId(null);
+                  }
+                }}
+                disabled={!selectedTeamId}
+                className="w-full flex items-center justify-center px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-bold text-sm transition-colors"
+              >
+                <Trophy className="w-4 h-4 mr-2" />
+                Confirm Sale
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

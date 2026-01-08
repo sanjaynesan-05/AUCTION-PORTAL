@@ -1,9 +1,8 @@
 import React from 'react';
 import { 
-  Star, 
+  Star,
   Activity, 
-  Target, 
-  Zap 
+  Target
 } from 'lucide-react';
 
 interface Player {
@@ -24,25 +23,15 @@ interface Player {
   };
 }
 
-interface Team {
-  id: number;
-  name: string;
-  shortName: string;
-  logo: string;
-  color: string;
-}
-
 interface TVBroadcastPlayerProps {
   currentPlayer: Player;
   currentBid: number;
-  currentBiddingTeam?: Team;
   auctionPaused: boolean;
 }
 
 export const TVBroadcastPlayer: React.FC<TVBroadcastPlayerProps> = ({
   currentPlayer,
   currentBid,
-  currentBiddingTeam,
   auctionPaused
 }) => {
   return (
@@ -147,47 +136,25 @@ export const TVBroadcastPlayer: React.FC<TVBroadcastPlayerProps> = ({
       <div className="relative bg-gradient-to-r from-red-900 via-orange-800 to-yellow-600 rounded-xl overflow-hidden border border-white/20">
         <div className="absolute inset-0 bg-black/30"></div>
         <div className="relative p-4 sm:p-6">
-          <div className="flex flex-col lg:flex-row items-center justify-between space-y-4 lg:space-y-0">
-            
-            {/* Current Bid Section */}
-            <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-yellow-400 rounded-full flex items-center justify-center">
-                  <Target className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
-                </div>
-                <div className="text-center sm:text-left">
-                  <p className="text-yellow-200 text-xs sm:text-sm font-semibold uppercase tracking-wide">
-                    {currentBid === 0 ? 'Starting Price' : 'Current Bid'}
-                  </p>
-                  <p className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white">₹{currentBid || currentPlayer.basePrice}L</p>
-                </div>
+          <div className="flex items-center justify-center lg:justify-start">
+            {/* Current Bid Section Only */}
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-400 rounded-full flex items-center justify-center flex-shrink-0">
+                <Target className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+              </div>
+              <div>
+                <p className="text-yellow-200 text-xs sm:text-sm font-semibold uppercase tracking-wide">
+                  {currentBid === 0 ? 'Starting Price' : 'Current Bid'}
+                </p>
+                <p className="text-4xl sm:text-5xl md:text-6xl font-black text-white">₹{currentBid || currentPlayer.basePrice}L</p>
               </div>
               
               {/* Live Indicator */}
-              <div className="flex items-center space-x-2 bg-red-600 px-3 py-1 rounded-full">
+              <div className="flex items-center space-x-2 bg-red-600 px-3 py-1 rounded-full ml-4 flex-shrink-0">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                 <span className="text-white text-xs font-bold uppercase tracking-wide">Live</span>
               </div>
             </div>
-
-            {/* Leading Team Section */}
-            {currentBiddingTeam && (
-              <div className="flex items-center space-x-3 bg-black/30 backdrop-blur-sm rounded-lg px-3 py-2 sm:px-4 sm:py-3 border border-white/20">
-                <img
-                  src={currentBiddingTeam.logo}
-                  alt={currentBiddingTeam.name}
-                  className="w-8 h-8 sm:w-10 sm:h-10"
-                  onError={(e) => {
-                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${currentBiddingTeam.shortName}&background=${currentBiddingTeam.color.slice(1)}&color=fff&size=40`;
-                  }}
-                />
-                <div className="text-center sm:text-left">
-                  <p className="text-white font-bold text-sm sm:text-base lg:text-lg">{currentBiddingTeam.shortName}</p>
-                  <p className="text-yellow-300 text-xs font-semibold uppercase tracking-wide">Leading Bidder</p>
-                </div>
-                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
-              </div>
-            )}
           </div>
         </div>
       </div>

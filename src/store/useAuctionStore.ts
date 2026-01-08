@@ -20,7 +20,9 @@ interface AuctionState {
   resumeAuction: () => void;
   nextPlayer: () => void;
   previousPlayer: () => void;
+  setCurrentPlayer: (player: Player | null) => void;
   placeBid: (teamId: number, amount: number) => void;
+  updateBidDisplay: (amount: number, teamId: number) => void;
   placeBidFromViewer: (bidAmount: number, teamId: number) => { success: boolean; message: string };
   getNextBidIncrement: (currentBid: number) => number;
   markSold: (playerId: number, teamId: number, price: number) => void;
@@ -102,6 +104,16 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
     }
   },
 
+  setCurrentPlayer: (player: Player | null) => {
+    set({
+      currentPlayer: player,
+      currentBid: 0,
+      currentBidder: null,
+      bidHistory: [],
+      lastUpdate: Date.now(),
+    });
+  },
+
   placeBid: (teamId: number, amount: number) => {
     const state = get();
     const team = state.teams.find(t => t.id === teamId);
@@ -134,21 +146,40 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
         ...state.bidHistory,
         { teamId, amount, timestamp: Date.now() }
       ],
+      lastUpdate: Date.now(),
     });
   },
 
-  // Add increment rules
+  // Update bid display for real-time sync (admin to presenter)
+  updateBidDisplay: (amount: number, teamId: number) => {
+    const state = get();
+    const currentPlayer = state.currentPlayer;
+
+    if (!currentPlayer) return;
+
+    set({
+      currentBid: amount,
+      currentBidder: teamId || state.currentBidder, // Keep existing bidder if not provided
+      bidHistory: [
+        ...state.bidHistory,
+        { teamId: teamId || state.currentBidder || 0, amount, timestamp: Date.now() }
+      ],
+      lastUpdate: Date.now(),
+    });
+  },
+
+  // IPL Official Slab-Based Increment Rules
   getNextBidIncrement: (currentBid: number) => {
     const BID_INCREMENT_RULES = [
-      { max: 10000000, increment: 500000 }, // 0-1 crore: 5 lakh
-      { max: 20000000, increment: 1000000 }, // 1-2 crore: 10 lakh
-      { max: 30000000, increment: 2000000 }, // 2-3 crore: 20 lakh
-      { max: 50000000, increment: 2500000 }, // 3-5 crore: 25 lakh
-      { max: Infinity, increment: 5000000 }, // 5+ crore: 50 lakh
+      { max: 100, increment: 5 },    // ₹20L - ₹1 Cr: +₹5 Lakhs
+      { max: 200, increment: 10 },   // ₹1 Cr - ₹2 Cr: +₹10 Lakhs
+      { max: 500, increment: 20 },   // ₹2 Cr - ₹5 Cr: +₹20 Lakhs
+      { max: 1000, increment: 25 },  // ₹5 Cr - ₹10 Cr: +₹25 Lakhs
+      { max: Infinity, increment: 50 }, // ₹10 Cr+: +₹50 Lakhs
     ];
 
     const rule = BID_INCREMENT_RULES.find(rule => currentBid < rule.max);
-    return rule ? rule.increment : 5000000;
+    return rule ? rule.increment : 50;
   },
 
   // Add viewer bidding function

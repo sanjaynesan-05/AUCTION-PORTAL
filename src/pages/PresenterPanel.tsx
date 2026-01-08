@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { useAuctionSync } from '../hooks/useAuctionSync';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TVBroadcastPlayer } from '../components/TVBroadcastPlayer';
 import { FloatingTeamPurse } from '../components/FloatingTeamPurse';
 import {
@@ -40,6 +40,32 @@ export default function PresenterPanel() {
     type: null,
     show: false
   });
+  
+  const [soldConfirmation, setSoldConfirmation] = useState<any>(null);
+
+  // Listen for sold confirmations from admin
+  useEffect(() => {
+    const checkSoldConfirmation = () => {
+      const confirmation = localStorage.getItem('soldConfirmation');
+      if (confirmation) {
+        const data = JSON.parse(confirmation);
+        setSoldConfirmation(data);
+        
+        // Clear after 5 seconds
+        setTimeout(() => {
+          setSoldConfirmation(null);
+          localStorage.removeItem('soldConfirmation');
+        }, 5000);
+      }
+    };
+
+    checkSoldConfirmation();
+    
+    // Listen for storage changes
+    window.addEventListener('storage', checkSoldConfirmation);
+    
+    return () => window.removeEventListener('storage', checkSoldConfirmation);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -272,6 +298,34 @@ export default function PresenterPanel() {
 
       {/* Floating Team Purse Button */}
       <FloatingTeamPurse teams={teams} />
+
+      {/* Sold Confirmation Overlay */}
+      {soldConfirmation && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100]">
+          <div className="text-center">
+            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-2xl">
+              <Trophy className="w-20 h-20 text-white" />
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-xl rounded-3xl border-4 border-yellow-400 p-8 max-w-2xl mx-4">
+              <h2 className="text-6xl font-black text-yellow-400 mb-4">SOLD!</h2>
+              
+              <div className="flex items-center justify-center space-x-6 mb-6">
+                <img
+                  src={soldConfirmation.teamLogo}
+                  alt={soldConfirmation.teamName}
+                  className="w-24 h-24"
+                />
+              </div>
+              
+              <h3 className="text-4xl font-bold text-white mb-2">{soldConfirmation.playerName}</h3>
+              <p className="text-2xl text-gray-300 mb-4">sold to</p>
+              <h4 className="text-3xl font-bold text-blue-400 mb-4">{soldConfirmation.teamName}</h4>
+              <div className="text-5xl font-black text-green-400">₹{soldConfirmation.price}L</div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
