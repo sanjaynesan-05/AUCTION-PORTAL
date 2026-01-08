@@ -1231,6 +1231,7 @@ export default function AdminPanel() {
                     
                     localStorage.setItem('soldConfirmation', JSON.stringify({
                       playerName: selectedPlayerForBid.name,
+                      playerImage: selectedPlayerForBid.image,
                       teamName: team?.name,
                       teamLogo: team?.logo,
                       price: bidAmount,

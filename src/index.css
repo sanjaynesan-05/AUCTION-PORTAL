@@ -113,14 +113,52 @@
   }
 }
 
-/* Responsive adjustments */
-@media (max-width: 640px) {
-  .stamp-text {
-    font-size: 3rem;
+/* Professional Sold Modal Animations */
+@keyframes modalSlideIn {
+  from {
+    transform: scale(0.95) translateY(20px);
+    opacity: 0;
   }
-  
-  .confetti-piece {
-    width: 6px;
-    height: 6px;
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
   }
 }
+
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 0.7;
+    filter: blur(20px);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(30px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes soldBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.modal-sold-container {
+  animation: modalSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.sold-text-animated {
+  animation: soldBounce 1.2s ease-in-out infinite;
+}
+

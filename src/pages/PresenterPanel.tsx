@@ -299,29 +299,53 @@ export default function PresenterPanel() {
       {/* Floating Team Purse Button */}
       <FloatingTeamPurse teams={teams} />
 
-      {/* Sold Confirmation Overlay */}
+      {/* Professional IPL Sold Confirmation Modal */}
       {soldConfirmation && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100]">
-          <div className="text-center">
-            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6 shadow-2xl">
-              <Trophy className="w-20 h-20 text-white" />
-            </div>
-            
-            <div className="bg-white/10 backdrop-blur-xl rounded-3xl border-4 border-yellow-400 p-8 max-w-2xl mx-4">
-              <h2 className="text-6xl font-black text-yellow-400 mb-4">SOLD!</h2>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          {/* Minimalist Modal - Simple & Clean */}
+          <div className="relative mx-4 w-full max-w-xs modal-sold-container">
+            <div className="bg-slate-900/80 backdrop-blur-md rounded-2xl border border-yellow-400/40 p-6 shadow-2xl">
               
-              <div className="flex items-center justify-center space-x-6 mb-6">
+              {/* Player Image Circle */}
+              <div className="relative mx-auto w-48 h-48 mb-4">
                 <img
-                  src={soldConfirmation.teamLogo}
-                  alt={soldConfirmation.teamName}
-                  className="w-24 h-24"
+                  src={soldConfirmation.playerImage || 'https://ui-avatars.com/api/?name=' + soldConfirmation.playerName + '&size=400&background=2d3748&color=fff'}
+                  alt={soldConfirmation.playerName}
+                  className="w-full h-full rounded-full object-cover border-4 border-yellow-400/60"
+                  onError={(e) => {
+                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${soldConfirmation.playerName}&size=400&background=2d3748&color=fff`;
+                  }}
                 />
+                
+                {/* Team Logo Badge - Inside Player Circle */}
+                <div className="absolute bottom-2 right-2 w-14 h-14 bg-white/10 backdrop-blur-lg rounded-full border-2 border-yellow-400/80 flex items-center justify-center">
+                  <img
+                    src={soldConfirmation.teamLogo}
+                    alt={soldConfirmation.teamName}
+                    className="w-10 h-10 object-contain"
+                    onError={(e) => {
+                      e.currentTarget.src = `https://ui-avatars.com/api/?name=${soldConfirmation.teamName}&size=80&background=1e293b`;
+                    }}
+                  />
+                </div>
               </div>
-              
-              <h3 className="text-4xl font-bold text-white mb-2">{soldConfirmation.playerName}</h3>
-              <p className="text-2xl text-gray-300 mb-4">sold to</p>
-              <h4 className="text-3xl font-bold text-blue-400 mb-4">{soldConfirmation.teamName}</h4>
-              <div className="text-5xl font-black text-green-400">₹{soldConfirmation.price}L</div>
+
+              {/* Player Name */}
+              <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-2">
+                {soldConfirmation.playerName}
+              </h2>
+
+              {/* Team Name */}
+              <p className="text-center text-yellow-400 font-semibold mb-4 text-sm">
+                {soldConfirmation.teamName}
+              </p>
+
+              {/* Amount - Green Gradient */}
+              <div className="text-center pb-2">
+                <p className="text-3xl md:text-4xl font-bold text-green-400">
+                  ₹{soldConfirmation.price}L
+                </p>
+              </div>
             </div>
           </div>
         </div>
