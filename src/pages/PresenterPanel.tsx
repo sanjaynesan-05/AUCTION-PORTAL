@@ -4,6 +4,7 @@ import { useAuctionSync } from '../hooks/useAuctionSync';
 import { useState, useEffect } from 'react';
 import { TVBroadcastPlayer } from '../components/TVBroadcastPlayer';
 import { FloatingTeamPurse } from '../components/FloatingTeamPurse';
+import SoldUnsoldModal from '../components/SoldUnsoldModal';
 import {
   LogOut,
   Play,
@@ -22,6 +23,7 @@ export default function PresenterPanel() {
   const {
     currentPlayer,
     teams,
+    players,
     auctionStarted,
     auctionPaused,
     currentBid,
@@ -297,88 +299,18 @@ export default function PresenterPanel() {
       </div>
 
       {/* Floating Team Purse Button */}
-      <FloatingTeamPurse teams={teams} />
+      <FloatingTeamPurse teams={teams} players={players} />
 
-      {/* Sold/Unsold Confirmation Modal */}
+      {/* Use Reusable SoldUnsoldModal Component */}
       {soldConfirmation && (
-        <div className={`fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-sm ${
-          soldConfirmation.unsold ? 'bg-red-900/50' : 'bg-black/50'
-        }`}>
-          {/* Minimalist Modal - Simple & Clean */}
-          <div className="relative mx-4 w-full max-w-xs modal-sold-container">
-            <div className={`rounded-2xl p-6 shadow-2xl backdrop-blur-md border ${
-              soldConfirmation.unsold 
-                ? 'bg-red-950/80 border-red-400/40'
-                : 'bg-slate-900/80 border-yellow-400/40'
-            }`}>
-              
-              {/* Player Image Circle with Stamp in Corner */}
-              <div className="relative mx-auto w-44 h-44 mb-4">
-                {/* Clean Player Image - Completely Unobstructed */}
-                <img
-                  src={soldConfirmation.playerImage || 'https://ui-avatars.com/api/?name=' + soldConfirmation.playerName + '&size=400&background=2d3748&color=fff'}
-                  alt={soldConfirmation.playerName}
-                  className={`w-full h-full rounded-full object-cover border-4 ${
-                    soldConfirmation.unsold ? 'border-red-400/60' : 'border-yellow-400/60'
-                  }`}
-                  onError={(e) => {
-                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${soldConfirmation.playerName}&size=400&background=2d3748&color=fff`;
-                  }}
-                />
-                
-                {/* Stamp in Top-Right Corner - Outside Player Circle */}
-                {soldConfirmation.unsold ? (
-                  <div className="absolute -top-4 -right-4 stamp-animation">
-                    <div className="text-4xl md:text-5xl font-black text-red-500 opacity-95 transform -rotate-12 border-4 border-red-500 px-3 py-1 rounded-lg bg-white/20 backdrop-blur-sm whitespace-nowrap">
-                      UNSOLD
-                    </div>
-                  </div>
-                ) : (
-                  <div className="absolute -top-4 -right-4 stamp-animation">
-                    <div className="text-4xl md:text-5xl font-black text-green-400 opacity-95 transform -rotate-12 border-4 border-green-400 px-3 py-1 rounded-lg bg-white/20 backdrop-blur-sm whitespace-nowrap">
-                      SOLD
-                    </div>
-                  </div>
-                )}
-                
-                {/* Team Logo Badge - Bottom Right (Only for Sold) */}
-                {!soldConfirmation.unsold && (
-                  <div className="absolute bottom-0 right-0 w-14 h-14 bg-white/10 backdrop-blur-lg rounded-full border-2 border-yellow-400/80 flex items-center justify-center transform translate-x-2 translate-y-2">
-                    <img
-                      src={soldConfirmation.teamLogo}
-                      alt={soldConfirmation.teamName}
-                      className="w-10 h-10 object-contain"
-                      onError={(e) => {
-                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${soldConfirmation.teamName}&size=80&background=1e293b`;
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Player Name */}
-              <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-2">
-                {soldConfirmation.playerName}
-              </h2>
-
-              {/* Status Text */}
-              <p className={`text-center font-semibold mb-4 text-sm ${
-                soldConfirmation.unsold ? 'text-red-400' : 'text-yellow-400'
-              }`}>
-                {soldConfirmation.unsold ? 'Player Not Sold' : soldConfirmation.teamName}
-              </p>
-
-              {/* Amount - Only for Sold */}
-              {!soldConfirmation.unsold && (
-                <div className="text-center pb-2">
-                  <p className="text-3xl md:text-4xl font-bold text-green-400">
-                    ₹{soldConfirmation.price}L
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <SoldUnsoldModal
+          playerName={soldConfirmation.playerName}
+          playerImage={soldConfirmation.playerImage}
+          teamName={soldConfirmation.teamName}
+          teamLogo={soldConfirmation.teamLogo}
+          price={soldConfirmation.price}
+          unsold={soldConfirmation.unsold}
+        />
       )}
     </div>
   );
