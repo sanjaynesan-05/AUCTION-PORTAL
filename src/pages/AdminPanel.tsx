@@ -552,6 +552,14 @@ export default function AdminPanel() {
                       <button
                         onClick={() => {
                           markUnsold(selectedPlayerForBid.id);
+                          
+                          // Show unsold confirmation
+                          localStorage.setItem('soldConfirmation', JSON.stringify({
+                            playerName: selectedPlayerForBid.name,
+                            playerImage: selectedPlayerForBid.image,
+                            unsold: true
+                          }));
+                          
                           setSelectedPlayerForBid(null);
                           setBidAmount(0);
                         }}
