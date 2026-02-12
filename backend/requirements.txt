@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+asyncpg
+python-dotenv
+alembic
+psycopg2-binary
+pydantic
+websockets
+greenlet
+phonenumbers
+python-multipart
+requests
+pytest
+httpx
+pytest-asyncio
+ 
