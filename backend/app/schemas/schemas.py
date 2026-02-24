@@ -57,5 +57,5 @@ class AuctionStateResponse(BaseModel):
         from_attributes = True
 
 class BidRequest(BaseModel):
-    team_id: UUID
+    team_id: Optional[UUID] = None
     amount: float

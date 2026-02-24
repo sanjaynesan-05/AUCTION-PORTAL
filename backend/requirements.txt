@@ -14,4 +14,5 @@ requests
 pytest
 httpx
 pytest-asyncio
- 
+pandas
+openpyxl

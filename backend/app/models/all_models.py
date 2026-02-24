@@ -21,7 +21,11 @@ class Team(Base):
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String, unique=True, index=True)
-    code = Column(String(3), unique=True, index=True) 
+    code = Column(String(10), unique=True, index=True) 
+    logo_url = Column(String, nullable=True)
+    color = Column(String, nullable=True)
+    primary_color = Column(String, nullable=True)
+    secondary_color = Column(String, nullable=True)
     
     # Financials
     purse_balance = Column(Numeric(12, 2), default=120000000) # ₹120 Cr
@@ -47,11 +51,22 @@ class Player(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String, index=True)
     role = Column(String) # BATSMAN, BOWLER, ALL-ROUNDER, WICKET-KEEPER
+    nationality = Column(String, default="India")
+    age = Column(Integer, nullable=True)
+
+    # Stats
+    matches = Column(Integer, default=0)
+    runs = Column(Integer, default=0)
+    wickets = Column(Integer, default=0)
+    average = Column(Numeric(10, 2), nullable=True)
+    strike_rate = Column(Numeric(10, 2), nullable=True)
+    economy = Column(Numeric(10, 2), nullable=True)
     
     # Auction Info
     base_price = Column(Numeric(10, 2))
     sold_price = Column(Numeric(10, 2), nullable=True)
     is_sold = Column(Boolean, default=False)
+    image_url = Column(String, nullable=True)
     
     # Gamification
     points = Column(Integer, default=0) 

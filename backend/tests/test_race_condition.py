@@ -18,9 +18,17 @@ async def test_concurrent_bids():
         from sqlalchemy import delete
         
         # 1. Wipe teams to avoid duplicates from previous runs
-        # Use a nested transaction or separate execution to ensure it commits
-        await session.execute(delete(Bid)) # Bids reference teams, delete first (though cascade might handle it)
-        await session.execute(delete(Player)) # Players reference teams
+        # We must clear AuctionState references first because it has foreign keys to Player and Team
+        await session.execute(delete(Bid)) 
+        
+        # Reset AuctionState fields that might point to players/teams
+        state = await session.get(AuctionState, 1)
+        if state:
+            state.current_player_id = None
+            state.current_bidder_id = None
+            await session.commit()
+
+        await session.execute(delete(Player)) 
         await session.execute(delete(Team))
         await session.commit()
 

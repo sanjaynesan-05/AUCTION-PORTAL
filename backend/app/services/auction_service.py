@@ -36,33 +36,41 @@ async def place_bid(amount: float, team_id: UUID, session: AsyncSession):
         if player.is_sold:
              raise ValueError("Player already sold")
 
-        if amount <= state.current_bid:
-             raise ValueError("Bid too low")
+        if team_id: # Real bid from a team
+            if amount <= state.current_bid:
+                 raise ValueError("Bid too low")
+        else: # Admin price adjustment
+            if amount < player.base_price:
+                 raise ValueError("Amount below base price")
 
-        if state.current_bidder_id == team_id:
-             raise ValueError("Self-bidding not allowed")
-             
-        team = await session.get(Team, team_id)
-        if team.purse_balance < amount:
-             raise ValueError("Insufficient funds")
-        if team.players_count >= 25:
-             raise ValueError("Squad full")
+        if team_id:
+            if state.current_bidder_id == team_id:
+                 raise ValueError("Self-bidding not allowed")
+                 
+            team = await session.get(Team, team_id)
+            if team.purse_balance < amount:
+                 raise ValueError("Insufficient funds")
+            if team.players_count >= 25:
+                 raise ValueError("Squad full")
         
         # 3. Update
         state.current_bid = amount
-        state.current_bidder_id = team_id
+        if team_id:
+            state.current_bidder_id = team_id
+        
         state.version += 1
         
-        # 4. Log
-        bid = Bid(
-            player_id=state.current_player_id, 
-            team_id=team_id, 
-            amount=amount
-        )
-        session.add(bid)
+        # 4. Log (Only if team provided)
+        if team_id:
+            bid = Bid(
+                player_id=state.current_player_id, 
+                team_id=team_id, 
+                amount=amount
+            )
+            session.add(bid)
         
     # 5. Broadcast (After Commit)
-    await manager.broadcast("BID_UPDATE", { "amount": amount, "team_id": str(team_id) })
+    await manager.broadcast("BID_UPDATE", { "amount": amount, "team_id": str(team_id) if team_id else None })
     return state
 
 async def confirm_sale(session: AsyncSession):

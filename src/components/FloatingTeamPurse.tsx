@@ -2,22 +2,24 @@ import React, { useState } from 'react';
 import { DollarSign, X, ChevronRight } from 'lucide-react';
 
 interface Player {
-  id: number;
+  id: string;
   name: string;
   role: string;
   price?: number;
   sold?: boolean;
-  teamId?: number;
+  teamId?: string;
   image: string;
 }
 
 interface Team {
-  id: number;
+  id: string;
   name: string;
   shortName: string;
   logo: string;
   color: string;
   purse: number;
+  rank?: number;
+  totalPoints?: number;
 }
 
 interface FloatingTeamPurseProps {
@@ -29,17 +31,20 @@ export const FloatingTeamPurse: React.FC<FloatingTeamPurseProps> = ({ teams, pla
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
 
-  // Sort teams by purse remaining (highest to lowest)
-  const sortedTeams = [...teams].sort((a, b) => b.purse - a.purse);
+  // Sort teams by rank (or purse if rank not available)
+  const sortedTeams = [...teams].sort((a, b) => {
+    if (a.rank && b.rank) return a.rank - b.rank;
+    return b.purse - a.purse;
+  });
   const totalInitialPurse = 120; // 120 Cr per team (standard IPL)
 
   // Get players for a specific team
-  const getTeamPlayers = (teamId: number): Player[] => {
+  const getTeamPlayers = (teamId: string): Player[] => {
     return players.filter(p => p.teamId === teamId && p.sold);
   };
 
   // Calculate total spent by a team
-  const getTotalSpent = (teamId: number): number => {
+  const getTotalSpent = (teamId: string): number => {
     return getTeamPlayers(teamId).reduce((total, player) => total + (player.price || 0), 0);
   };
 
@@ -57,7 +62,7 @@ export const FloatingTeamPurse: React.FC<FloatingTeamPurseProps> = ({ teams, pla
     const percentage = getPursePercentage(team.purse);
     const circumference = 2 * Math.PI * 45; // radius = 45
     const strokeDashoffset = circumference - (percentage / 100) * circumference;
-    
+
     const getColor = () => {
       if (percentage < 25) return '#ef4444'; // red
       if (percentage < 50) return '#f97316'; // orange
@@ -106,7 +111,7 @@ export const FloatingTeamPurse: React.FC<FloatingTeamPurseProps> = ({ teams, pla
             }}
           />
         </svg>
-        
+
         {/* Team Logo in Center */}
         <img
           src={team.logo}
@@ -138,14 +143,14 @@ export const FloatingTeamPurse: React.FC<FloatingTeamPurseProps> = ({ teams, pla
       {isOpen && (
         <>
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
             onClick={() => {
               setIsOpen(false);
               setSelectedTeam(null);
             }}
           />
-          
+
           {/* Main Panel - Full Screen Grid */}
           <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-slate-900 to-purple-900 md:inset-auto md:bottom-20 md:right-4 md:left-auto md:w-[92vw] md:h-[85vh] lg:w-[1100px] lg:h-[550px] md:rounded-2xl md:border md:border-white/20 md:shadow-2xl md:backdrop-blur-xl">
             {/* Header */}
@@ -184,7 +189,7 @@ export const FloatingTeamPurse: React.FC<FloatingTeamPurseProps> = ({ teams, pla
                 <div className="p-2 md:p-3 grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-2.5 h-full auto-rows-max md:auto-rows-fr">
                   {sortedTeams.map((team) => {
                     const teamPlayers = getTeamPlayers(team.id);
-                    
+
                     return (
                       <div
                         key={team.id}
@@ -199,10 +204,19 @@ export const FloatingTeamPurse: React.FC<FloatingTeamPurseProps> = ({ teams, pla
                         {/* Team Info */}
                         <div className="text-center w-full flex-1 flex flex-col justify-between">
                           <div>
-                            <h3 className="text-white font-bold text-xs md:text-sm">{team.shortName}</h3>
-                            <p className="text-gray-400 text-xs mb-1 hidden md:block line-clamp-1 text-[10px]">{team.name}</p>
+                            <div className="flex items-center">
+                              <h3 className="text-white font-bold text-xs md:text-sm">{team.shortName}</h3>
+                              {team.rank && (
+                                <span className="ml-1 px-1 bg-yellow-500 text-black text-[8px] font-black rounded">
+                                  #{team.rank}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-gray-400 text-xs mb-1 hidden md:block line-clamp-1 text-[10px]">
+                              {team.totalPoints !== undefined ? `${team.totalPoints} Pts` : team.name}
+                            </p>
                           </div>
-                          
+
                           {/* Purse and Players Info */}
                           <div className="space-y-1 text-xs">
                             <div>

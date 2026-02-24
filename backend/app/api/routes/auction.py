@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.services.auction_service import place_bid, confirm_sale, reset_auction_logic, get_auction_state
 from app.schemas.schemas import BidRequest, AuctionStateResponse
-from app.models.all_models import AuctionState, Player
+from app.models.all_models import AuctionState, Player, Bid, Team
 from sqlalchemy import select, update
 from app.websockets.manager import manager
 from uuid import UUID
@@ -60,4 +60,23 @@ async def select_player(player_id: UUID, db: AsyncSession = Depends(get_db)):
         state.current_bidder_id = None
         
     await manager.broadcast("PLAYER_SELECTED", {"player_id": str(player_id)})
-    return {"status": "success", "player_id": player_id}
+
+@router.get("/all-bids")
+async def get_all_bids(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Bid, Player.name, Team.code)
+        .join(Player, Bid.player_id == Player.id)
+        .join(Team, Bid.team_id == Team.id)
+        .order_by(Bid.timestamp.desc())
+    )
+    bids = []
+    for row in result.all():
+        bid, player_name, team_code = row
+        bids.append({
+            "id": str(bid.id),
+            "player_name": player_name,
+            "team_code": team_code,
+            "amount": float(bid.amount) / 100000,
+            "timestamp": bid.timestamp.isoformat()
+        })
+    return bids

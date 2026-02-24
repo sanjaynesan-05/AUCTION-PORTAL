@@ -1,0 +1,20 @@
+﻿29baad6 feat: Initialize Python virtual environment and install project dependencies.
+bba3af2 feat: Add initial FastAPI backend implementation plan and a comprehensive gamified master plan.
+7e753c6 feat: enhance FloatingTeamPurse component with purse progress visualization and responsive design improvements
+cbb5842 feat: integrate SoldUnsoldModal component for player sale confirmation and update FloatingTeamPurse to handle player data
+aa9654e feat: implement sold/unsold confirmation modal with dynamic styling and animations
+5965640 feat: enhance Sold Confirmation Modal with professional animations and player image display
+c172ec0 docs: update README to clarify dual-role authentication and remove viewer role references
+5b8cb4c Refactor auction system: Remove viewer role, enhance bidding management, and improve UI components
+1ba9298 Add comprehensive documentation for IPL Auction Portal including setup guide, quick test instructions, and verification checklist
+b7226e3 feat: update AdminPanel styling for role and status filters; enhance dropdown options with improved accessibility
+3567489 feat: enhance AdminPanel with player search, filtering, and export functionality; improve player management UI and modal interactions
+b82da27 feat: enhance application structure with error boundary, loading spinner, and service worker; improve accessibility and responsive design in various components
+4b1690d feat: implement dynamic bidding increments and first bid handling in ViewerScreen; enhance bid history display in PresenterPanel
+2085ee1 feat: integrate FloatingTeamPurse component into PresenterPanel and ViewerScreen for enhanced team purse visibility
+7a9eb8d feat: add TVBroadcastPlayer component for enhanced player display in ViewerScreen
+4e069e3 feat: enhance team purse status display with improved design and interactivity
+76f9409 feat: navigate to appropriate dashboard based on user role after login
+6d60e4a feat: update title in index.html and add new teams and viewers in mock data
+10db23d feat: add stamp and confetti animations for sold/unsold items in PresenterPanel
+2c953ea feat: prevent consecutive bids from the same team in auction

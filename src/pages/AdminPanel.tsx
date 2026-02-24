@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { useAuctionSync } from '../hooks/useAuctionSync';
+import { fetchFromBackend } from '../utils/api';
 import {
   LogOut,
   Users,
@@ -48,13 +49,15 @@ export default function AdminPanel() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<any>(null);
-  
+
   // Bidding controls
-  const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [bidAmount, setBidAmount] = useState<number>(0);
   const [selectedPlayerForBid, setSelectedPlayerForBid] = useState<any>(null);
   const [showSoldModal, setShowSoldModal] = useState(false);
-  
+  const [globalBids, setGlobalBids] = useState<any[]>([]);
+  const [isLoadingBids, setIsLoadingBids] = useState(false);
+
   const [newPlayer, setNewPlayer] = useState({
     name: '',
     role: 'Batsman',
@@ -72,6 +75,24 @@ export default function AdminPanel() {
       strikeRate: 0
     }
   });
+
+  const fetchGlobalBids = async () => {
+    setIsLoadingBids(true);
+    try {
+      const data = await fetchFromBackend('/auction/all-bids');
+      setGlobalBids(data);
+    } catch (error) {
+      console.error('Failed to fetch global bids:', error);
+    } finally {
+      setIsLoadingBids(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'analytics') {
+      fetchGlobalBids();
+    }
+  }, [activeTab]);
 
   const handleLogout = () => {
     logout();
@@ -134,7 +155,7 @@ export default function AdminPanel() {
     }
   };
 
-  const handleDeletePlayer = (playerId: number) => {
+  const handleDeletePlayer = (playerId: string) => {
     if (window.confirm('Are you sure you want to delete this player?')) {
       removePlayer(playerId);
     }
@@ -142,7 +163,7 @@ export default function AdminPanel() {
 
   const handleExportPlayers = () => {
     const dataStr = JSON.stringify(players, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
     const exportFileDefaultName = 'players-data.json';
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
@@ -153,11 +174,11 @@ export default function AdminPanel() {
   // Filter players based on search and filters
   const filteredPlayers = players.filter(player => {
     const matchesSearch = player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         player.nationality.toLowerCase().includes(searchTerm.toLowerCase());
+      player.nationality.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = filterRole === 'all' || player.role === filterRole;
     const matchesStatus = filterStatus === 'all' ||
-                         (filterStatus === 'sold' && player.sold) ||
-                         (filterStatus === 'available' && !player.sold);
+      (filterStatus === 'sold' && player.sold) ||
+      (filterStatus === 'available' && !player.sold);
     return matchesSearch && matchesRole && matchesStatus;
   });
 
@@ -212,11 +233,10 @@ export default function AdminPanel() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center px-3 sm:px-4 py-2 rounded-md transition-all text-sm sm:text-base ${
-                  activeTab === tab.id
-                    ? 'bg-white/20 text-white'
-                    : 'text-gray-300 hover:text-white hover:bg-white/10'
-                }`}
+                className={`flex items-center px-3 sm:px-4 py-2 rounded-md transition-all text-sm sm:text-base ${activeTab === tab.id
+                  ? 'bg-white/20 text-white'
+                  : 'text-gray-300 hover:text-white hover:bg-white/10'
+                  }`}
               >
                 <tab.icon className="w-4 h-4 mr-1 sm:mr-2" />
                 {tab.label}
@@ -335,7 +355,7 @@ export default function AdminPanel() {
                   {teams
                     .map(team => ({
                       ...team,
-                      spent: 1000 - team.purse,
+                      spent: 12000 - team.purse,
                       soldPlayers: players.filter(p => p.teamId === team.id && p.sold).length
                     }))
                     .sort((a, b) => b.spent - a.spent)
@@ -346,9 +366,10 @@ export default function AdminPanel() {
                           <img
                             src={team.logo}
                             alt={team.name}
-                            className="w-8 h-8 mr-3"
+                            className="w-12 h-12 mr-3 object-contain"
                             onError={(e) => {
-                              e.currentTarget.src = `https://ui-avatars.com/api/?name=${team.shortName}&background=${team.color.slice(1)}&color=fff&size=32`;
+                              console.warn(`Logo failed for ${team.shortName}, using fallback`);
+                              e.currentTarget.src = `https://ui-avatars.com/api/?name=${team.shortName}&background=${team.color.replace('#', '')}&color=fff&size=48`;
                             }}
                           />
                           <div>
@@ -387,11 +408,10 @@ export default function AdminPanel() {
                           setBidAmount(player.basePrice);
                           setCurrentPlayer(player); // Sync to presenter display
                         }}
-                        className={`w-full flex items-center p-4 rounded-lg border transition-all ${
-                          selectedPlayerForBid?.id === player.id
-                            ? 'bg-blue-500/20 border-blue-400'
-                            : 'bg-white/5 border-white/20 hover:bg-white/10'
-                        }`}
+                        className={`w-full flex items-center p-4 rounded-lg border transition-all ${selectedPlayerForBid?.id === player.id
+                          ? 'bg-blue-500/20 border-blue-400'
+                          : 'bg-white/5 border-white/20 hover:bg-white/10'
+                          }`}
                       >
                         <img
                           src={player.image}
@@ -414,7 +434,7 @@ export default function AdminPanel() {
                 {selectedPlayerForBid && (
                   <div className="bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-xl p-6 border border-purple-400/30">
                     <h3 className="text-lg font-semibold text-white mb-4">Place Bid</h3>
-                    
+
                     <div className="space-y-4">
                       {/* Player Info */}
                       <div className="bg-white/10 rounded-lg p-4">
@@ -446,32 +466,32 @@ export default function AdminPanel() {
                           <div className="grid grid-cols-4 gap-2">
                             {(() => {
                               const quickBids = [];
-                              let currentBid = Math.max(selectedPlayerForBid.basePrice, bidAmount);
-                              
+                              let startBid = Math.max(selectedPlayerForBid.basePrice, currentBid);
+
                               // Generate 8 quick bid options
                               for (let i = 0; i < 8; i++) {
-                                if (i === 0 && currentBid === bidAmount) {
-                                  quickBids.push(currentBid);
+                                // If current bid is 0 (just started), first option is base price
+                                if (i === 0 && startBid > currentBid && currentBid === 0) {
+                                  quickBids.push(startBid);
                                 } else {
-                                  const nextIncrement = getNextBidIncrement(currentBid);
-                                  currentBid = currentBid + nextIncrement;
-                                  quickBids.push(currentBid);
+                                  const nextIncrement = getNextBidIncrement(startBid);
+                                  startBid = startBid + nextIncrement;
+                                  quickBids.push(startBid);
                                 }
                               }
-                              
+
                               return quickBids.map((amount, index) => (
                                 <button
                                   key={index}
                                   onClick={() => {
                                     setBidAmount(amount);
                                     // Broadcast just the bid amount, no team association yet
-                                    updateBidDisplay(amount, 0); // 0 = no team assigned
+                                    updateBidDisplay(amount);
                                   }}
-                                  className={`px-3 py-2 rounded-lg font-bold text-sm transition-all ${
-                                    bidAmount === amount
-                                      ? 'bg-yellow-500 text-black shadow-lg scale-105'
-                                      : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white'
-                                  }`}
+                                  className={`px-3 py-2 rounded-lg font-bold text-sm transition-all ${bidAmount === amount
+                                    ? 'bg-yellow-500 text-black shadow-lg scale-105'
+                                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white'
+                                    }`}
                                 >
                                   ₹{amount}L
                                 </button>
@@ -479,11 +499,11 @@ export default function AdminPanel() {
                             })()}
                           </div>
                           <p className="text-gray-400 text-xs mt-2">
-                            {bidAmount < 100 && '💡 Increment: +₹5L per step'}
-                            {bidAmount >= 100 && bidAmount < 200 && '💡 Increment: +₹10L per step'}
-                            {bidAmount >= 200 && bidAmount < 500 && '💡 Increment: +₹20L per step'}
-                            {bidAmount >= 500 && bidAmount < 1000 && '💡 Increment: +₹25L per step'}
-                            {bidAmount >= 1000 && '💡 Increment: +₹50L per step'}
+                            {currentBid < 100 && '💡 Increment: +₹5L per step'}
+                            {currentBid >= 100 && currentBid < 200 && '💡 Increment: +₹10L per step'}
+                            {currentBid >= 200 && currentBid < 500 && '💡 Increment: +₹20L per step'}
+                            {currentBid >= 500 && currentBid < 1000 && '💡 Increment: +₹25L per step'}
+                            {currentBid >= 1000 && '💡 Increment: +₹50L per step'}
                           </p>
                         </div>
 
@@ -494,38 +514,38 @@ export default function AdminPanel() {
                             {/* Decrement Button */}
                             <button
                               onClick={() => {
-                                const increment = getNextBidIncrement(bidAmount - 1);
-                                const newAmount = Math.max(selectedPlayerForBid.basePrice, bidAmount - increment);
+                                const increment = getNextBidIncrement(currentBid - 1);
+                                const newAmount = Math.max(selectedPlayerForBid.basePrice, currentBid - increment);
                                 setBidAmount(newAmount);
-                                updateBidDisplay(newAmount, 0); // 0 = no team
+                                updateBidDisplay(newAmount);
                               }}
-                              disabled={bidAmount <= selectedPlayerForBid.basePrice}
+                              disabled={currentBid <= selectedPlayerForBid.basePrice}
                               className="px-4 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-bold text-xl transition-colors"
                             >
                               -
                             </button>
-                            
+
                             {/* Manual Input Field */}
                             <input
                               type="number"
-                              value={bidAmount}
+                              value={bidAmount || currentBid}
                               onChange={(e) => {
                                 const newAmount = Number(e.target.value);
                                 setBidAmount(newAmount);
-                                updateBidDisplay(newAmount, 0); // 0 = no team
+                                updateBidDisplay(newAmount);
                               }}
                               min={selectedPlayerForBid.basePrice}
                               placeholder="Enter amount"
                               className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white text-center text-xl font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
-                            
+
                             {/* Increment Button */}
                             <button
                               onClick={() => {
-                                const increment = getNextBidIncrement(bidAmount);
-                                const newAmount = bidAmount + increment;
+                                const increment = getNextBidIncrement(currentBid);
+                                const newAmount = currentBid + increment;
                                 setBidAmount(newAmount);
-                                updateBidDisplay(newAmount, 0); // 0 = no team
+                                updateBidDisplay(newAmount);
                               }}
                               className="px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xl transition-colors"
                             >
@@ -533,7 +553,7 @@ export default function AdminPanel() {
                             </button>
                           </div>
                           <p className="text-gray-400 text-xs mt-1">
-                            Min: ₹{selectedPlayerForBid.basePrice}L | Next: +₹{getNextBidIncrement(bidAmount)}L
+                            Min: ₹{selectedPlayerForBid.basePrice}L | Next: +₹{getNextBidIncrement(currentBid)}L
                           </p>
                         </div>
                       </div>
@@ -552,14 +572,14 @@ export default function AdminPanel() {
                       <button
                         onClick={() => {
                           markUnsold(selectedPlayerForBid.id);
-                          
+
                           // Show unsold confirmation
                           localStorage.setItem('soldConfirmation', JSON.stringify({
                             playerName: selectedPlayerForBid.name,
                             playerImage: selectedPlayerForBid.image,
                             unsold: true
                           }));
-                          
+
                           setSelectedPlayerForBid(null);
                           setBidAmount(0);
                         }}
@@ -615,7 +635,249 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* Players Tab - Comprehensive CMS */}
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Leaderboard Summary */}
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
+                <h3 className="text-white font-bold mb-4 flex items-center">
+                  <Trophy className="w-5 h-5 mr-2 text-yellow-400" />
+                  Top Performers
+                </h3>
+                <div className="space-y-4">
+                  {[...teams].sort((a, b) => (b.totalPoints || 0) - (a.totalPoints || 0)).slice(0, 3).map((team, idx) => (
+                    <div key={team.id} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mr-3 ${idx === 0 ? 'bg-yellow-500 text-black' :
+                          idx === 1 ? 'bg-gray-400 text-black' :
+                            'bg-orange-600 text-white'
+                          }`}>
+                          {idx + 1}
+                        </span>
+                        <img src={team.logo} alt={team.shortName} className="w-8 h-8 mr-2 object-contain" />
+                        <span className="text-white font-medium">{team.shortName}</span>
+                      </div>
+                      <span className="text-yellow-400 font-bold">{team.totalPoints || 0} Pts</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Expensive Players */}
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
+                <h3 className="text-white font-bold mb-4 flex items-center">
+                  <TrendingUp className="w-5 h-5 mr-2 text-green-400" />
+                  Most Expensive Buys
+                </h3>
+                <div className="space-y-4">
+                  {[...players].filter(p => p.sold).sort((a, b) => (b.price || 0) - (a.price || 0)).slice(0, 3).map((player) => (
+                    <div key={player.id} className="flex items-center justify-between">
+                      <div className="flex items-center min-w-0">
+                        <img src={player.image} alt={player.name} className="w-8 h-8 rounded-full mr-2 object-cover" />
+                        <span className="text-white font-medium truncate">{player.name}</span>
+                      </div>
+                      <span className="text-green-400 font-bold ml-2 shrink-0">₹{player.price}L</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Role Distribution */}
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
+                <h3 className="text-white font-bold mb-4 flex items-center">
+                  <Activity className="w-5 h-5 mr-2 text-blue-400" />
+                  Squad Composition
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {['Batsman', 'Bowler', 'All-rounder', 'Wicketkeeper'].map(role => {
+                    const count = players.filter(p => p.sold && p.role === role).length;
+                    return (
+                      <div key={role} className="bg-white/5 rounded-lg p-3">
+                        <p className="text-gray-400 text-[10px] uppercase font-bold">{role}</p>
+                        <p className="text-xl font-black text-white">{count}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Price Range Analysis */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
+              <h3 className="text-white font-bold mb-6">Market Trends</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                  <p className="text-gray-400 text-sm mb-1">Total Trading Volume</p>
+                  <p className="text-3xl font-black text-white">₹{totalSpent}L</p>
+                  <p className="text-xs text-gray-500 mt-2">Across {soldPlayers.length} successful bids</p>
+                </div>
+                <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                  <p className="text-gray-400 text-sm mb-1">Market Average</p>
+                  <p className="text-3xl font-black text-white">₹{Math.round(averagePrice)}L</p>
+                  <p className="text-xs text-gray-500 mt-2">Per player sold</p>
+                </div>
+                <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                  <p className="text-gray-400 text-sm mb-1">Total Players Processed</p>
+                  <p className="text-3xl font-black text-white">{players.length}</p>
+                  <p className="text-xs text-gray-500 mt-2">{players.filter(p => !p.sold).length} remaining in auction</p>
+                </div>
+                <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                  <p className="text-gray-400 text-sm mb-1">Purse Utilization</p>
+                  <p className="text-3xl font-black text-white">{Math.round((totalSpent / (teams.length * 12000)) * 100)}%</p>
+                  <p className="text-xs text-gray-500 mt-2">Total league budget used</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Leaderboard Summary */}
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
+                <h3 className="text-white font-bold mb-4 flex items-center">
+                  <Trophy className="w-5 h-5 mr-2 text-yellow-400" />
+                  Top Performers
+                </h3>
+                <div className="space-y-4">
+                  {[...teams].sort((a, b) => (b.totalPoints || 0) - (a.totalPoints || 0)).slice(0, 3).map((team, idx) => (
+                    <div key={team.id} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mr-3 ${idx === 0 ? 'bg-yellow-500 text-black' :
+                          idx === 1 ? 'bg-gray-400 text-black' :
+                            'bg-orange-600 text-white'
+                          }`}>
+                          {idx + 1}
+                        </span>
+                        <img src={team.logo} alt={team.shortName} className="w-8 h-8 mr-2 object-contain" />
+                        <span className="text-white font-medium">{team.shortName}</span>
+                      </div>
+                      <span className="text-yellow-400 font-bold">{team.totalPoints || 0} Pts</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Expensive Players */}
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
+                <h3 className="text-white font-bold mb-4 flex items-center">
+                  <TrendingUp className="w-5 h-5 mr-2 text-green-400" />
+                  Most Expensive Buys
+                </h3>
+                <div className="space-y-4">
+                  {[...players].filter(p => p.sold).sort((a, b) => (b.price || 0) - (a.price || 0)).slice(0, 3).map((player) => (
+                    <div key={player.id} className="flex items-center justify-between">
+                      <div className="flex items-center min-w-0">
+                        <img src={player.image} alt={player.name} className="w-8 h-8 rounded-full mr-2 object-cover" />
+                        <span className="text-white font-medium truncate">{player.name}</span>
+                      </div>
+                      <span className="text-green-400 font-bold ml-2 shrink-0">₹{player.price}L</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Role Distribution */}
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
+                <h3 className="text-white font-bold mb-4 flex items-center">
+                  <Activity className="w-5 h-5 mr-2 text-blue-400" />
+                  Squad Composition
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {['Batsman', 'Bowler', 'All-rounder', 'Wicketkeeper'].map(role => {
+                    const count = players.filter(p => p.sold && p.role === role).length;
+                    return (
+                      <div key={role} className="bg-white/5 rounded-lg p-3">
+                        <p className="text-gray-400 text-[10px] uppercase font-bold">{role}</p>
+                        <p className="text-xl font-black text-white">{count}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Price Range Analysis */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
+              <h3 className="text-white font-bold mb-6">Market Trends</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                  <p className="text-gray-400 text-sm mb-1">Total Trading Volume</p>
+                  <p className="text-3xl font-black text-white">₹{totalSpent}L</p>
+                  <p className="text-xs text-gray-500 mt-2">Across {soldPlayers.length} successful bids</p>
+                </div>
+                <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                  <p className="text-gray-400 text-sm mb-1">Market Average</p>
+                  <p className="text-3xl font-black text-white">₹{Math.round(averagePrice)}L</p>
+                  <p className="text-xs text-gray-500 mt-2">Per player sold</p>
+                </div>
+                <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                  <p className="text-gray-400 text-sm mb-1">Total Players Processed</p>
+                  <p className="text-3xl font-black text-white">{players.length}</p>
+                  <p className="text-xs text-gray-500 mt-2">{players.filter(p => !p.sold).length} remaining in auction</p>
+                </div>
+                <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                  <p className="text-gray-400 text-sm mb-1">Purse Utilization</p>
+                  <p className="text-3xl font-black text-white">{Math.round((totalSpent / (teams.length * 12000)) * 100)}%</p>
+                  <p className="text-xs text-gray-500 mt-2">Total league budget used</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Auction Timeline */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-white font-bold flex items-center">
+                  <Activity className="w-5 h-5 mr-2 text-purple-400" />
+                  Bidding Timeline
+                </h3>
+                <button
+                  onClick={fetchGlobalBids}
+                  className="text-xs text-blue-400 hover:text-blue-300"
+                >
+                  Refresh
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-white/5">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase">Time</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase">Player</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase">Bid By</th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-400 uppercase">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {isLoadingBids ? (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-8 text-center text-gray-500">Loading timeline...</td>
+                      </tr>
+                    ) : globalBids.length > 0 ? (
+                      globalBids.map((bid) => (
+                        <tr key={bid.id} className="hover:bg-white/5">
+                          <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-400">
+                            {new Date(bid.timestamp).toLocaleTimeString()}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-white font-medium">{bid.player_name}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{bid.team_code}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-yellow-500 font-bold">₹{bid.amount}L</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-8 text-center text-gray-500">No bidding history yet</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
         {activeTab === 'players' && (
           <div className="space-y-6">
             {/* Header with Actions */}
@@ -705,6 +967,7 @@ export default function AdminPanel() {
                               <img
                                 src={player.image}
                                 alt={player.name}
+                                loading="lazy"
                                 className="w-10 h-10 rounded-full mr-3 object-cover"
                                 onError={(e) => {
                                   e.currentTarget.src = `https://ui-avatars.com/api/?name=${player.name}&background=6366f1&color=fff&size=40`;
@@ -731,11 +994,10 @@ export default function AdminPanel() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-white font-bold">₹{player.basePrice}L</td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              player.sold
-                                ? 'bg-green-600 text-white'
-                                : 'bg-gray-600 text-gray-300'
-                            }`}>
+                            <span className={`px-2 py-1 text-xs rounded-full ${player.sold
+                              ? 'bg-green-600 text-white'
+                              : 'bg-gray-600 text-gray-300'
+                              }`}>
                               {player.sold ? 'Sold' : 'Available'}
                             </span>
                             {player.sold && team && (
@@ -823,7 +1085,7 @@ export default function AdminPanel() {
                     <input
                       type="text"
                       value={newPlayer.name}
-                      onChange={(e) => setNewPlayer({...newPlayer, name: e.target.value})}
+                      onChange={(e) => setNewPlayer({ ...newPlayer, name: e.target.value })}
                       className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                       placeholder="Enter player name"
                     />
@@ -832,7 +1094,7 @@ export default function AdminPanel() {
                     <label className="block text-sm font-medium text-gray-300 mb-2">Role *</label>
                     <select
                       value={newPlayer.role}
-                      onChange={(e) => setNewPlayer({...newPlayer, role: e.target.value})}
+                      onChange={(e) => setNewPlayer({ ...newPlayer, role: e.target.value })}
                       className="w-full px-4 py-2 bg-gray-800 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 cursor-pointer hover:border-white/50 transition-colors"
                     >
                       <option value="Batsman" className="bg-gray-900 text-white">Batsman</option>
@@ -846,7 +1108,7 @@ export default function AdminPanel() {
                     <input
                       type="number"
                       value={newPlayer.basePrice}
-                      onChange={(e) => setNewPlayer({...newPlayer, basePrice: parseInt(e.target.value) || 0})}
+                      onChange={(e) => setNewPlayer({ ...newPlayer, basePrice: parseInt(e.target.value) || 0 })}
                       className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                       placeholder="50"
                       min="1"
@@ -857,7 +1119,7 @@ export default function AdminPanel() {
                     <input
                       type="text"
                       value={newPlayer.nationality}
-                      onChange={(e) => setNewPlayer({...newPlayer, nationality: e.target.value})}
+                      onChange={(e) => setNewPlayer({ ...newPlayer, nationality: e.target.value })}
                       className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                       placeholder="India"
                     />
@@ -867,7 +1129,7 @@ export default function AdminPanel() {
                     <input
                       type="number"
                       value={newPlayer.age}
-                      onChange={(e) => setNewPlayer({...newPlayer, age: parseInt(e.target.value) || 0})}
+                      onChange={(e) => setNewPlayer({ ...newPlayer, age: parseInt(e.target.value) || 0 })}
                       className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                       placeholder="25"
                       min="16"
@@ -879,7 +1141,7 @@ export default function AdminPanel() {
                     <input
                       type="url"
                       value={newPlayer.image}
-                      onChange={(e) => setNewPlayer({...newPlayer, image: e.target.value})}
+                      onChange={(e) => setNewPlayer({ ...newPlayer, image: e.target.value })}
                       className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                       placeholder="https://example.com/player-image.jpg"
                     />
@@ -892,7 +1154,7 @@ export default function AdminPanel() {
                     <label className="block text-sm font-medium text-gray-300 mb-2">Batting Style</label>
                     <select
                       value={newPlayer.battingStyle}
-                      onChange={(e) => setNewPlayer({...newPlayer, battingStyle: e.target.value})}
+                      onChange={(e) => setNewPlayer({ ...newPlayer, battingStyle: e.target.value })}
                       className="w-full px-4 py-2 bg-gray-800 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 cursor-pointer hover:border-white/50 transition-colors"
                     >
                       <option value="Right-handed" className="bg-gray-900 text-white">Right-handed</option>
@@ -903,7 +1165,7 @@ export default function AdminPanel() {
                     <label className="block text-sm font-medium text-gray-300 mb-2">Bowling Style</label>
                     <select
                       value={newPlayer.bowlingStyle}
-                      onChange={(e) => setNewPlayer({...newPlayer, bowlingStyle: e.target.value})}
+                      onChange={(e) => setNewPlayer({ ...newPlayer, bowlingStyle: e.target.value })}
                       className="w-full px-4 py-2 bg-gray-800 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 cursor-pointer hover:border-white/50 transition-colors"
                     >
                       <option value="" className="bg-gray-900 text-white">None</option>
@@ -930,7 +1192,7 @@ export default function AdminPanel() {
                         value={newPlayer.stats?.matches || 0}
                         onChange={(e) => setNewPlayer({
                           ...newPlayer,
-                          stats: {...newPlayer.stats, matches: parseInt(e.target.value) || 0}
+                          stats: { ...newPlayer.stats, matches: parseInt(e.target.value) || 0 }
                         })}
                         className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                         min="0"
@@ -943,7 +1205,7 @@ export default function AdminPanel() {
                         value={newPlayer.stats?.runs || 0}
                         onChange={(e) => setNewPlayer({
                           ...newPlayer,
-                          stats: {...newPlayer.stats, runs: parseInt(e.target.value) || 0}
+                          stats: { ...newPlayer.stats, runs: parseInt(e.target.value) || 0 }
                         })}
                         className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                         min="0"
@@ -956,7 +1218,7 @@ export default function AdminPanel() {
                         value={newPlayer.stats?.wickets || 0}
                         onChange={(e) => setNewPlayer({
                           ...newPlayer,
-                          stats: {...newPlayer.stats, wickets: parseInt(e.target.value) || 0}
+                          stats: { ...newPlayer.stats, wickets: parseInt(e.target.value) || 0 }
                         })}
                         className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                         min="0"
@@ -970,7 +1232,7 @@ export default function AdminPanel() {
                         value={newPlayer.stats?.average || 0}
                         onChange={(e) => setNewPlayer({
                           ...newPlayer,
-                          stats: {...newPlayer.stats, average: parseFloat(e.target.value) || 0}
+                          stats: { ...newPlayer.stats, average: parseFloat(e.target.value) || 0 }
                         })}
                         className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                         min="0"
@@ -984,7 +1246,7 @@ export default function AdminPanel() {
                         value={newPlayer.stats?.strikeRate || 0}
                         onChange={(e) => setNewPlayer({
                           ...newPlayer,
-                          stats: {...newPlayer.stats, strikeRate: parseFloat(e.target.value) || 0}
+                          stats: { ...newPlayer.stats, strikeRate: parseFloat(e.target.value) || 0 }
                         })}
                         className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                         min="0"
@@ -1027,7 +1289,7 @@ export default function AdminPanel() {
                       if (showAddModal) {
                         // Add new player
                         if (newPlayer.name) {
-                          addPlayer(newPlayer);
+                          addPlayer({ ...newPlayer, sold: false });
                           setShowAddModal(false);
                           setNewPlayer({
                             name: '',
@@ -1067,28 +1329,44 @@ export default function AdminPanel() {
         {/* Teams Tab */}
         {activeTab === 'teams' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {teams.map((team) => {
+            {[...teams].sort((a, b) => (a.rank || 99) - (b.rank || 99)).map((team) => {
               const teamPlayers = players.filter(p => p.teamId === team.id && p.sold);
               const totalSpent = 12000 - team.purse;
-              
+
               return (
                 <div key={team.id} className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 overflow-hidden">
                   <div className="p-6" style={{ backgroundColor: `${team.color}20` }}>
-                    <div className="flex items-center mb-4">
-                      <img
-                        src={team.logo}
-                        alt={team.name}
-                        className="w-12 h-12 mr-3"
-                        onError={(e) => {
-                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${team.shortName}&background=${team.color.slice(1)}&color=fff&size=48`;
-                        }}
-                      />
-                      <div>
-                        <h3 className="text-white font-bold">{team.shortName}</h3>
-                        <p className="text-gray-300 text-sm">{team.name}</p>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center">
+                        <img
+                          src={team.logo}
+                          alt={team.name}
+                          className="w-12 h-12 mr-3"
+                          onError={(e) => {
+                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${team.shortName}&background=${team.color.slice(1)}&color=fff&size=48`;
+                          }}
+                        />
+                        <div>
+                          <div className="flex items-center">
+                            <h3 className="text-white font-bold">{team.shortName}</h3>
+                            {team.rank && (
+                              <span className="ml-2 px-1.5 py-0.5 bg-yellow-500 text-black text-[10px] font-black rounded flex items-center">
+                                <Crown className="w-2.5 h-2.5 mr-0.5" />
+                                #{team.rank}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-gray-300 text-sm">{team.name}</p>
+                        </div>
                       </div>
+                      {team.totalPoints !== undefined && (
+                        <div className="text-right">
+                          <p className="text-[10px] text-gray-400 uppercase font-bold">PTS</p>
+                          <p className="text-lg font-black text-white leading-tight">{team.totalPoints}</p>
+                        </div>
+                      )}
                     </div>
-                    
+
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-gray-400">Players</span>
@@ -1102,7 +1380,7 @@ export default function AdminPanel() {
                         <span className="text-gray-400">Spent</span>
                         <span className="text-yellow-400 font-bold">₹{totalSpent}L</span>
                       </div>
-                      
+
                       <div className="w-full bg-gray-700 rounded-full h-2 mt-3">
                         <div
                           className="h-2 rounded-full transition-all duration-500"
@@ -1114,7 +1392,7 @@ export default function AdminPanel() {
                       </div>
                     </div>
                   </div>
-                  
+
                   {teamPlayers.length > 0 && (
                     <div className="p-4 border-t border-white/10">
                       <h4 className="text-white font-medium mb-2">Squad</h4>
@@ -1202,13 +1480,12 @@ export default function AdminPanel() {
                       onClick={() => setSelectedTeamId(team.id)}
                       disabled={team.purse < bidAmount}
                       title={team.purse < bidAmount ? `Insufficient purse (needs ₹${bidAmount}L, has ₹${team.purse}L)` : team.name}
-                      className={`p-2 rounded-lg border-2 transition-all text-center transform ${
-                        selectedTeamId === team.id
-                          ? 'border-yellow-400 bg-yellow-500/30 scale-105 shadow-lg shadow-yellow-400/50'
-                          : team.purse < bidAmount
+                      className={`p-2 rounded-lg border-2 transition-all text-center transform ${selectedTeamId === team.id
+                        ? 'border-yellow-400 bg-yellow-500/30 scale-105 shadow-lg shadow-yellow-400/50'
+                        : team.purse < bidAmount
                           ? 'border-gray-600 bg-gray-800/40 opacity-50 cursor-not-allowed'
                           : 'border-white/30 bg-white/5 hover:bg-white/10 hover:border-white/50 hover:scale-105'
-                      }`}
+                        }`}
                     >
                       <img
                         src={team.logo}
@@ -1236,7 +1513,7 @@ export default function AdminPanel() {
                   if (selectedTeamId) {
                     const team = teams.find(t => t.id === selectedTeamId);
                     markSold(selectedPlayerForBid.id, selectedTeamId, bidAmount);
-                    
+
                     localStorage.setItem('soldConfirmation', JSON.stringify({
                       playerName: selectedPlayerForBid.name,
                       playerImage: selectedPlayerForBid.image,
@@ -1245,7 +1522,7 @@ export default function AdminPanel() {
                       price: bidAmount,
                       timestamp: Date.now()
                     }));
-                    
+
                     setShowSoldModal(false);
                     setSelectedPlayerForBid(null);
                     setBidAmount(0);
