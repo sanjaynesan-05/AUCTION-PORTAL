@@ -153,6 +153,10 @@ async def get_leaderboard(session: AsyncSession):
             "id": str(team.id),
             "name": team.name,
             "code": team.code,
+            "logo_url": team.logo_url,
+            "color": team.color,
+            "primary_color": team.primary_color,
+            "secondary_color": team.secondary_color,
             "total_points": team.total_points,
             "purse_balance": float(team.purse_balance),
             "players_count": team.players_count
@@ -166,7 +170,7 @@ async def reset_auction_logic(session: AsyncSession):
         count = await session.scalar(select(func.count(Player.id)))
         
         # 2. Reset Tables
-        await session.execute(update(Team).values(purse_balance=120000000, total_points=0, players_count=0))
+        await session.execute(update(Team).values(purse_balance=1200000000, total_points=0, players_count=0))
         await session.execute(update(Player).values(is_sold=False, sold_price=None, team_id=None))
         await session.execute(delete(Bid))
         
