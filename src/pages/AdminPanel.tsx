@@ -499,10 +499,9 @@ export default function AdminPanel() {
                             })()}
                           </div>
                           <p className="text-gray-400 text-xs mt-2">
-                            {currentBid < 100 && '💡 Increment: +₹5L per step'}
-                            {currentBid >= 100 && currentBid < 200 && '💡 Increment: +₹10L per step'}
-                            {currentBid >= 200 && currentBid < 500 && '💡 Increment: +₹20L per step'}
-                            {currentBid >= 500 && currentBid < 1000 && '💡 Increment: +₹25L per step'}
+                            {currentBid < 200 && '💡 Increment: +₹5L per step'}
+                            {currentBid >= 200 && currentBid < 500 && '💡 Increment: +₹10L per step'}
+                            {currentBid >= 500 && currentBid < 1000 && '💡 Increment: +₹20L per step'}
                             {currentBid >= 1000 && '💡 Increment: +₹50L per step'}
                           </p>
                         </div>

@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.get("/", response_model=List[PlayerResponse])
 async def get_players(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Player).order_by(Player.id))
+    result = await db.execute(select(Player).order_by(Player.set_number, Player.name))
     players = result.scalars().all()
     return players
 
@@ -33,12 +33,13 @@ async def bulk_upload_players(file: UploadFile = File(...), db: AsyncSession = D
         
         players_to_add = []
         for row in csv_reader:
-            # Assumes CSV columns: name, role, base_price, points
+            # Assumes CSV columns: name, role, nationality, age, image
             player = Player(
                 name=row['name'],
                 role=row['role'],
-                base_price=float(row['base_price']),
-                points=int(row.get('points', 0))
+                nationality=row.get('nationality', 'India'),
+                age=int(row.get('age', 25)),
+                image=row.get('image', '')
             )
             players_to_add.append(player)
             

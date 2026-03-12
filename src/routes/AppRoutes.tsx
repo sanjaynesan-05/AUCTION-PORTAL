@@ -7,6 +7,7 @@ import { LoadingSpinner } from '../components/Loading';
 const Login = lazy(() => import('../pages/Login'));
 const AdminPanel = lazy(() => import('../pages/AdminPanel'));
 const PresenterPanel = lazy(() => import('../pages/PresenterPanel'));
+const PlayersPage = lazy(() => import('../pages/PlayersPage'));
 const Unauthorized = lazy(() => import('../pages/Unauthorized'));
 
 export default function AppRoutes() {
@@ -31,6 +32,7 @@ export default function AppRoutes() {
             </RoleGuard>
           }
         />
+        <Route path="/players" element={<PlayersPage />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

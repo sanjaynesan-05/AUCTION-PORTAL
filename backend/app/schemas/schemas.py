@@ -21,17 +21,22 @@ class TeamResponse(TeamBase):
 class PlayerBase(BaseModel):
     name: str
     role: str
-    base_price: float
-    points: int = 0
+    nationality: str = "India"
+    age: Optional[int] = None
+    image: Optional[str] = None
+    set_number: int = 1
+    set_name: str = "Marquee Players"
+    base_price: int = 20
+    sold_price: Optional[float] = None
 
 class PlayerCreate(PlayerBase):
-    pass
+    points: int = 0
 
 class PlayerResponse(PlayerBase):
     id: UUID
-    sold_price: Optional[float] = None
     is_sold: bool = False
     team_id: Optional[UUID] = None
+    points: int = 0
     class Config:
         from_attributes = True
 

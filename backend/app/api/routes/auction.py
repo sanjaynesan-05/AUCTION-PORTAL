@@ -56,7 +56,7 @@ async def select_player(player_id: UUID, db: AsyncSession = Depends(get_db)):
             
         state.current_player_id = player_id
         state.status = "ACTIVE"
-        state.current_bid = player.base_price
+        state.current_bid = 0
         state.current_bidder_id = None
         
     await manager.broadcast("PLAYER_SELECTED", {"player_id": str(player_id)})

@@ -13,7 +13,7 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         
-    print("Startup: Tables verified.")
+
     
     # Self-healing: Sync remaining players count
     async with async_session_maker() as session:
@@ -28,14 +28,14 @@ async def lifespan(app: FastAPI):
             if state:
                 if state.remaining_players_count != count:
                     state.remaining_players_count = count
-                    print(f"Self-healing: Synced remaining players count to {count}")
+
             else:
                 # Initialize if missing
                 state = AuctionState(id=1, status="WAITING", remaining_players_count=count)
                 session.add(state)
-                print(f"Self-healing: Initialized Auction State with count {count}")
+
     
-    print("Startup: State Synced. Application Ready.")
+    print("🚀 IPL Auction Backend Ready.")
     
     yield
     

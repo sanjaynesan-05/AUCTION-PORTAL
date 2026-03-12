@@ -5,20 +5,21 @@ export interface Player {
   id: string;
   name: string;
   role: string;
-  basePrice: number;
-  sold: boolean;
-  teamId?: string;
-  price?: number;
   nationality: string;
   age: number;
   image: string;
+  sold: boolean;
+  teamId?: string;
+  setNumber: number;
+  setName: string;
+  basePrice: number;
+  price?: number;
   stats?: {
-    matches?: number;
-    runs?: number;
-    wickets?: number;
-    average?: number;
-    strikeRate?: number;
-    economy?: number;
+    matches: number;
+    runs: number;
+    wickets: number;
+    average: number;
+    strikeRate: number;
   };
 }
 
@@ -36,6 +37,12 @@ export interface Team {
   totalPoints?: number;
 }
 
+export interface BidHistoryItem {
+  teamId: string;
+  amount: number;
+  timestamp: number;
+}
+
 interface AuctionState {
   players: Player[];
   teams: Team[];
@@ -45,8 +52,9 @@ interface AuctionState {
   auctionPaused: boolean;
   currentBid: number;
   currentBidder: string | null;
-  bidHistory: Array<{ teamId: string; amount: number; timestamp: number }>;
+  bidHistory: BidHistoryItem[];
   lastBid?: { amount: number; teamId: string; teamName: string; timestamp: number };
+  currentSetName: string | null;
   lastUpdate: number;
 
   // Hydration Actions
@@ -84,6 +92,7 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
   currentBid: 0,
   currentBidder: null,
   bidHistory: [],
+  currentSetName: null,
   lastUpdate: Date.now(),
 
   setPlayers: (players) => set({ players }),
@@ -102,20 +111,21 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
         id: p.id,
         name: p.name,
         role: p.role,
-        basePrice: parseFloat(p.base_price) / 100000, // Lakhs
-        sold: p.is_sold,
-        teamId: p.team_id,
-        price: p.sold_price ? parseFloat(p.sold_price) / 100000 : undefined,
         nationality: p.nationality,
         age: p.age,
-        image: p.image_url,
+        image: p.image,
+        sold: p.is_sold,
+        teamId: p.team_id,
+        setNumber: p.set_number,
+        setName: p.set_name,
+        basePrice: parseFloat(p.base_price) / 100000,
+        price: p.sold_price ? parseFloat(p.sold_price) / 100000 : undefined,
         stats: {
-          matches: p.matches,
-          runs: p.runs,
-          wickets: p.wickets,
-          average: p.average,
-          strikeRate: p.strike_rate,
-          economy: p.economy
+          matches: 0,
+          runs: 0,
+          wickets: 0,
+          average: 0,
+          strikeRate: 0
         }
       }));
 
@@ -140,7 +150,8 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
         auctionPaused: stateData.status === 'PAUSED',
         currentBid: parseFloat(stateData.current_bid) / 100000,
         currentBidder: stateData.current_bidder_id,
-        currentPlayer: players.find((p: any) => p.id === stateData.current_player_id) || null
+        currentPlayer: players.find((p: any) => p.id === stateData.current_player_id) || null,
+        currentSetName: players.find((p: any) => p.id === stateData.current_player_id)?.setName || null
       });
     } catch (error) {
       console.error('Failed to fetch initial data:', error);
@@ -158,6 +169,7 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
         currentBid: 0,
         currentBidder: null,
         bidHistory: [],
+        currentSetName: unsoldPlayers[0].setName,
       });
     }
   },
@@ -177,6 +189,7 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
         currentBid: 0,
         currentBidder: null,
         bidHistory: [],
+        currentSetName: unsoldPlayers[nextIndex].setName,
       });
     } else {
       set({
@@ -201,6 +214,7 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
         currentBid: 0,
         currentBidder: null,
         bidHistory: [],
+        currentSetName: unsoldPlayers[prevIndex].setName,
       });
     }
   },
@@ -211,6 +225,7 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
       currentBid: 0,
       currentBidder: null,
       bidHistory: [],
+      currentSetName: player ? player.setName : null,
       lastUpdate: Date.now(),
     });
   },
@@ -249,10 +264,9 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
 
   getNextBidIncrement: (currentBid) => {
     const BID_INCREMENT_RULES = [
-      { max: 100, increment: 5 },
-      { max: 200, increment: 10 },
-      { max: 500, increment: 20 },
-      { max: 1000, increment: 25 },
+      { max: 200, increment: 5 },
+      { max: 500, increment: 10 },
+      { max: 1000, increment: 20 },
       { max: Infinity, increment: 50 },
     ];
     const rule = BID_INCREMENT_RULES.find(rule => currentBid < rule.max);
@@ -268,7 +282,7 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
     const team = state.teams.find(t => t.id === teamId);
     if (!team) return { success: false, message: 'Team not found' };
 
-    const minValidBid = state.currentBidder === null ? state.currentPlayer.basePrice : state.currentBid;
+    const minValidBid = state.currentBid;
 
     if (bidAmount < minValidBid) {
       return { success: false, message: 'Bid too low' };

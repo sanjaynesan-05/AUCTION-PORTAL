@@ -1,212 +1,253 @@
+"""
+Seed script for IPL Auction — 193 players across 11 sets.
+Deletes all existing players and re-seeds with set-based data.
+"""
 import asyncio
-import pandas as pd
-import requests
-import re
 import sys
 import os
-import traceback
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select, delete
-from app.models.all_models import Team, Player
-from app.db.session import Base, DATABASE_URL
 
-# Fix for Windows Asyncio Loop
-import platform
-if platform.system() == 'Windows':
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-engine = create_async_engine(DATABASE_URL, echo=True, connect_args={"statement_cache_size": 0})
-async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+from sqlalchemy import delete
+from app.db.session import async_session_maker
+from app.models.all_models import Player, AuctionState, Bid
 
-TEAM_URLS = {
-    "CSK": "https://www.iplt20.com/teams/chennai-super-kings/squad",
-    "MI": "https://www.iplt20.com/teams/mumbai-indians/squad",
-    "RCB": "https://www.iplt20.com/teams/royal-challengers-bengaluru/squad",
-    "KKR": "https://www.iplt20.com/teams/kolkata-knight-riders/squad",
-    "SRH": "https://www.iplt20.com/teams/sunrisers-hyderabad/squad",
-    "DC": "https://www.iplt20.com/teams/delhi-capitals/squad",
-    "PBKS": "https://www.iplt20.com/teams/punjab-kings/squad",
-    "RR": "https://www.iplt20.com/teams/rajasthan-royals/squad",
-    "LSG": "https://www.iplt20.com/teams/lucknow-super-giants/squad",
-    "GT": "https://www.iplt20.com/teams/gujarat-titans/squad"
-}
+PLACEHOLDER_IMG = "https://www.iplt20.com/assets/images/IPL/placeholder.png"
 
-def normalize_name(name):
-    if not isinstance(name, str):
-        return ""
-    return re.sub(r'[^a-zA-Z0-9]', '', name).lower()
+# ────────────────────────────────────────────────
+#  ALL 193 PLAYERS — organized by auction set
+# ────────────────────────────────────────────────
 
-def scrape_player_images():
-    image_map = {} 
-    try:
-        print("Scraping Squad Pages...")
-        for code, url in TEAM_URLS.items():
-            try:
-                print(f"Scraping {code}...")
-                resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
-                if resp.status_code == 200:
-                    matches = re.findall(r'href="https://www.iplt20.com/players/([^/]+)/(\d+)"', resp.text)
-                    for slug, pid in matches:
-                        norm_name = normalize_name(slug.replace('-', ' '))
-                        image_url = f"https://documents.iplt20.com/ipl/IPLHeadshot2024/{pid}.png"
-                        image_map[norm_name] = image_url
-            except Exception as e:
-                print(f"Skip {code}: {e}")
-    except Exception as e:
-        print(f"Scrape Error: {e}")
-    return image_map
+PLAYERS = [
+    # ── SET 1: MARQUEE PLAYERS ──
+    {"name": "Jasprit Bumrah",      "role": "Fast Bowler",    "nationality": "India",       "age": 30, "points": 95, "set_number": 1, "set_name": "Marquee Players"},
+    {"name": "Ruturaj Gaikwad",     "role": "Batsman",        "nationality": "India",       "age": 27, "points": 88, "set_number": 1, "set_name": "Marquee Players"},
+    {"name": "Travis Head",         "role": "Batsman",        "nationality": "Australia",   "age": 30, "points": 87, "set_number": 1, "set_name": "Marquee Players"},
+    {"name": "KL Rahul",            "role": "Wicketkeeper",   "nationality": "India",       "age": 32, "points": 86, "set_number": 1, "set_name": "Marquee Players"},
+    {"name": "Ravindra Jadeja",     "role": "All-Rounder",    "nationality": "India",       "age": 35, "points": 90, "set_number": 1, "set_name": "Marquee Players"},
+    {"name": "Shreyas Iyer",        "role": "Batsman",        "nationality": "India",       "age": 29, "points": 85, "set_number": 1, "set_name": "Marquee Players"},
+    {"name": "Jos Buttler",         "role": "Wicketkeeper",   "nationality": "England",     "age": 33, "points": 89, "set_number": 1, "set_name": "Marquee Players"},
+    {"name": "Shubman Gill",        "role": "Batsman",        "nationality": "India",       "age": 24, "points": 88, "set_number": 1, "set_name": "Marquee Players"},
+    {"name": "Sanju Samson",        "role": "Wicketkeeper",   "nationality": "India",       "age": 29, "points": 84, "set_number": 1, "set_name": "Marquee Players"},
+    {"name": "Mitchell Starc",      "role": "Fast Bowler",    "nationality": "Australia",   "age": 34, "points": 91, "set_number": 1, "set_name": "Marquee Players"},
+    {"name": "Suryakumar Yadav",    "role": "Batsman",        "nationality": "India",       "age": 33, "points": 90, "set_number": 1, "set_name": "Marquee Players"},
+    {"name": "Rishabh Pant",        "role": "Wicketkeeper",   "nationality": "India",       "age": 27, "points": 92, "set_number": 1, "set_name": "Marquee Players"},
+    {"name": "Kagiso Rabada",       "role": "Fast Bowler",    "nationality": "South Africa","age": 29, "points": 89, "set_number": 1, "set_name": "Marquee Players"},
+    {"name": "Shivam Dube",         "role": "All-Rounder",    "nationality": "India",       "age": 30, "points": 80, "set_number": 1, "set_name": "Marquee Players"},
+    {"name": "Hardik Pandya",       "role": "All-Rounder",    "nationality": "India",       "age": 30, "points": 88, "set_number": 1, "set_name": "Marquee Players"},
+    {"name": "Pat Cummins",         "role": "Fast Bowler",    "nationality": "Australia",   "age": 31, "points": 90, "set_number": 1, "set_name": "Marquee Players"},
+
+    # ── SET 2: CAPPED BATTERS ──
+    {"name": "David Miller",        "role": "Batsman",        "nationality": "South Africa","age": 35, "points": 78, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Devon Conway",        "role": "Batsman",        "nationality": "New Zealand", "age": 33, "points": 76, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Aiden Markram",       "role": "Batsman",        "nationality": "South Africa","age": 30, "points": 75, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Rahul Tripathi",      "role": "Batsman",        "nationality": "India",       "age": 33, "points": 70, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Harry Brook",         "role": "Batsman",        "nationality": "England",     "age": 25, "points": 80, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Faf du Plessis",      "role": "Batsman",        "nationality": "South Africa","age": 40, "points": 77, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Dewald Brevis",       "role": "Batsman",        "nationality": "South Africa","age": 21, "points": 72, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Tilak Varma",         "role": "Batsman",        "nationality": "India",       "age": 21, "points": 78, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Mayank Agarwal",      "role": "Batsman",        "nationality": "India",       "age": 33, "points": 68, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Prithvi Shaw",        "role": "Batsman",        "nationality": "India",       "age": 24, "points": 65, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Dawid Malan",         "role": "Batsman",        "nationality": "England",     "age": 37, "points": 70, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Shimron Hetmyer",     "role": "Batsman",        "nationality": "West Indies", "age": 27, "points": 73, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Manish Pandey",       "role": "Batsman",        "nationality": "India",       "age": 34, "points": 62, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Yashasvi Jaiswal",    "role": "Batsman",        "nationality": "India",       "age": 22, "points": 85, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Devdutt Padikkal",    "role": "Batsman",        "nationality": "India",       "age": 24, "points": 68, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Rinku Singh",         "role": "Batsman",        "nationality": "India",       "age": 27, "points": 78, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Rajat Patidar",       "role": "Batsman",        "nationality": "India",       "age": 31, "points": 72, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Sai Sudharsan",       "role": "Batsman",        "nationality": "India",       "age": 23, "points": 74, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Mitchell Marsh",      "role": "Batsman",        "nationality": "Australia",   "age": 32, "points": 76, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Abhishek Sharma",     "role": "Batsman",        "nationality": "India",       "age": 24, "points": 74, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Tristan Stubbs",      "role": "Batsman",        "nationality": "South Africa","age": 24, "points": 70, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Tim David",           "role": "Batsman",        "nationality": "Australia",   "age": 28, "points": 73, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Riyan Parag",         "role": "Batsman",        "nationality": "India",       "age": 22, "points": 72, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Sherfane Rutherford", "role": "Batsman",        "nationality": "West Indies", "age": 26, "points": 65, "set_number": 2, "set_name": "Capped Batters"},
+    {"name": "Jacob Bethell",       "role": "Batsman",        "nationality": "England",     "age": 21, "points": 70, "set_number": 2, "set_name": "Capped Batters"},
+
+    # ── SET 3: CAPPED WICKETKEEPERS ──
+    {"name": "Ishan Kishan",        "role": "Wicketkeeper",   "nationality": "India",       "age": 26, "points": 78, "set_number": 3, "set_name": "Capped Wicketkeepers"},
+    {"name": "Heinrich Klaasen",    "role": "Wicketkeeper",   "nationality": "South Africa","age": 33, "points": 85, "set_number": 3, "set_name": "Capped Wicketkeepers"},
+    {"name": "Nicholas Pooran",     "role": "Wicketkeeper",   "nationality": "West Indies", "age": 28, "points": 80, "set_number": 3, "set_name": "Capped Wicketkeepers"},
+    {"name": "Jitesh Sharma",       "role": "Wicketkeeper",   "nationality": "India",       "age": 30, "points": 65, "set_number": 3, "set_name": "Capped Wicketkeepers"},
+    {"name": "Finn Allen",          "role": "Wicketkeeper",   "nationality": "New Zealand", "age": 25, "points": 72, "set_number": 3, "set_name": "Capped Wicketkeepers"},
+    {"name": "Dhruv Jurel",         "role": "Wicketkeeper",   "nationality": "India",       "age": 24, "points": 70, "set_number": 3, "set_name": "Capped Wicketkeepers"},
+    {"name": "Quinton de Kock",     "role": "Wicketkeeper",   "nationality": "South Africa","age": 31, "points": 82, "set_number": 3, "set_name": "Capped Wicketkeepers"},
+    {"name": "Ryan Rickelton",      "role": "Wicketkeeper",   "nationality": "South Africa","age": 28, "points": 68, "set_number": 3, "set_name": "Capped Wicketkeepers"},
+    {"name": "Josh Inglis",         "role": "Wicketkeeper",   "nationality": "Australia",   "age": 29, "points": 70, "set_number": 3, "set_name": "Capped Wicketkeepers"},
+
+    # ── SET 4: CAPPED ALL-ROUNDERS ──
+    {"name": "Marco Jansen",        "role": "All-Rounder",    "nationality": "South Africa","age": 24, "points": 80, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Vijay Shankar",       "role": "All-Rounder",    "nationality": "India",       "age": 33, "points": 62, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Axar Patel",          "role": "All-Rounder",    "nationality": "India",       "age": 30, "points": 78, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Washington Sundar",   "role": "All-Rounder",    "nationality": "India",       "age": 25, "points": 75, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Krunal Pandya",       "role": "All-Rounder",    "nationality": "India",       "age": 33, "points": 68, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Nitish Kumar Reddy",  "role": "All-Rounder",    "nationality": "India",       "age": 21, "points": 72, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Sam Curran",          "role": "All-Rounder",    "nationality": "England",     "age": 26, "points": 82, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Sunil Narine",        "role": "All-Rounder",    "nationality": "West Indies", "age": 36, "points": 85, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Romario Shepherd",    "role": "All-Rounder",    "nationality": "West Indies", "age": 30, "points": 65, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Glenn Maxwell",       "role": "All-Rounder",    "nationality": "Australia",   "age": 36, "points": 82, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Mitchell Santner",    "role": "All-Rounder",    "nationality": "New Zealand", "age": 32, "points": 70, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Liam Livingstone",    "role": "All-Rounder",    "nationality": "England",     "age": 31, "points": 78, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Will Jacks",          "role": "All-Rounder",    "nationality": "England",     "age": 26, "points": 75, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Marcus Stoinis",      "role": "All-Rounder",    "nationality": "Australia",   "age": 35, "points": 74, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Venkatesh Iyer",      "role": "All-Rounder",    "nationality": "India",       "age": 29, "points": 70, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Shardul Thakur",      "role": "All-Rounder",    "nationality": "India",       "age": 33, "points": 72, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Deepak Chahar",       "role": "All-Rounder",    "nationality": "India",       "age": 32, "points": 70, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Harshit Rana",        "role": "All-Rounder",    "nationality": "India",       "age": 22, "points": 68, "set_number": 4, "set_name": "Capped All-Rounders"},
+    {"name": "Cameron Green",       "role": "All-Rounder",    "nationality": "Australia",   "age": 25, "points": 78, "set_number": 4, "set_name": "Capped All-Rounders"},
+
+    # ── SET 5: CAPPED FAST BOWLERS ──
+    {"name": "Lockie Ferguson",     "role": "Fast Bowler",    "nationality": "New Zealand", "age": 33, "points": 80, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Mohammed Siraj",      "role": "Fast Bowler",    "nationality": "India",       "age": 30, "points": 78, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Nathan Ellis",        "role": "Fast Bowler",    "nationality": "Australia",   "age": 30, "points": 70, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Umran Malik",         "role": "Fast Bowler",    "nationality": "India",       "age": 25, "points": 68, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Jofra Archer",        "role": "Fast Bowler",    "nationality": "England",     "age": 29, "points": 82, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Avesh Khan",          "role": "Fast Bowler",    "nationality": "India",       "age": 28, "points": 68, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Josh Hazlewood",      "role": "Fast Bowler",    "nationality": "Australia",   "age": 33, "points": 80, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Mohammed Shami",      "role": "Fast Bowler",    "nationality": "India",       "age": 34, "points": 82, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Alzarri Joseph",      "role": "Fast Bowler",    "nationality": "West Indies", "age": 27, "points": 72, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Trent Boult",         "role": "Fast Bowler",    "nationality": "New Zealand", "age": 35, "points": 80, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Arshdeep Singh",      "role": "Fast Bowler",    "nationality": "India",       "age": 25, "points": 78, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Matheesha Pathirana", "role": "Fast Bowler",    "nationality": "Sri Lanka",   "age": 21, "points": 78, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Bhuvneshwar Kumar",   "role": "Fast Bowler",    "nationality": "India",       "age": 34, "points": 72, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Prasidh Krishna",     "role": "Fast Bowler",    "nationality": "India",       "age": 28, "points": 72, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Anrich Nortje",       "role": "Fast Bowler",    "nationality": "South Africa","age": 30, "points": 78, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Khaleel Ahmed",       "role": "Fast Bowler",    "nationality": "India",       "age": 26, "points": 65, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Matt Henry",          "role": "Fast Bowler",    "nationality": "New Zealand", "age": 32, "points": 70, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Natarajan",           "role": "Fast Bowler",    "nationality": "India",       "age": 33, "points": 65, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Sandeep Sharma",      "role": "Fast Bowler",    "nationality": "India",       "age": 31, "points": 60, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Mukesh Kumar",        "role": "Fast Bowler",    "nationality": "India",       "age": 30, "points": 65, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Mark Wood",           "role": "Fast Bowler",    "nationality": "England",     "age": 34, "points": 78, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+    {"name": "Akash Deep",          "role": "Fast Bowler",    "nationality": "India",       "age": 27, "points": 65, "set_number": 5, "set_name": "Capped Fast Bowlers"},
+
+    # ── SET 6: CAPPED SPIN BOWLERS ──
+    {"name": "Wanindu Hasaranga",   "role": "Spin Bowler",    "nationality": "Sri Lanka",   "age": 27, "points": 82, "set_number": 6, "set_name": "Capped Spin Bowlers"},
+    {"name": "Rashid Khan",         "role": "Spin Bowler",    "nationality": "Afghanistan", "age": 26, "points": 90, "set_number": 6, "set_name": "Capped Spin Bowlers"},
+    {"name": "Kuldeep Yadav",       "role": "Spin Bowler",    "nationality": "India",       "age": 29, "points": 82, "set_number": 6, "set_name": "Capped Spin Bowlers"},
+    {"name": "Rahul Tewatia",       "role": "Spin Bowler",    "nationality": "India",       "age": 31, "points": 68, "set_number": 6, "set_name": "Capped Spin Bowlers"},
+    {"name": "Ravi Bishnoi",        "role": "Spin Bowler",    "nationality": "India",       "age": 24, "points": 75, "set_number": 6, "set_name": "Capped Spin Bowlers"},
+    {"name": "Keshav Maharaj",      "role": "Spin Bowler",    "nationality": "South Africa","age": 34, "points": 72, "set_number": 6, "set_name": "Capped Spin Bowlers"},
+    {"name": "Noor Ahmad",          "role": "Spin Bowler",    "nationality": "Afghanistan", "age": 19, "points": 70, "set_number": 6, "set_name": "Capped Spin Bowlers"},
+    {"name": "Rahul Chahar",        "role": "Spin Bowler",    "nationality": "India",       "age": 25, "points": 68, "set_number": 6, "set_name": "Capped Spin Bowlers"},
+    {"name": "Varun Chakravarthy",  "role": "Spin Bowler",    "nationality": "India",       "age": 33, "points": 75, "set_number": 6, "set_name": "Capped Spin Bowlers"},
+    {"name": "Yuzvendra Chahal",    "role": "Spin Bowler",    "nationality": "India",       "age": 34, "points": 78, "set_number": 6, "set_name": "Capped Spin Bowlers"},
+    {"name": "Maheesh Theekshana",  "role": "Spin Bowler",    "nationality": "Sri Lanka",   "age": 24, "points": 72, "set_number": 6, "set_name": "Capped Spin Bowlers"},
+    {"name": "Sikandar Raza",       "role": "Spin Bowler",    "nationality": "Zimbabwe",    "age": 38, "points": 65, "set_number": 6, "set_name": "Capped Spin Bowlers"},
+
+    # ── SET 7: UNCAPPED BATTERS ──
+    {"name": "Abhinav Manohar",     "role": "Batsman",        "nationality": "India",       "age": 30, "points": 55, "set_number": 7, "set_name": "Uncapped Batters"},
+    {"name": "Priyansh Arya",       "role": "Batsman",        "nationality": "India",       "age": 24, "points": 50, "set_number": 7, "set_name": "Uncapped Batters"},
+    {"name": "Ayush Badoni",        "role": "Batsman",        "nationality": "India",       "age": 24, "points": 58, "set_number": 7, "set_name": "Uncapped Batters"},
+    {"name": "Vaibhav Suryavanshi", "role": "Batsman",        "nationality": "India",       "age": 14, "points": 55, "set_number": 7, "set_name": "Uncapped Batters"},
+    {"name": "Naman Dhir",          "role": "Batsman",        "nationality": "India",       "age": 22, "points": 48, "set_number": 7, "set_name": "Uncapped Batters"},
+    {"name": "Robin Minz",          "role": "Batsman",        "nationality": "India",       "age": 23, "points": 45, "set_number": 7, "set_name": "Uncapped Batters"},
+    {"name": "Prabhsimran Singh",   "role": "Batsman",        "nationality": "India",       "age": 23, "points": 50, "set_number": 7, "set_name": "Uncapped Batters"},
+    {"name": "Nehal Wadhera",       "role": "Batsman",        "nationality": "India",       "age": 24, "points": 52, "set_number": 7, "set_name": "Uncapped Batters"},
+    {"name": "Sameer Rizvi",        "role": "Batsman",        "nationality": "India",       "age": 21, "points": 48, "set_number": 7, "set_name": "Uncapped Batters"},
+    {"name": "Riyan Raghuvanshi",   "role": "Batsman",        "nationality": "India",       "age": 18, "points": 45, "set_number": 7, "set_name": "Uncapped Batters"},
+    {"name": "Ashutosh Sharma",     "role": "Batsman",        "nationality": "India",       "age": 21, "points": 48, "set_number": 7, "set_name": "Uncapped Batters"},
+    {"name": "Shashank Singh",      "role": "Batsman",        "nationality": "India",       "age": 32, "points": 50, "set_number": 7, "set_name": "Uncapped Batters"},
+    {"name": "Aniket Verma",        "role": "Batsman",        "nationality": "India",       "age": 22, "points": 42, "set_number": 7, "set_name": "Uncapped Batters"},
+    {"name": "Kartik Sharma",       "role": "Batsman",        "nationality": "India",       "age": 23, "points": 40, "set_number": 7, "set_name": "Uncapped Batters"},
+    {"name": "Angkrish Raghuvanshi","role": "Batsman",        "nationality": "India",       "age": 17, "points": 42, "set_number": 7, "set_name": "Uncapped Batters"},
+
+    # ── SET 8: UNCAPPED WICKETKEEPERS ──
+    {"name": "Upendra Yadav",       "role": "Wicketkeeper",   "nationality": "India",       "age": 27, "points": 45, "set_number": 8, "set_name": "Uncapped Wicketkeepers"},
+    {"name": "Urvil Patel",         "role": "Wicketkeeper",   "nationality": "India",       "age": 27, "points": 42, "set_number": 8, "set_name": "Uncapped Wicketkeepers"},
+    {"name": "Kona Srikar Bharat",  "role": "Wicketkeeper",   "nationality": "India",       "age": 31, "points": 50, "set_number": 8, "set_name": "Uncapped Wicketkeepers"},
+    {"name": "Vishnu Vinod",        "role": "Wicketkeeper",   "nationality": "India",       "age": 31, "points": 42, "set_number": 8, "set_name": "Uncapped Wicketkeepers"},
+    {"name": "Abishek Porel",       "role": "Wicketkeeper",   "nationality": "India",       "age": 22, "points": 48, "set_number": 8, "set_name": "Uncapped Wicketkeepers"},
+    {"name": "Anuj Rawat",          "role": "Wicketkeeper",   "nationality": "India",       "age": 24, "points": 45, "set_number": 8, "set_name": "Uncapped Wicketkeepers"},
+    {"name": "Tejasvi Singh",       "role": "Wicketkeeper",   "nationality": "India",       "age": 22, "points": 40, "set_number": 8, "set_name": "Uncapped Wicketkeepers"},
+
+    # ── SET 9: UNCAPPED ALL-ROUNDERS ──
+    {"name": "Musheer Khan",        "role": "All-Rounder",    "nationality": "India",       "age": 20, "points": 55, "set_number": 9, "set_name": "Uncapped All-Rounders"},
+    {"name": "Abdul Samad",         "role": "All-Rounder",    "nationality": "India",       "age": 23, "points": 52, "set_number": 9, "set_name": "Uncapped All-Rounders"},
+    {"name": "Shahbaz Ahmed",       "role": "All-Rounder",    "nationality": "India",       "age": 30, "points": 55, "set_number": 9, "set_name": "Uncapped All-Rounders"},
+    {"name": "Ramandeep Singh",     "role": "All-Rounder",    "nationality": "India",       "age": 27, "points": 48, "set_number": 9, "set_name": "Uncapped All-Rounders"},
+    {"name": "Jayant Yadav",        "role": "All-Rounder",    "nationality": "India",       "age": 34, "points": 50, "set_number": 9, "set_name": "Uncapped All-Rounders"},
+    {"name": "Prashant Veer",       "role": "All-Rounder",    "nationality": "India",       "age": 25, "points": 42, "set_number": 9, "set_name": "Uncapped All-Rounders"},
+    {"name": "Shahrukh Khan",       "role": "All-Rounder",    "nationality": "India",       "age": 29, "points": 55, "set_number": 9, "set_name": "Uncapped All-Rounders"},
+    {"name": "Anshul Kamboj",       "role": "All-Rounder",    "nationality": "India",       "age": 24, "points": 48, "set_number": 9, "set_name": "Uncapped All-Rounders"},
+    {"name": "Harpreet Brar",       "role": "All-Rounder",    "nationality": "India",       "age": 28, "points": 52, "set_number": 9, "set_name": "Uncapped All-Rounders"},
+    {"name": "Swapnil Singh",       "role": "All-Rounder",    "nationality": "India",       "age": 33, "points": 45, "set_number": 9, "set_name": "Uncapped All-Rounders"},
+
+    # ── SET 10: UNCAPPED FAST BOWLERS ──
+    {"name": "Arjun Tendulkar",     "role": "Fast Bowler",    "nationality": "India",       "age": 24, "points": 42, "set_number": 10, "set_name": "Uncapped Fast Bowlers"},
+    {"name": "Yash Dayal",          "role": "Fast Bowler",    "nationality": "India",       "age": 26, "points": 55, "set_number": 10, "set_name": "Uncapped Fast Bowlers"},
+    {"name": "Mohsin Khan",         "role": "Fast Bowler",    "nationality": "India",       "age": 25, "points": 52, "set_number": 10, "set_name": "Uncapped Fast Bowlers"},
+    {"name": "Vaibhav Arora",       "role": "Fast Bowler",    "nationality": "India",       "age": 26, "points": 50, "set_number": 10, "set_name": "Uncapped Fast Bowlers"},
+    {"name": "Ishant Sharma",       "role": "Fast Bowler",    "nationality": "India",       "age": 35, "points": 60, "set_number": 10, "set_name": "Uncapped Fast Bowlers"},
+    {"name": "Mayank Yadav",        "role": "Fast Bowler",    "nationality": "India",       "age": 22, "points": 58, "set_number": 10, "set_name": "Uncapped Fast Bowlers"},
+    {"name": "Kuldeep Sen",         "role": "Fast Bowler",    "nationality": "India",       "age": 26, "points": 50, "set_number": 10, "set_name": "Uncapped Fast Bowlers"},
+    {"name": "Mukesh Choudhary",    "role": "Fast Bowler",    "nationality": "India",       "age": 27, "points": 48, "set_number": 10, "set_name": "Uncapped Fast Bowlers"},
+    {"name": "Kartik Tyagi",        "role": "Fast Bowler",    "nationality": "India",       "age": 24, "points": 48, "set_number": 10, "set_name": "Uncapped Fast Bowlers"},
+    {"name": "Akash Singh",         "role": "Fast Bowler",    "nationality": "India",       "age": 22, "points": 42, "set_number": 10, "set_name": "Uncapped Fast Bowlers"},
+    {"name": "Ashwani Kumar",       "role": "Fast Bowler",    "nationality": "India",       "age": 24, "points": 45, "set_number": 10, "set_name": "Uncapped Fast Bowlers"},
+
+    # ── SET 11: UNCAPPED SPIN BOWLERS ──
+    {"name": "R Sai Kishore",       "role": "Spin Bowler",    "nationality": "India",       "age": 27, "points": 55, "set_number": 11, "set_name": "Uncapped Spin Bowlers"},
+    {"name": "Suyash Sharma",       "role": "Spin Bowler",    "nationality": "India",       "age": 21, "points": 48, "set_number": 11, "set_name": "Uncapped Spin Bowlers"},
+    {"name": "Mayank Markande",     "role": "Spin Bowler",    "nationality": "India",       "age": 27, "points": 50, "set_number": 11, "set_name": "Uncapped Spin Bowlers"},
+    {"name": "Kumar Kartikeya",     "role": "Spin Bowler",    "nationality": "India",       "age": 27, "points": 52, "set_number": 11, "set_name": "Uncapped Spin Bowlers"},
+    {"name": "Digvesh Rathi",       "role": "Spin Bowler",    "nationality": "India",       "age": 25, "points": 42, "set_number": 11, "set_name": "Uncapped Spin Bowlers"},
+    {"name": "Vignesh Puthur",      "role": "Spin Bowler",    "nationality": "India",       "age": 24, "points": 40, "set_number": 11, "set_name": "Uncapped Spin Bowlers"},
+]
+
 
 async def seed_data():
-    try:
-        # Scrape
-        image_map = scrape_player_images()
-        print(f"Found {len(image_map)} images.")
-        
-        # Read Excel
-        excel_path = "IPL_2025_FINAL_OUTPUT.xlsx"
-        if not os.path.exists(excel_path):
-             excel_path = "../IPL_2025_FINAL_OUTPUT.xlsx"
-        
-        if not os.path.exists(excel_path):
-            print(f"Excel file not found at {excel_path}")
-            return
+    async with async_session_maker() as session:
+        async with session.begin():
+            # 1. Reset auction state to remove foreign key references
+            from sqlalchemy import update, select
+            result = await session.execute(select(AuctionState).where(AuctionState.id == 1))
+            state = result.scalar_one_or_none()
+            if state:
+                await session.execute(
+                    update(AuctionState).where(AuctionState.id == 1).values(
+                        status="WAITING",
+                        current_bid=0,
+                        current_bidder_id=None,
+                        current_player_id=None,
+                        remaining_players_count=len(PLAYERS),
+                        version=0
+                    )
+                )
 
-        xl = pd.ExcelFile(excel_path)
-        sheets = xl.sheet_names
-        print(f"Reading sheets: {sheets}")
-
-        async with async_session() as session:
-            # Clear existing data for fresh update
-            from sqlalchemy import delete
-            from app.models.all_models import Bid, AuctionState
-            await session.execute(delete(AuctionState))
+            # 2. Clear all existing players and bids
             await session.execute(delete(Bid))
             await session.execute(delete(Player))
-            # Optional: Clear teams if you want to update their logos fully
-            # await session.execute(delete(Team)) 
-            await session.commit()
-            print("Database cleared (AuctionState, Bid, Player) for fresh seeding.")
 
-            # Teams ensure
-            teams_info = {
-                "CSK": {"name": "Chennai Super Kings", "logo": "https://documents.iplt20.com/ipl/CSK/logos/Logooutline/CSKoutline.png", "color": "#FFCC00", "p": "#FFCC00", "s": "#003366"},
-                "MI": {"name": "Mumbai Indians", "logo": "https://documents.iplt20.com/ipl/MI/Logos/Logooutline/MIoutline.png", "color": "#004BA0", "p": "#004BA0", "s": "#FFD700"},
-                "RCB": {"name": "Royal Challengers Bengaluru", "shortName": "RCB", "logo": "https://documents.iplt20.com/ipl/RCB/Logos/Logooutline/RCBoutline.png", "color": "#EC1C24", "p": "#EC1C24", "s": "#FFD700"},
-                "KKR": {"name": "Kolkata Knight Riders", "logo": "https://documents.iplt20.com/ipl/KKR/Logos/Logooutline/KKRoutline.png", "color": "#3A225D", "p": "#3A225D", "s": "#FFD700"},
-                "SRH": {"name": "Sunrisers Hyderabad", "logo": "https://documents.iplt20.com/ipl/SRH/Logos/Logooutline/SRHoutline.png", "color": "#FF822A", "p": "#FF822A", "s": "#000000"},
-                "DC": {"name": "Delhi Capitals", "logo": "https://documents.iplt20.com/ipl/DC/Logos/LogoOutline/DCoutline.png", "color": "#004C93", "p": "#004C93", "s": "#DC143C"},
-                "PBKS": {"name": "Punjab Kings", "logo": "https://documents.iplt20.com/ipl/PBKS/Logos/Logooutline/PBKSoutline.png", "color": "#ED1B24", "p": "#ED1B24", "s": "#FFD700"},
-                "RR": {"name": "Rajasthan Royals", "logo": "https://documents.iplt20.com/ipl/RR/Logos/RR_Logo.png", "color": "#254AA5", "p": "#254AA5", "s": "#FFB6C1"},
-                "LSG": {"name": "Lucknow Super Giants", "logo": "https://documents.iplt20.com/ipl/LSG/Logos/Logooutline/LSGoutline.png", "color": "#00A0E3", "p": "#00A0E3", "s": "#FFD700"},
-                "GT": {"name": "Gujarat Titans", "logo": "https://documents.iplt20.com/ipl/GT/Logos/Logooutline/GToutline.png", "color": "#1B2631", "p": "#1B2631", "s": "#FFD700"}
-            }
+            # 2. Insert all players
+            for p in PLAYERS:
+                player = Player(
+                    name=p["name"],
+                    role=p["role"],
+                    nationality=p["nationality"],
+                    age=p["age"],
+                    points=p["points"],
+                    set_number=p["set_number"],
+                    set_name=p["set_name"],
+                    base_price=(p.get("base_price_lakhs", 200 if p["set_number"] == 1 else 50 if p["set_number"] <= 6 else 20)) * 100000,
+                    image=PLACEHOLDER_IMG,
+                )
+                session.add(player)
 
-            for code, info in teams_info.items():
-                stmt = select(Team).where(Team.code == code)
-                result = await session.execute(stmt)
-                t = result.scalars().first()
-                if not t:
-                    t = Team(
-                        name=info["name"], 
-                        code=code, 
-                        purse_balance=1200000000, # 120 Cr
-                        logo_url=info["logo"],
-                        color=info["color"],
-                        primary_color=info["p"],
-                        secondary_color=info["s"]
-                    )
-                    session.add(t)
-                else:
-                    # Update existing team info
-                    t.name = info["name"]
-                    t.logo_url = info["logo"]
-                    t.color = info["color"]
-                    t.primary_color = info["p"]
-                    t.secondary_color = info["s"]
-                    t.purse_balance = 1200000000 # Reset balance on re-seed
-                await session.commit()
+            # 3. Create auction state if not exists
+            if not state:
+                session.add(AuctionState(
+                    id=1,
+                    status="WAITING",
+                    remaining_players_count=len(PLAYERS)
+                ))
 
-            print("Teams ready.")
+        print(f"Seeded {len(PLAYERS)} players across 11 sets")
+        print("   Set breakdown:")
+        from collections import Counter
+        counts = Counter(p["set_name"] for p in PLAYERS)
+        for name, count in counts.items():
+            print(f"   - {name}: {count} players")
 
-            # Players from all sheets
-            total_count = 0
-            for sheet in sheets:
-                df = pd.read_excel(excel_path, sheet_name=sheet)
-                print(f"Processing sheet {sheet}: {len(df)} rows")
-                
-                for index, row in df.iterrows():
-                    try:
-                        name = str(row.get('NAME', 'Unknown')).strip()
-                        if name.lower() == 'nan' or not name: continue
-                        
-                        role = str(row.get('ROLE', 'Unknown')).strip().upper()
-                        nationality = str(row.get('COUNTRY', 'India')).strip()
-                        age = int(row.get('AGE', 25)) if not pd.isna(row.get('AGE')) else 25
-                        
-                        # Handle different base price column names
-                        base_price_val = row.get('BASE PRICE', row.get('BASE PRICE (LAKHS)', 20))
-                        try:
-                            val = float(base_price_val)
-                            if val <= 500: # Lakhs
-                                base_price = val * 100000
-                            else:
-                                base_price = val
-                        except:
-                            base_price = 2000000
-                            
-                        # Image Match
-                        norm = normalize_name(name)
-                        img = image_map.get(norm)
-                        if not img:
-                            for k, v in image_map.items():
-                                if k in norm or norm in k:
-                                    img = v
-                                    break
-                        if not img:
-                            img = "https://www.iplt20.com/assets/images/IPL/placeholder.png"
-                            
-                        # Stats
-                        matches = int(row.get('MATCHES', 0)) if not pd.isna(row.get('MATCHES')) else 0
-                        runs = int(row.get('RUNS', 0)) if not pd.isna(row.get('RUNS')) else 0
-                        wickets = int(row.get('WICKETS', 0)) if not pd.isna(row.get('WICKETS')) else 0
-                        avg = float(row.get('AVERAGE', 0)) if not pd.isna(row.get('AVERAGE')) else 0
-                        sr = float(row.get('STRIKE RATE', 0)) if not pd.isna(row.get('STRIKE RATE')) else 0
-                        econ = float(row.get('ECONOMY RATE', 0)) if not pd.isna(row.get('ECONOMY RATE')) else 0
-
-                        # Stats proxy for points
-                        points = (runs / 10) + (wickets * 20)
-                        
-                        p = Player(
-                            name=name,
-                            role=role,
-                            nationality=nationality,
-                            age=age,
-                            matches=matches,
-                            runs=runs,
-                            wickets=wickets,
-                            average=avg,
-                            strike_rate=sr,
-                            economy=econ,
-                            base_price=base_price,
-                            points=int(points),
-                            image_url=img
-                        )
-                        session.add(p)
-                        total_count += 1
-                        
-                        if total_count % 50 == 0:
-                            await session.commit() # Periodic commit
-                    except Exception as row_error:
-                        print(f"Row Error in {sheet}: {row_error}")
-            
-            await session.commit()
-            print(f"Successfully seeded {total_count} players from all sheets.")
-            
-    except Exception as e:
-        with open("seed_error.log", "w") as f:
-            f.write(traceback.format_exc())
-        print(f"Global Error: {e}")
 
 if __name__ == "__main__":
     asyncio.run(seed_data())

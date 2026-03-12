@@ -21,18 +21,11 @@ export interface BackendPlayer {
     role: string;
     nationality: string;
     age: number;
-    matches: number;
-    runs: number;
-    wickets: number;
-    average: number;
-    strike_rate: number;
-    economy: number;
-    base_price: number;
-    sold_price: number | null;
+    image: string;
     is_sold: boolean;
-    image_url: string;
-    points: number;
     team_id: string | null;
+    set_number: number;
+    set_name: string;
 }
 
 export interface BackendTeam {

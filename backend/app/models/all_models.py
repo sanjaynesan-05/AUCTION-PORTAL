@@ -50,36 +50,21 @@ class Player(Base):
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String, index=True)
-    role = Column(String) # BATSMAN, BOWLER, ALL-ROUNDER, WICKET-KEEPER
+    role = Column(String)
     nationality = Column(String, default="India")
     age = Column(Integer, nullable=True)
-
-    # Stats
-    matches = Column(Integer, default=0)
-    runs = Column(Integer, default=0)
-    wickets = Column(Integer, default=0)
-    average = Column(Numeric(10, 2), nullable=True)
-    strike_rate = Column(Numeric(10, 2), nullable=True)
-    economy = Column(Numeric(10, 2), nullable=True)
+    image = Column(String, nullable=True)
+    points = Column(Integer, default=0)
+    set_number = Column(Integer, default=1)
+    set_name = Column(String, default="Marquee Players")
+    base_price = Column(Numeric(12, 2), default=2000000) # Default 20L
+    sold_price = Column(Numeric(12, 2), nullable=True)
     
-    # Auction Info
-    base_price = Column(Numeric(10, 2))
-    sold_price = Column(Numeric(10, 2), nullable=True)
     is_sold = Column(Boolean, default=False)
-    image_url = Column(String, nullable=True)
-    
-    # Gamification
-    points = Column(Integer, default=0) 
     
     # Relations (Safe Delete)
     team_id = Column(UUID(as_uuid=True), ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
     team = relationship("Team", back_populates="players")
-
-    # Optimization & Safety
-    __table_args__ = (
-        CheckConstraint("points >= 0", name="check_points_non_negative"),
-        Index("idx_players_is_sold", "is_sold"), # Speed up unsold count
-    )
 
 class Bid(Base):
     __tablename__ = "bids"
@@ -103,7 +88,7 @@ class AuctionState(Base):
     
     status = Column(String, default='WAITING') # WAITING, ACTIVE, PAUSED, COMPLETED
     current_player_id = Column(UUID(as_uuid=True), ForeignKey("players.id"), nullable=True)
-    current_bid = Column(Numeric(10, 2), default=0)
+    current_bid = Column(Numeric(12, 2), default=0)
     current_bidder_id = Column(UUID(as_uuid=True), ForeignKey("teams.id"), nullable=True)
     
     # Optimization

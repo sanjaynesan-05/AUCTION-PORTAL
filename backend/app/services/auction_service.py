@@ -4,6 +4,16 @@ from app.models.all_models import Team, Player, Bid, AuctionState
 from app.websockets.manager import manager
 from uuid import UUID
 
+def get_bid_increment(current_bid_rupees: float) -> float:
+    """Standard IPL-style bid increments in Rupees"""
+    lakhs = current_bid_rupees / 100000
+    if lakhs < 200:    # < 2 Cr
+        return 5000000  # 50 L
+    elif lakhs < 1000: # 5 Cr - 10 Cr
+        return 10000000 # 100 L
+    else:                    # > 10 Cr
+        return 15000000 # 150 L
+
 async def get_auction_state(session: AsyncSession):
     result = await session.execute(select(AuctionState).where(AuctionState.id == 1))
     state = result.scalar_one_or_none()
@@ -37,11 +47,22 @@ async def place_bid(amount: float, team_id: UUID, session: AsyncSession):
              raise ValueError("Player already sold")
 
         if team_id: # Real bid from a team
-            if amount <= state.current_bid:
-                 raise ValueError("Bid too low")
+            base_price_val = float(player.base_price)
+            current_bid_val = float(state.current_bid)
+            
+            # If current_bid is 0, first bid must be >= base_price
+            if current_bid_val == 0:
+                if amount < base_price_val:
+                    raise ValueError(f"First bid must be at least base price: ₹{int(base_price_val/100000)}L")
+            else:
+                increment = get_bid_increment(current_bid_val)
+                if amount < (current_bid_val + increment) and amount != current_bid_val + increment:
+                     # Allow slightly less if it matches strictly (float precision)
+                     pass 
+                if amount <= current_bid_val:
+                    raise ValueError(f"Bid too low. Current bid: {current_bid_val}")
         else: # Admin price adjustment
-            if amount < player.base_price:
-                 raise ValueError("Amount below base price")
+            pass
 
         if team_id:
             if state.current_bidder_id == team_id:
@@ -74,6 +95,7 @@ async def place_bid(amount: float, team_id: UUID, session: AsyncSession):
     return state
 
 async def confirm_sale(session: AsyncSession):
+    sold_price = 0
     winner = None
     async with session.begin(): # Start Transaction
         # 1. Lock Auction State (Pessimistic Lock)
@@ -84,6 +106,8 @@ async def confirm_sale(session: AsyncSession):
 
         if not state.current_bidder_id:
             raise Exception("No active bid to confirm")
+        
+        sold_price = float(state.current_bid)
         
         # 2. Fetch Entities
         player = await session.get(Player, state.current_player_id)
@@ -98,13 +122,12 @@ async def confirm_sale(session: AsyncSession):
              raise Exception("Squad limit reached")
 
         # 4. Execute Transfer
-        team.purse_balance = float(team.purse_balance) - float(state.current_bid)
+        team.purse_balance = float(team.purse_balance) - float(sold_price)
         player.is_sold = True
         player.team_id = team.id
-        player.sold_price = state.current_bid
+        player.sold_price = sold_price
         
-        # 5. Apply Gamification
-        team.total_points += player.points
+        # 5. Update Team Count
         team.players_count += 1
         
         # 6. Reset State for Next Player
@@ -125,7 +148,7 @@ async def confirm_sale(session: AsyncSession):
     # 8. Post-Commit Broadcast (Safe)
     await manager.broadcast("PLAYER_SOLD", {
         "player_id": str(player.id),
-        "sold_price": float(player.sold_price),
+        "sold_price": sold_price,
         "team_id": str(team.id)
     })
     
@@ -171,7 +194,7 @@ async def reset_auction_logic(session: AsyncSession):
         
         # 2. Reset Tables
         await session.execute(update(Team).values(purse_balance=1200000000, total_points=0, players_count=0))
-        await session.execute(update(Player).values(is_sold=False, sold_price=None, team_id=None))
+        await session.execute(update(Player).values(is_sold=False, team_id=None))
         await session.execute(delete(Bid))
         
         # 3. Reset State
