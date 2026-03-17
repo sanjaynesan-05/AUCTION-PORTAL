@@ -6,19 +6,13 @@ import { TVBroadcastPlayer } from '../components/TVBroadcastPlayer';
 import { FloatingTeamPurse } from '../components/FloatingTeamPurse';
 import SoldUnsoldModal from '../components/SoldUnsoldModal';
 import {
-  LogOut,
-  Play,
-  Pause,
-  SkipForward,
-  SkipBack,
-  CheckCircle,
-  XCircle,
-  TrendingUp,
-  Trophy
+  Trophy,
+  Crown,
+  Clock
 } from 'lucide-react';
 
 export default function PresenterPanel() {
-  const { user, logout } = useRole();
+  const { logout } = useRole();
   const navigate = useNavigate();
   const {
     currentPlayer,
@@ -28,44 +22,25 @@ export default function PresenterPanel() {
     auctionPaused,
     currentBid,
     currentBidder,
-    bidHistory,
-    startAuction,
-    pauseAuction,
-    resumeAuction,
-    nextPlayer,
-    previousPlayer,
-    markSold,
-    markUnsold,
+    currentSetName,
   } = useAuctionSync();
 
-  const [stampAnimation, setStampAnimation] = useState<{type: 'sold' | 'unsold' | null, show: boolean}>({
-    type: null,
-    show: false
-  });
-  
   const [soldConfirmation, setSoldConfirmation] = useState<any>(null);
 
-  // Listen for sold confirmations from admin
   useEffect(() => {
     const checkSoldConfirmation = () => {
       const confirmation = localStorage.getItem('soldConfirmation');
       if (confirmation) {
         const data = JSON.parse(confirmation);
         setSoldConfirmation(data);
-        
-        // Clear after 5 seconds
         setTimeout(() => {
-          setSoldConfirmation(null);
           localStorage.removeItem('soldConfirmation');
+          setSoldConfirmation(null);
         }, 5000);
       }
     };
-
-    checkSoldConfirmation();
-    
-    // Listen for storage changes
     window.addEventListener('storage', checkSoldConfirmation);
-    
+    checkSoldConfirmation();
     return () => window.removeEventListener('storage', checkSoldConfirmation);
   }, []);
 
@@ -74,234 +49,88 @@ export default function PresenterPanel() {
     navigate('/login');
   };
 
-  const handleSold = () => {
-    if (currentPlayer && currentBidder) {
-      markSold(currentPlayer.id, currentBidder, currentBid);
-      setStampAnimation({ type: 'sold', show: true });
-      setTimeout(() => {
-        setStampAnimation({ type: null, show: false });
-        nextPlayer();
-      }, 2000);
-    }
-  };
+  const currentBiddingTeam = teams ? teams.find(t => t.id === currentBidder) : undefined;
 
-  const handleUnsold = () => {
-    if (currentPlayer) {
-      markUnsold(currentPlayer.id);
-      setStampAnimation({ type: 'unsold', show: true });
-      setTimeout(() => {
-        setStampAnimation({ type: null, show: false });
-        nextPlayer();
-      }, 2000);
-    }
-  };
-
-  const currentBiddingTeam = teams.find(t => t.id === currentBidder);
-
-  if (!currentPlayer) {
+  if (!auctionStarted && !currentPlayer) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
-        <div className="text-center text-white">
-          <Trophy className="w-16 h-16 mx-auto mb-4 text-yellow-400" />
-          <h2 className="text-3xl font-bold mb-4">Auction Complete!</h2>
-          <p className="text-lg text-gray-300">All players have been processed.</p>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-[#1a0b2e] to-indigo-950 text-white flex flex-col pt-16 font-['Inter'] relative overflow-hidden">
+        <div className="fixed top-0 left-0 right-0 h-16 bg-black/40 backdrop-blur-md border-b border-white/10 flex items-center justify-between px-8 z-50">
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center mr-3">
+              <Crown className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold text-white tracking-wide">IPL AUCTION BROADCAST</h1>
+            </div>
+          </div>
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center">
+              <div className="text-right mr-3">
+                <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Presenter Mode</p>
+                <div className="flex items-center justify-end mt-1">
+                  <div className="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.5)] mr-2"></div>
+                  <p className="text-white font-bold text-sm leading-none">Live</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full px-8">
+          <div className="text-center">
+            <Trophy className="w-32 h-32 text-indigo-400/30 mx-auto mb-8 stroke-[1]" />
+            <h1 className="text-7xl font-black mb-6 tracking-tight text-white uppercase drop-shadow-lg">Auction Room Ready</h1>
+            <p className="text-2xl text-gray-400 font-medium max-w-2xl mx-auto leading-relaxed">Awaiting the auctioneer to initiate the first player draw.</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Header */}
-      <div className="bg-black/30 backdrop-blur-lg border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between h-auto sm:h-16 py-4 sm:py-0 space-y-4 sm:space-y-0">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center mr-3">
-                <Trophy className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg sm:text-xl font-bold text-white">IPL Auction Portal</h1>
-                <p className="text-xs sm:text-sm text-gray-300">Presenter Panel</p>
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-[#1a0b2e] to-[#0d0722] text-white pt-16 font-['Inter'] relative overflow-hidden flex flex-col">
+      <div className="fixed top-0 left-0 right-0 h-16 bg-black/40 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-8 z-50">
+        <div className="flex items-center">
+          <div className="w-10 h-10 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-md flex items-center justify-center mr-4 shadow-lg shadow-amber-500/20">
+            <Crown className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-black text-white tracking-widest uppercase">IPL MEGA AUCTION</h1>
+            <p className="text-xs text-yellow-500/80 font-bold uppercase tracking-[0.2em]">{currentSetName || 'Session 1'}</p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-6">
+          <div className="flex items-center bg-white/5 border border-white/10 px-4 py-1.5 rounded-full">
+            <Clock className="w-4 h-4 text-cyan-400 mr-2" />
+            <span className="font-mono text-sm font-bold tracking-widest text-white/90">{new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+          </div>
+          <div className="w-px h-8 bg-white/10"></div>
+          <div className="flex items-center cursor-pointer hover:opacity-80 transition-opacity" onClick={handleLogout}>
+            <div className="text-right mr-3">
+              <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest leading-none">System</p>
+              <p className="text-white font-bold text-sm leading-tight mt-1 uppercase tracking-wider">Presenter</p>
             </div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
-              <div className="text-left sm:text-right">
-                <p className="text-xs sm:text-sm text-gray-300">Welcome back,</p>
-                <p className="text-white font-medium text-sm sm:text-base">{user?.username}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm sm:text-base w-full sm:w-auto justify-center"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </button>
-            </div>
+            <div className="w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          
-          {/* Main Player Display - TV Broadcast Style */}
-          <div className="lg:col-span-2 relative space-y-6">
-            
-            {/* Stamp Animation Overlay */}
-            {stampAnimation.show && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                {/* Confetti Animation - Only for SOLD */}
-                {stampAnimation.type === 'sold' && (
-                  <div className="confetti-container">
-                    {Array.from({ length: 20 }, (_, i) => (
-                      <div key={i} className="confetti-piece"></div>
-                    ))}
-                  </div>
-                )}
-                
-                <div className={`stamp-animation ${stampAnimation.type === 'sold' ? 'stamp-sold' : 'stamp-unsold'}`}>
-                  <div className="stamp-text">
-                    {stampAnimation.type === 'sold' ? 'SOLD' : 'UNSOLD'}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TV Broadcast Player Component */}
-            <TVBroadcastPlayer
-              currentPlayer={currentPlayer}
-              currentBid={currentBid}
-              currentBiddingTeam={currentBiddingTeam}
-              auctionPaused={auctionPaused}
-            />
-
-            {/* Presenter Controls */}
-            <div className="bg-black/40 backdrop-blur-xl rounded-xl border border-white/20 p-6">
-              <div className="space-y-4">
-                
-                {/* Auction Controls */}
-                <div className="flex flex-wrap justify-center gap-3">
-                  {!auctionStarted ? (
-                    <button
-                      onClick={startAuction}
-                      className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg flex items-center transition-colors font-semibold"
-                    >
-                      <Play className="w-5 h-5 mr-2" />
-                      Start Auction
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        onClick={previousPlayer}
-                        className="bg-gray-600 hover:bg-gray-700 text-white p-3 rounded-lg transition-colors"
-                        title="Previous Player"
-                      >
-                        <SkipBack className="w-5 h-5" />
-                      </button>
-
-                      {auctionPaused ? (
-                        <button
-                          onClick={resumeAuction}
-                          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg flex items-center transition-colors font-semibold"
-                        >
-                          <Play className="w-5 h-5 mr-2" />
-                          Resume
-                        </button>
-                      ) : (
-                        <button
-                          onClick={pauseAuction}
-                          className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg flex items-center transition-colors font-semibold"
-                        >
-                          <Pause className="w-5 h-5 mr-2" />
-                          Pause
-                        </button>
-                      )}
-
-                      <button
-                        onClick={nextPlayer}
-                        className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg transition-colors"
-                        title="Next Player"
-                      >
-                        <SkipForward className="w-5 h-5" />
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                {/* Action Buttons */}
-                {auctionStarted && !auctionPaused && (
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
-                    <button
-                      onClick={handleSold}
-                      disabled={!currentBidder}
-                      className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-4 px-6 rounded-xl flex items-center justify-center transition-all font-bold text-lg hover:scale-105"
-                    >
-                      <CheckCircle className="w-6 h-6 mr-2" />
-                      SOLD
-                    </button>
-                    <button
-                      onClick={handleUnsold}
-                      className="bg-red-600 hover:bg-red-700 text-white py-4 px-6 rounded-xl flex items-center justify-center transition-all font-bold text-lg hover:scale-105"
-                    >
-                      <XCircle className="w-6 h-6 mr-2" />
-                      UNSOLD
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+      <div className="flex-1 w-full flex items-center justify-center p-8 lg:p-12">
+        {currentPlayer ? (
+          <TVBroadcastPlayer
+            currentPlayer={currentPlayer}
+            currentBid={currentBid}
+            currentBiddingTeam={currentBiddingTeam}
+            auctionPaused={auctionPaused}
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center h-[60vh]">
+            <Trophy className="w-24 h-24 text-white/10 mb-6" />
+            <p className="text-gray-500 font-bold tracking-[0.3em] uppercase text-2xl">Waiting for Player...</p>
           </div>
-
-          {/* Right Sidebar - Recent Bids */}
-          <div className="lg:col-span-1">
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6 sticky top-6">
-              <h3 className="text-white font-semibold mb-4 flex items-center">
-                <TrendingUp className="w-5 h-5 mr-2" />
-                Recent Bids
-              </h3>
-              
-              {bidHistory.length > 0 ? (
-                <div className="space-y-3">
-                  {bidHistory.slice(-6).reverse().map((bid, idx) => {
-                    const team = teams.find(t => t.id === bid.teamId);
-                    return (
-                      <div key={idx} className="flex items-center justify-between bg-white/5 rounded-lg p-3 hover:bg-white/10 transition-colors">
-                        <div className="flex items-center space-x-3 flex-1 min-w-0">
-                          {team && (
-                            <img
-                              src={team.logo}
-                              alt={team.name}
-                              className="w-8 h-8 flex-shrink-0"
-                              onError={(e) => {
-                                e.currentTarget.src = `https://ui-avatars.com/api/?name=${team.shortName}&background=${team.color.slice(1)}&color=fff&size=32`;
-                              }}
-                            />
-                          )}
-                          <span className="text-white text-sm font-medium truncate">{team?.shortName}</span>
-                        </div>
-                        <span className="text-yellow-400 font-bold text-lg ml-2 flex-shrink-0">₹{bid.amount}L</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <TrendingUp className="w-12 h-12 mx-auto text-gray-500 mb-3" />
-                  <p className="text-gray-400 text-sm">No bids yet</p>
-                  <p className="text-gray-500 text-xs mt-1">Bids will appear here</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-        </div>
+        )}
       </div>
 
-      {/* Floating Team Purse Button */}
-      <FloatingTeamPurse teams={teams} players={players} />
-
-      {/* Use Reusable SoldUnsoldModal Component */}
       {soldConfirmation && (
         <SoldUnsoldModal
           playerName={soldConfirmation.playerName}

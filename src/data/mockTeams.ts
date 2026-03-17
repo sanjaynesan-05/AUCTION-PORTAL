@@ -71,7 +71,7 @@ export const mockTeams: Team[] = [
     name: 'Rajasthan Royals',
     shortName: 'RR',
     purse: 12000,
-    logo: 'https://documents.iplt20.com/ipl/RR/Logos/Logooutline/RRoutline.png',
+    logo: 'https://documents.iplt20.com/ipl/RR/Logos/RR_Logo.png',
     players: [],
     color: '#254AA5',
     primaryColor: '#254AA5',

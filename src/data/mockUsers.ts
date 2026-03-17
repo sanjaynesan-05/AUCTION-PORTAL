@@ -2,8 +2,10 @@ export interface User {
   id: string;
   username: string;
   password: string;
-  role: 'admin' | 'presenter';
+  role: 'admin' | 'presenter' | 'viewer';
+  teamId?: string;
 }
+
 
 export const mockUsers: User[] = [
   // Admin user

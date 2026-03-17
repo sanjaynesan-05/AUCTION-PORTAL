@@ -1,0 +1,13 @@
+﻿Seeded 152 players across 11 sets
+   Set breakdown:
+   - Marquee Players: 16 players
+   - Capped Batters: 25 players
+   - Capped Wicketkeepers: 9 players
+   - Capped All-Rounders: 19 players
+   - Capped Fast Bowlers: 22 players
+   - Capped Spin Bowlers: 12 players
+   - Uncapped Batters: 15 players
+   - Uncapped Wicketkeepers: 7 players
+   - Uncapped All-Rounders: 10 players
+   - Uncapped Fast Bowlers: 11 players
+   - Uncapped Spin Bowlers: 6 players
