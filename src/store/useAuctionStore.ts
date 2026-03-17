@@ -13,7 +13,10 @@ export interface Player {
   setNumber: number;
   setName: string;
   basePrice: number;
+  points: number;
   price?: number;
+  battingStyle?: string;
+  bowlingStyle?: string;
   stats?: {
     matches: number;
     runs: number;
@@ -300,17 +303,27 @@ export const useAuctionStore = create<AuctionState>((set, get) => ({
   },
 
   markSold: (playerId, teamId, price) => {
-    set(state => ({
-      players: state.players.map(p =>
-        p.id === playerId ? { ...p, sold: true, teamId, price } : p
-      ),
-      teams: state.teams.map(t =>
-        t.id === teamId ? { ...t, purse: t.purse - price } : t
-      ),
-      currentBid: 0,
-      currentBidder: null,
-      bidHistory: [],
-    }));
+    set(state => {
+      const soldPlayer = state.players.find(p => p.id === playerId);
+      const points = soldPlayer?.points || 0;
+      
+      return {
+        players: state.players.map(p =>
+          p.id === playerId ? { ...p, sold: true, teamId, price } : p
+        ),
+        teams: state.teams.map(t =>
+          t.id === teamId ? { 
+            ...t, 
+            purse: t.purse - price,
+            totalPoints: (t.totalPoints || 0) + points,
+            players: [...t.players, playerId]
+          } : t
+        ),
+        currentBid: 0,
+        currentBidder: null,
+        bidHistory: [],
+      };
+    });
   },
 
   markUnsold: (playerId) => {

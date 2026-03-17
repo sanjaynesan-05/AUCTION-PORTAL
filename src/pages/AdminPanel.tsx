@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { useAuctionSync } from '../hooks/useAuctionSync';
 import { fetchFromBackend } from '../utils/api';
+import { Player } from '../store/useAuctionStore';
 import {
   LogOut,
   Users,
@@ -58,7 +59,7 @@ export default function AdminPanel() {
   const [globalBids, setGlobalBids] = useState<any[]>([]);
   const [isLoadingBids, setIsLoadingBids] = useState(false);
 
-  const [newPlayer, setNewPlayer] = useState({
+  const [newPlayer, setNewPlayer] = useState<Omit<Player, 'id'>>({
     name: '',
     role: 'Batsman',
     basePrice: 50,
@@ -67,6 +68,9 @@ export default function AdminPanel() {
     battingStyle: 'Right-handed',
     bowlingStyle: '',
     image: '',
+    setNumber: 1,
+    setName: 'Uncategorized',
+    points: 0,
     stats: {
       matches: 0,
       runs: 0,
@@ -144,6 +148,9 @@ export default function AdminPanel() {
         battingStyle: 'Right-handed',
         bowlingStyle: '',
         image: '',
+        setNumber: 1,
+        setName: 'Uncategorized',
+        points: 0,
         stats: {
           matches: 0,
           runs: 0,
@@ -1191,7 +1198,7 @@ export default function AdminPanel() {
                         value={newPlayer.stats?.matches || 0}
                         onChange={(e) => setNewPlayer({
                           ...newPlayer,
-                          stats: { ...newPlayer.stats, matches: parseInt(e.target.value) || 0 }
+                          stats: { ...(newPlayer.stats || { matches: 0, runs: 0, wickets: 0, average: 0, strikeRate: 0 }), matches: parseInt(e.target.value) || 0 }
                         })}
                         className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                         min="0"
@@ -1204,7 +1211,7 @@ export default function AdminPanel() {
                         value={newPlayer.stats?.runs || 0}
                         onChange={(e) => setNewPlayer({
                           ...newPlayer,
-                          stats: { ...newPlayer.stats, runs: parseInt(e.target.value) || 0 }
+                          stats: { ...(newPlayer.stats || { matches: 0, runs: 0, wickets: 0, average: 0, strikeRate: 0 }), runs: parseInt(e.target.value) || 0 }
                         })}
                         className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                         min="0"
@@ -1217,7 +1224,7 @@ export default function AdminPanel() {
                         value={newPlayer.stats?.wickets || 0}
                         onChange={(e) => setNewPlayer({
                           ...newPlayer,
-                          stats: { ...newPlayer.stats, wickets: parseInt(e.target.value) || 0 }
+                          stats: { ...(newPlayer.stats || { matches: 0, runs: 0, wickets: 0, average: 0, strikeRate: 0 }), wickets: parseInt(e.target.value) || 0 }
                         })}
                         className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                         min="0"
@@ -1231,7 +1238,7 @@ export default function AdminPanel() {
                         value={newPlayer.stats?.average || 0}
                         onChange={(e) => setNewPlayer({
                           ...newPlayer,
-                          stats: { ...newPlayer.stats, average: parseFloat(e.target.value) || 0 }
+                          stats: { ...(newPlayer.stats || { matches: 0, runs: 0, wickets: 0, average: 0, strikeRate: 0 }), average: parseFloat(e.target.value) || 0 }
                         })}
                         className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                         min="0"
@@ -1245,7 +1252,7 @@ export default function AdminPanel() {
                         value={newPlayer.stats?.strikeRate || 0}
                         onChange={(e) => setNewPlayer({
                           ...newPlayer,
-                          stats: { ...newPlayer.stats, strikeRate: parseFloat(e.target.value) || 0 }
+                          stats: { ...(newPlayer.stats || { matches: 0, runs: 0, wickets: 0, average: 0, strikeRate: 0 }), strikeRate: parseFloat(e.target.value) || 0 }
                         })}
                         className="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                         min="0"
@@ -1270,6 +1277,9 @@ export default function AdminPanel() {
                         battingStyle: 'Right-handed',
                         bowlingStyle: '',
                         image: '',
+                        setNumber: 1,
+                        setName: 'Uncategorized',
+                        points: 0,
                         stats: {
                           matches: 0,
                           runs: 0,
@@ -1299,6 +1309,9 @@ export default function AdminPanel() {
                             battingStyle: 'Right-handed',
                             bowlingStyle: '',
                             image: '',
+                            setNumber: 1,
+                            setName: 'Uncategorized',
+                            points: 0,
                             stats: {
                               matches: 0,
                               runs: 0,
@@ -1523,6 +1536,11 @@ export default function AdminPanel() {
                     }));
 
                     setShowSoldModal(false);
+                    
+                    // Automatically transition to next available player
+                    const nextUnsold = players.find(p => !p.sold && p.id !== selectedPlayerForBid.id);
+                    setCurrentPlayer(nextUnsold || null);
+                    
                     setSelectedPlayerForBid(null);
                     setBidAmount(0);
                     setSelectedTeamId(null);

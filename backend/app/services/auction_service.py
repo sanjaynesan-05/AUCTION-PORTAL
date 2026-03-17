@@ -129,6 +129,7 @@ async def confirm_sale(session: AsyncSession):
         
         # 5. Update Team Count
         team.players_count += 1
+        team.total_points = (team.total_points or 0) + player.points
         
         # 6. Reset State for Next Player
         state.current_bid = 0
