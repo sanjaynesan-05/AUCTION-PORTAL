@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = 'https://auction-portal-1.onrender.com/api';
 
 export async function fetchFromBackend(endpoint: string, options: RequestInit = {}) {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -12,7 +12,7 @@ export async function fetchFromBackend(endpoint: string, options: RequestInit = 
     return response.json();
 }
 
-export const socketUrl = 'ws://localhost:8000/ws';
+export const socketUrl = 'wss://auction-portal-1.onrender.com/ws';
 
 
 export interface BackendPlayer {
